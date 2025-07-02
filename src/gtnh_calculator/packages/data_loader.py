@@ -37,7 +37,6 @@ def load_data() -> tuple[Dict[int, Recipe], MaterialList, Dict[str, Machine]]:
     for _, row in df.iterrows():
         name = row['Machine']
         machines[name] = Machine(name)
-    print(machines)
 
     materials = {'EU': Material(0, 'EU')}
     count = 1
@@ -47,7 +46,6 @@ def load_data() -> tuple[Dict[int, Recipe], MaterialList, Dict[str, Machine]]:
             if name not in materials.keys():
                 materials[name] = Material(count, name)
                 count += 1
-    print(materials)
     materials_by_id = {}
     for material in materials.values():
         materials_by_id[material.id] = material
@@ -91,7 +89,4 @@ def load_data() -> tuple[Dict[int, Recipe], MaterialList, Dict[str, Machine]]:
         recipe = create_recipe_from(row)
         if recipe is not None:
             recipes[row['Recipe ID']] = recipe
-    print('Imported Recipes:')
-    for recipe in recipes.values():
-        print(recipe)
     return recipes, material_list, machines

@@ -3,10 +3,14 @@ from xgi import DiHypergraph
 from typing import Dict
 from scipy.optimize import linprog
 import numpy as np
+import logging
 
 from gtnh_calculator.packages.recipes.material import Material, MaterialList
 from gtnh_calculator.packages.recipes.recipe import Recipe
 from gtnh_calculator.packages.crafting_chains.crafting_chain import CraftingChain
+
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel(logging.INFO)
 
 
 class CraftingChainFinder:
@@ -98,8 +102,19 @@ class CraftingChainFinder:
             bounds=bounds,
             method='highs'
         )
+        if result.status != 0:
+            if result.status == 2:
+                _LOGGER.error(f'The optimization problem is infeasible. Possibly, because a required material cannot '
+                              f'be crafted via the imported recipes or are not specified as input materials.')
+                return None
+            if result.status == 3:
+                _LOGGER.error(f'The optimization problem is unbounded. Possibly, because there are no materials '
+                              f'with negative weights.')
+                return None
+            _LOGGER.error(f'An unknown error occurred: {result.status}')
+
+
         recipe_vector = result.x
-        print(result)
         # print(f'recipe_vector = {recipe_vector.tolist()}')
         # print(f'material_vector = {np.matmul(X, recipe_vector).tolist()}')
         crafting_chain = CraftingChain(self.create_hypergraph(recipe_vector), recipe_vector, X)

@@ -48,7 +48,7 @@ class CraftingChain:
         data[:, 2] = [recipes[i].output_string(time_factor * self.recipe_vector[i]) for i in recipe_indices]
         df = pd.DataFrame(data=data, columns=columns)
 
-        total_material_needs = np.matmul(self.recipe_matrix, self.recipe_vector)
+        total_material_needs = time_factor * np.matmul(self.recipe_matrix, self.recipe_vector)
         total_materials = list(zip(total_material_needs, materials.values()))
 
         # fig, axs = plt.subplots(nrows=2, ncols=1)
