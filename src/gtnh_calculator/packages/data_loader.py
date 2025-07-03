@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from typing import Dict
 from math import floor, log, isnan
@@ -11,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
-def load_data() -> tuple[Dict[int, Recipe], MaterialList, Dict[str, Machine]]:
+def load_data() -> tuple[Dict[int, Recipe], MaterialList, Dict[str, Machine], np.ndarray]:
     sheet_id = "1OSog0iIKua5T7ms0Iv9OZxCR1Qw45QSPtZd7EDP-FK4"
     df = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv")
 
@@ -85,8 +86,11 @@ def load_data() -> tuple[Dict[int, Recipe], MaterialList, Dict[str, Machine]]:
         )
 
     recipes = {}
+    recipe_weights = np.zeros((df.shape[0]), dtype=np.float32)
     for _, row in df.iterrows():
         recipe = create_recipe_from(row)
         if recipe is not None:
             recipes[row['Recipe ID']] = recipe
-    return recipes, material_list, machines
+            recipe_weights[recipe.id] = float(row['Weight']) if row['Weight'] != '' else 1
+
+    return recipes, material_list, machines, recipe_weights

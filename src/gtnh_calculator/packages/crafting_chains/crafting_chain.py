@@ -1,13 +1,11 @@
 import xgi
 import matplotlib.pyplot as plt
-from matplotlib.font_manager import FontProperties
 import numpy as np
 import pandas as pd
 from typing import Dict
 import networkx as nx
 
 from ..recipes.material import Material
-from ..recipes.recipe import Recipe
 
 
 class CraftingChain:
@@ -66,16 +64,15 @@ class CraftingChain:
         node_labels = {materials[material_id].id: materials[material_id].get_abbreviation() for material_id
                        in self.hypergraph.nodes if material_id >= 0}
         node_labels[-1] = 'Start'
-        node_fc = {material_id: 'white' if material_id >= 0 else 'grey' for material_id in self.hypergraph.nodes}
+        node_fc = {material_id: 'grey' if material_id < 0 or total_materials[material_id][0] >= 0.0005 else 'white'
+                   for material_id in self.hypergraph.nodes}
         xgi.draw_bipartite(self.hypergraph, node_labels=node_labels, node_size=47, node_fc=node_fc,
                            aspect='auto')
-        print('\n+---------+')
-        print('| Results |')
-        print('+---------+\n')
-        print(f'Total Inputs per {time_interval_name}:')
+
+        print(f'\nTotal Inputs per {time_interval_name}:')
         print(', '.join([f'{"{:.3f}".format(-amount)} {material}' for amount, material in total_materials if amount < 0]) + '\n')
         print(f'Total Outputs per {time_interval_name}:')
         print(', '.join([f'{"{:.3f}".format(amount)} {material}' for amount, material in total_materials if amount > 0]) + '\n')
-        print('Complete Recipe List:')
+        print(f'Complete Recipe List{' (ordered)' if nx.is_directed_acyclic_graph(graph) else ''}:')
         print(df.to_string() + '\n')
         plt.show()

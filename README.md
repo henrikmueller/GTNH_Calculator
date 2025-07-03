@@ -13,9 +13,10 @@ The time variable defines the amount of time, in which the output materials are 
 3. Edit the ```time_interval``` variable. It needs to be formatted in the same way as the ```time``` variable, but has no influence
 on the calculation itself, only one the displayed information about the recipe chain at the end. All materials in this
 recipe chain are displayed in the form "x per time interval" (usually, x/tick oder x/second).
-4. Associate weights to the input materials.
-5. All materials in the ```infinite_materials``` set are automatically included as inputs with weight 0.
-6. The script then displays the complete optimal recipe chain under the specified constraints. If the optimization problem
+4. Associate weights to the input materials to prioritize some materials over others.
+5. Adapt the ```recipe_weight_factor``` variable to emphasize material costs or machine costs (higher ```recipe_weight_factor``` means more emphasis on machine costs).
+6. All materials in the ```infinite_materials``` set are automatically included as inputs with weight 0.
+7. The script then displays the complete optimal recipe chain under the specified constraints.
 
 ## Adding Recipes
 
