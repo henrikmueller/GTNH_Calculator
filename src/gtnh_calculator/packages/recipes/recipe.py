@@ -14,12 +14,12 @@ class Recipe:
     processing_time: float  # in seconds
 
     def __init__(
-            self,
-            id: int,
-            materials: Dict[Material, float],
-            machine: Machine,
-            voltage_tier: int,
-            processing_time: float
+        self,
+        id: int,
+        materials: Dict[Material, float],
+        machine: Machine,
+        voltage_tier: int,
+        processing_time: float
     ):
         self.id = id
         self.materials = materials

@@ -7,7 +7,7 @@ To install this project and the required libraries, the following steps are requ
 
 ## Usage
 
-1. Specify input and output materials in the main.py file.
+1. Specify input and output materials in the main.py file. A recipe output is ignored, when it is an input material.
 2. Edit the ```time``` variable. It is a string starting with an integer and ending in either 's' or 't' (for seconds of ticks). 
 The time variable defines the amount of time, in which the output materials are to be produced.
 3. Edit the ```time_interval``` variable. It needs to be formatted in the same way as the ```time``` variable, but has no influence
