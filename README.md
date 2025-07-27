@@ -7,7 +7,7 @@ To install this project and the required libraries, the following steps are requ
 
 ## Usage
 
-1. Specify input and output materials in the main.py file. A recipe output is ignored, when it is an input material.
+1. Specify input and output materials in the main.py file.
 2. Edit the ```time``` variable. It is a string starting with an integer and ending in either 's' or 't' (for seconds of ticks). 
 The time variable defines the amount of time, in which the output materials are to be produced.
 3. Edit the ```time_interval``` variable. It needs to be formatted in the same way as the ```time``` variable, but has no influence
@@ -16,7 +16,11 @@ recipe chain are displayed in the form "x per time interval" (usually, x/tick od
 4. Associate weights to the input materials to prioritize some materials over others.
 5. Adapt the ```recipe_weight_factor``` variable to emphasize material costs or machine costs (higher ```recipe_weight_factor``` means more emphasis on machine costs).
 6. All materials in the ```infinite_materials``` set are automatically included as inputs with weight 0.
-7. The script then displays the complete optimal recipe chain under the specified constraints.
+7. The ```mode``` variable must be one of the following: `Fixed_Input` or `Fixed_Output`. In the former case, there can
+be only one input material (excluding infinite materials) and the `fixed_amount` variable specifies the amount of this
+input material. In the latter case, there can be only one output material and the `fixed_amount` variable specifies the 
+amount of this output material. 
+8. The script then displays the complete optimal recipe chain under the specified constraints.
 
 ## Adding Recipes
 

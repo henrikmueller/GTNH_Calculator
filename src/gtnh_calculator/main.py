@@ -8,6 +8,13 @@ from packages.data_loader import load_data
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+    Initialization Code
+------------------------------------------------------------------------------------------------------------------------
+"""
+
 default_gid = 0
 gid_rocket_fuel = 23007754
 gid_nitrobenzene = 172535012
@@ -16,40 +23,59 @@ materials = recipe_book.material_list.materials_by_name
 recipe_hypergraph = RecipeHypergraph(recipe_book)
 recipe_graph = recipe_hypergraph.get_recipe_graph()
 
-infinite_materials = [
-    'Water', 'Sodium Dust', 'Zinc Dust', 'Chlorine', 'Hydrofluoric Acid', 'Saltpeter Dust', 'Sulfuric Acid',
-    'Calcium Dust', 'Potassium Dust', 'Hydrogen', 'Oxygen', 'Nitrogen', 'Fluorine', 'Hydrogen Sulfide', 'Salt',
-    'Carbon Dust', 'Sulfur Dust'
-]
-mode = 'Fixed_Input'
-inputs = ['Platinum Comb']
-outputs = ['Platinum Dust, Ruthenium Dust, Iridium Dust, Palladium Dust, Rhodium Dust']
-fixed_amount = 1
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+    Mode Fixed_Input
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+# infinite_materials = [
+#     'Water', 'Sodium Dust', 'Zinc Dust', 'Chlorine', 'Hydrofluoric Acid', 'Saltpeter Dust', 'Sulfuric Acid',
+#     'Calcium Dust', 'Potassium Dust', 'Hydrogen', 'Oxygen', 'Nitrogen', 'Fluorine', 'Hydrogen Sulfide', 'Salt',
+#     'Carbon Dust', 'Sulfur Dust'
+# ]
+# mode = 'Fixed_Input'
+# inputs = ['Platinum Comb']
+# outputs = ['Platinum Dust, Ruthenium Dust, Iridium Dust, Palladium Dust, Rhodium Dust']
+# fixed_amount = 1
+# material_weights = {
+#     'Platinum Comb': -1,
+#     'Platinum Dust': 1,
+#     'Ruthenium Dust': 1,
+#     'Iridium Dust': 1,
+#     'Palladium Dust': 1,
+#     'Rhodium Dust': 1
+# }
+# time = '1s'
+# time_interval = '1s'
+# recipe_weight_factor = 0.00001
+
+"""
+------------------------------------------------------------------------------------------------------------------------
+    Mode Fixed_Input
+------------------------------------------------------------------------------------------------------------------------
+"""
+
+mode = 'Fixed_Output'
+infinite_materials = ['Water']
+inputs = ['Oil Drone', 'Wood Log', 'Salt Drone']
+outputs = ['EU']
+fixed_amount = 32000
 material_weights = {
-    'Platinum Comb': -1,
-    'Platinum Dust': 1,
-    'Ruthenium Dust': 1,
-    'Iridium Dust': 1,
-    'Palladium Dust': 1,
-    'Rhodium Dust': 1
+    'Oil Drone': -1,
+    'Salt Drone': -1,
+    'Wood Log': -1,
 }
-time = '1s'
-time_interval = '1s'
+time = '1t'
+time_interval = '1t'
 recipe_weight_factor = 0.00001
 
-# mode = 'Fixed_Output'
-# infinite_materials = ['Water']
-# inputs = ['Oil Drone', 'Wood Log', 'Salt Drone']
-# outputs = ['EU']
-# fixed_amount = 32000
-# material_weights = {
-#     'Oil Drone': -1,
-#     'Salt Drone': -1,
-#     'Wood Log': -1,
-# }
-# time = '1t'
-# time_interval = '1t'
-# recipe_weight_factor = 0.00001
+"""
+------------------------------------------------------------------------------------------------------------------------
+    Recipe Chain Calculation
+------------------------------------------------------------------------------------------------------------------------
+"""
 
 infinite_materials = set(get_materials(materials, infinite_materials))
 inputs = set(get_materials(materials, inputs))
