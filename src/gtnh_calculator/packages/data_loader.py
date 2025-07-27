@@ -1,9 +1,8 @@
-import numpy as np
 import pandas as pd
-from typing import Dict
 from math import floor, log, isnan
 import logging
 
+from .recipes.recipe_book import RecipeBook
 from .recipes.recipe import Recipe
 from .recipes.material import Material, MaterialList
 from .recipes.machine import Machine
@@ -12,9 +11,9 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
-def load_data() -> tuple[Dict[int, Recipe], MaterialList, Dict[str, Machine], np.ndarray]:
+def load_data(gid: int) -> RecipeBook:
     sheet_id = "1OSog0iIKua5T7ms0Iv9OZxCR1Qw45QSPtZd7EDP-FK4"
-    df = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv")
+    df = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?gid={gid}&format=csv")
 
     def fix_cell(entry) -> str:
         if isinstance(entry, float) and isnan(entry):
@@ -58,6 +57,9 @@ def load_data() -> tuple[Dict[int, Recipe], MaterialList, Dict[str, Machine], np
                 return entry.replace(',', '.')
             return entry
 
+        if row['Exclude'] != '':
+            return None
+
         processing_time = float(convert_entry(row['Processing Time'])) if row['Processing Time'] else None
         eu_per_tick = float(convert_entry(row['EU/t'])) if row['EU/t'] else None
         total_eu = float(convert_entry(row['Total EU'])) if row['Total EU'] else None
@@ -82,15 +84,14 @@ def load_data() -> tuple[Dict[int, Recipe], MaterialList, Dict[str, Machine], np
             materials=inputs | outputs | {materials['EU']: -total_eu},
             machine=machines[row['Machine']],
             voltage_tier=voltage_tier,
-            processing_time=processing_time
+            processing_time=processing_time,
+            weight=float(row['Weight']) if row['Weight'] != '' else 1
         )
 
     recipes = {}
-    recipe_weights = np.zeros((df.shape[0]), dtype=np.float32)
     for _, row in df.iterrows():
         recipe = create_recipe_from(row)
         if recipe is not None:
             recipes[row['Recipe ID']] = recipe
-            recipe_weights[recipe.id] = float(row['Weight']) if row['Weight'] != '' else 1
 
-    return recipes, material_list, machines, recipe_weights
+    return RecipeBook(recipes, material_list)

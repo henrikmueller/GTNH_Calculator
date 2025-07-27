@@ -16,6 +16,18 @@ class Material:
         return self.name
 
 
+def get_materials(materials: Dict[str, Material], material_names: list[str]) -> list[Material]:
+    return [
+        materials[material_name] for material_name in material_names if material_name in materials.keys()
+    ]
+
+
+def get_material_dict(materials: Dict[str, Material], dict: Dict[str, float]) -> Dict[Material, float]:
+    return {
+        materials[material_name]: entry for material_name, entry in dict.items() if material_name in materials.keys()
+    }
+
+
 class MaterialList:
     materials_by_name: Dict[str, Material]
     materials_by_id: Dict[id, Material]

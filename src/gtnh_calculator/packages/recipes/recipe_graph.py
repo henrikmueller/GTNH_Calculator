@@ -128,26 +128,3 @@ class RecipeHypergraph:
 
     def get_subgraph(self, materials: list[Material]) -> RecipeHypergraph:
         return RecipeHypergraph(self.recipe_book.restrict_to(materials))
-
-    def get_crafting_chains(self, start: list[Material], end: list[Material],
-                            crafting_chain_finder: CraftingChainFinder) -> list[CraftingChain]:
-        def _get_crafting_chains(single_start: Material, single_end: Material) -> list[RecipePath]:
-            paths = nx.all_simple_paths(
-                recipe_graph.graph, source=Node(single_start), target=Node(single_end), cutoff=recipe_graph.size
-            )
-            for path in paths:
-                print([(node.item if node.is_material() else node.id) for node in path])
-            return []
-
-        if not start or not end or (len(start) != 1 and len(end) != 1):
-            return []
-
-        recipe_graph = self.get_recipe_graph()
-        eu = self.recipe_book.material_by_name('EU')
-        recipe_graph.graph.remove_node(recipe_graph.get_node(eu))
-        if len(end) == 1:
-            end_material = end[0]
-            for start_material in start:
-                recipe_paths = _get_crafting_chains(start_material, end_material)
-
-        return []

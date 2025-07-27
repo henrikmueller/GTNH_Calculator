@@ -12,6 +12,7 @@ class Recipe:
     machine: Machine
     voltage_tier: int
     processing_time: float  # in seconds
+    weight: float
 
     def __init__(
         self,
@@ -19,13 +20,15 @@ class Recipe:
         materials: Dict[Material, float],
         machine: Machine,
         voltage_tier: int,
-        processing_time: float
+        processing_time: float,
+        weight: float
     ):
         self.id = id
         self.materials = materials
         self.machine = machine
         self.voltage_tier = voltage_tier
         self.processing_time = processing_time
+        self.weight = weight
 
     def __repr__(self) -> str:
         return (f'Recipe {self.id}: {self.materials}. Machine: {self.machine}, '

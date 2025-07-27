@@ -6,20 +6,22 @@ from typing import Dict
 import networkx as nx
 
 from ..recipes.material import Material
+from ..recipes.recipe import Recipe
 
 
 class CraftingChain:
     hypergraph: xgi.DiHypergraph  # needs to be acyclic
-    recipe_vector: np.ndarray
+    recipe_amounts: Dict[int, float]
     recipe_matrix: np.ndarray
 
-    def __init__(self, hypergraph: xgi.DiHypergraph, recipe_vector: np.ndarray, recipe_matrix: np.ndarray):
+    def __init__(self, hypergraph: xgi.DiHypergraph, recipe_amounts: Dict[int, float], recipe_matrix: np.ndarray):
         self.hypergraph = hypergraph
-        self.recipe_vector = recipe_vector
+        self.recipe_amounts = recipe_amounts
         self.recipe_matrix = recipe_matrix
 
-    def draw(self, materials: Dict[int, Material], recipes, time, time_factor, time_interval_name: str):
-        recipes = {i: recipe for i, recipe in recipes.items() if self.recipe_vector[i] > 0}
+    def draw(self, materials: Dict[int, Material], recipes: Dict[int, Recipe], time, time_factor,
+             time_interval_name: str):
+        recipes = {i: recipe for i, recipe in recipes.items() if self.recipe_amounts[i] > 0}
 
         # first sort the recipes topologically along the graph
         graph = nx.DiGraph()
@@ -40,26 +42,15 @@ class CraftingChain:
         columns = ['Machine', f'Inputs per {time_interval_name}', f'Outputs per {time_interval_name}']
         n, q = len(columns), len(recipes)
         data = np.zeros((q, n), dtype=object)
-        data[:, 0] = [(f'{"{:.2f}".format(self.recipe_vector[i] * recipes[i].processing_time / time)} '
+        data[:, 0] = [(f'{"{:.2f}".format(self.recipe_amounts[i] * recipes[i].processing_time / time)} '
                        f'{recipes[i].machine.name} ({recipes[i].voltage_tier_name()})') for i in recipe_indices]
-        data[:, 1] = [recipes[i].input_string(time_factor * self.recipe_vector[i]) for i in recipe_indices]
-        data[:, 2] = [recipes[i].output_string(time_factor * self.recipe_vector[i]) for i in recipe_indices]
+        data[:, 1] = [recipes[i].input_string(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
+        data[:, 2] = [recipes[i].output_string(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
         df = pd.DataFrame(data=data, columns=columns)
 
-        total_material_needs = time_factor * np.matmul(self.recipe_matrix, self.recipe_vector)
+        recipe_vector = np.array([amount for _, amount in self.recipe_amounts.items()])
+        total_material_needs = time_factor * np.matmul(self.recipe_matrix, recipe_vector)
         total_materials = list(zip(total_material_needs, materials.values()))
-
-        # fig, axs = plt.subplots(nrows=2, ncols=1)
-        # for ax in axs:
-        #     ax.axis('off')
-        # table = axs[0].table(cellText=df.values, colLabels=df.keys(), loc='center', cellLoc='center',
-        #                      edges='horizontal')
-        # table.auto_set_font_size(False)
-        # table.set_fontsize(18)
-        # table.auto_set_column_width(col=list(range(n)))
-        # for (row, col), cell in table.get_celld().items():
-        #     if row == 0:
-        #         cell.set_text_props(fontproperties=FontProperties(weight='bold', size=18))
 
         node_labels = {materials[material_id].id: materials[material_id].get_abbreviation() for material_id
                        in self.hypergraph.nodes if material_id >= 0}
