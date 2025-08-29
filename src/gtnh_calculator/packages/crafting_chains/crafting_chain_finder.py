@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import linprog
 import numpy as np
 import logging
+from math import nan, isnan
 
 from ..recipes.recipe_book import RecipeBook
 from ..recipes.material import Material
@@ -38,6 +39,7 @@ class CraftingChainFinder:
             outputs: set[Material],
             fixed_amount: float,
             material_weights: Dict[Material, float],
+            material_caps: Dict[Material, float | None],
             time: str,
             time_interval: str,
             mode: str,
@@ -46,8 +48,9 @@ class CraftingChainFinder:
     ) -> None:
         """
         :param inputs:
-        :param output_spec:
+        :param outputs:
         :param material_weights:
+        :param material_caps:
         :param time: Outputs are required every time seconds.
         :param time_interval: For displaying
         :param mode: One of the following: 'Fixed_Input' or 'Fixed_Output'
@@ -76,7 +79,9 @@ class CraftingChainFinder:
         if len(outputs) != 1 and mode == 'Fixed_Output':
             raise ValueError(f'Only one output material allowed in mode Fixed_Output')
 
-        if not (mode == 'Fixed_Output' and list(outputs)[0] == self.materials_by_name['EU']):
+        if self.materials_by_name['EU'] not in outputs and not (
+                mode == 'Fixed_Output' and list(outputs)[0] == self.materials_by_name['EU']):
+            _LOGGER.info('Automatically added EU to infinite materials')
             infinite_materials.add(self.materials_by_name['EU'])
 
         print('Materials which cannot be produced from recipes and are not specified as input or infinite materials:')
@@ -99,7 +104,24 @@ class CraftingChainFinder:
         recipe_matrix = X.copy()
         recipe_weights = np.array([r.weight for r in self.recipes.values()])
         for material in infinite_materials:
-            material_weights[material] = 0
+            if material not in material_weights.keys():
+                material_weights[material] = 0
+            else:
+                _LOGGER.info(f'A weight was specified for the infinite material {material.name}. '
+                             f'Using the specified weight instead of 0.')
+
+        for material in inputs:
+            if material not in material_caps.keys():
+                material_caps[material] = 0 if mode == 'Fixed_Output' else None
+            else:
+                _LOGGER.info(f'A cap was specified for the input material {material.name}. '
+                             f'Using the specified cap instead of 0.')
+        for material in infinite_materials:
+            if material not in material_caps.keys():
+                material_caps[material] = None
+            else:
+                _LOGGER.info(f'A cap was specified for the infinite material {material.name}. '
+                             f'Using the specified cap instead of "None".')
 
         match mode:
             case 'Fixed_Output':
@@ -107,7 +129,7 @@ class CraftingChainFinder:
                 inputs = inputs.union(infinite_materials)
 
                 # If a material is specified as an input: Remove it as output from every recipe.
-                for material in inputs:
+                for material in infinite_materials:
                     X[material.id][X[material.id] > 0] = 0
 
                 c = np.array(
@@ -115,13 +137,17 @@ class CraftingChainFinder:
                      materials], dtype=np.float64)
                 cost_summand_from_weights = recipe_weight_factor * recipe_weights
                 cost_vector = np.matmul(c, X) + cost_summand_from_weights
-                bounds = np.full((q, 2), np.nan, dtype=np.float64)
-                bounds[:, 0] = 0
+                bounds = [(0, None if isnan(recipe.cap) else recipe.cap * time / recipe.processing_time)
+                          for recipe in self.recipes.values()]
                 b_ub = np.zeros((p,))
                 A_ub = -X.copy()
                 for i in range(A_ub.shape[0]):
-                    if materials[i] in inputs:
-                        A_ub[i, :] = 0
+                    if materials[i] in material_caps.keys():
+                        if material_caps[materials[i]] is None:
+                            A_ub[i, :] = 0
+                        else:
+                            A_ub[i, :] = -A_ub[i, :]
+                            b_ub[i] = material_caps[materials[i]]
                 A_eq = np.zeros((1, q))
                 A_eq[0, :] = X[output_material.id, :]
                 b_eq = np.zeros((A_eq.shape[0],))
@@ -139,14 +165,18 @@ class CraftingChainFinder:
                 cost_summand_from_weights = recipe_weight_factor * recipe_weights
                 cost_vector = - (np.matmul(c, X) - cost_summand_from_weights)
 
-                bounds = np.full((q, 2), np.nan, dtype=np.float64)
-                bounds[:, 0] = 0
+                bounds = [(0, None if isnan(recipe.cap) else recipe.cap * time / recipe.processing_time)
+                          for recipe in self.recipes.values()]
                 b_ub = np.zeros((p,))
                 A_ub = -X.copy()
                 A_ub[input_material.id, :] = 0
                 if infinite_materials is not None:
-                    for material in infinite_materials:
-                        A_ub[material.id, :] = 0
+                    if materials[i] in material_caps.keys():
+                        if material_caps[materials[i]] is None:
+                            A_ub[i, :] = 0
+                        else:
+                            A_ub[i, :] = -A_ub[i, :]
+                            b_ub[i] = material_caps[materials[i]]
                 A_eq = np.zeros((1, q))
                 A_eq[0, :] = X[input_material.id, :]
                 b_eq = np.zeros((A_eq.shape[0],))
@@ -168,8 +198,8 @@ class CraftingChainFinder:
                 _LOGGER.error(f'The optimization problem is infeasible. Possibly, because a required material cannot '
                               f'be crafted via the imported recipes or is not specified as an input material.')
             elif result.status == 3:
-                _LOGGER.error(f'The optimization problem is unbounded. Possibly, because there is an input material'
-                              f'with positive weight')
+                _LOGGER.error(f'The optimization problem is unbounded. Possibly, because there is a recipe with '
+                              f'negative cost.')
             else:
                 _LOGGER.error(f'An unknown error occurred: {result.status}')
         if result.status != 0:
@@ -205,14 +235,14 @@ class CraftingChainFinder:
         )
 
         crafting_chain.draw(self.materials_by_id, self.recipes, time, time_interval / time,
-                            time_interval_name)
+                            time_interval_name, input_materials=inputs.union(infinite_materials))
 
-    def create_hypergraph(self, recipes: list[Recipe], start=True) -> xgi.DiHypergraph:
+    def create_hypergraph(self, recipes: list[Recipe], start=False) -> xgi.DiHypergraph:
         hypergraph = xgi.DiHypergraph()
         for recipe in recipes:
             input_data, output_data = recipe.get_edge_data(eu=False)
             if input_data and output_data:
-                hypergraph.add_edge((input_data, output_data), id=recipe.id)
+                hypergraph.add_edge((input_data, output_data), idx=recipe.id)
         in_degrees = hypergraph.nodes.in_degree.asdict()
         if start:
             for node, in_degree in in_degrees.items():

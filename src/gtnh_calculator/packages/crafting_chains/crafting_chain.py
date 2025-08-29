@@ -1,16 +1,21 @@
+import logging
+
 import xgi
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from typing import Dict
 import networkx as nx
+from netgraph import InteractiveGraph
 
 from ..recipes.material import Material
 from ..recipes.recipe import Recipe
+from ..graphs.graded_layout import graded_layout
+from ..graphs.graph_conversion import to_full_digraph
 
 
 class CraftingChain:
-    hypergraph: xgi.DiHypergraph  # needs to be acyclic
+    hypergraph: xgi.DiHypergraph
     recipe_amounts: Dict[int, float]
     recipe_matrix: np.ndarray
 
@@ -20,7 +25,7 @@ class CraftingChain:
         self.recipe_matrix = recipe_matrix
 
     def draw(self, materials: Dict[int, Material], recipes: Dict[int, Recipe], time, time_factor,
-             time_interval_name: str):
+             time_interval_name: str, input_materials: set[Material]):
         recipes = {i: recipe for i, recipe in recipes.items() if self.recipe_amounts[i] > 0}
 
         # first sort the recipes topologically along the graph
@@ -41,9 +46,11 @@ class CraftingChain:
 
         columns = ['Machine', f'Inputs per {time_interval_name}', f'Outputs per {time_interval_name}']
         n, q = len(columns), len(recipes)
+        machine_amounts = {i: self.recipe_amounts[i] * recipes[i].processing_time / time for i in recipe_indices}
+        machine_names = {i: (f'{f'{"{:.2f}".format(machine_amounts[i])}'} {recipes[i].machine.name} '
+                             f'({recipes[i].voltage_tier_name})') for i in recipe_indices}
         data = np.zeros((q, n), dtype=object)
-        data[:, 0] = [(f'{"{:.2f}".format(self.recipe_amounts[i] * recipes[i].processing_time / time)} '
-                       f'{recipes[i].machine.name} ({recipes[i].voltage_tier_name()})') for i in recipe_indices]
+        data[:, 0] = [machine_names[i] for i in recipe_indices]
         data[:, 1] = [recipes[i].input_string(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
         data[:, 2] = [recipes[i].output_string(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
         df = pd.DataFrame(data=data, columns=columns)
@@ -54,11 +61,50 @@ class CraftingChain:
 
         node_labels = {materials[material_id].id: materials[material_id].get_abbreviation() for material_id
                        in self.hypergraph.nodes if material_id >= 0}
-        node_labels[-1] = 'Start'
         node_fc = {material_id: 'grey' if material_id < 0 or total_materials[material_id][0] >= 0.0005 else 'white'
                    for material_id in self.hypergraph.nodes}
-        xgi.draw_bipartite(self.hypergraph, node_labels=node_labels, node_size=47, node_fc=node_fc,
-                           aspect='auto')
+        input_nodes = set(material.id for material in input_materials)
+        for i in input_nodes:
+            node_fc[i] = 'green'
+        pos = graded_layout(self.hypergraph, input_nodes, node_labels)
+        if pos is None:
+            logging.warning(f'Graded layout could not be determined.')
+            xgi.draw_bipartite(self.hypergraph, node_labels=node_labels, node_size=47, node_fc=node_fc, aspect='auto')
+        else:
+            g = to_full_digraph(self.hypergraph)
+            node_pos, edge_pos = pos
+            min_x = np.min([p[0] for p in node_pos.values()] + [p[0] for p in edge_pos.values()])
+            min_y = np.min([p[1] for p in node_pos.values()] + [p[1] for p in edge_pos.values()])
+            shift = np.array([max(-min_x, 0), max(-min_y, 0)]) + 0.05
+            combined_pos = ({f'N{n}': tuple((p + shift + 0.1 * np.random.rand(2)).tolist()) for n, p in node_pos.items()} |
+                            {f'E{e}': tuple((p + shift + 0.1 * np.random.rand(2)).tolist()) for e, p in edge_pos.items()})
+
+            horizontal_diff = max(p[0] for p in combined_pos.values()) - min(p[0] for p in combined_pos.values())
+            vertical_diff = max(p[1] for p in combined_pos.values()) - min(p[1] for p in combined_pos.values())
+            if vertical_diff > 0.5 * horizontal_diff:
+                combined_pos = {k: p * np.array([vertical_diff / (0.5 * horizontal_diff), 1]) for k, p in combined_pos.items()}
+
+            combined_node_labels = ({f'N{n}': materials[n].get_abbreviation() for n in node_pos.keys() if n >= 0} |
+                                    {f'E{e}': '' for e in edge_pos.keys()})
+            combined_node_size = {f'N{n}': 5 for n in node_pos.keys()} | {f'E{e}': 2 for e in edge_pos.keys()}
+
+            node_color = {n: ('tab:blue' if n.startswith('N') else 'tab:red') for n in g.nodes}
+            for e in edge_pos.keys():
+                if machine_amounts[int(e)].is_integer():
+                    node_color[f'E{e}'] = 'green'
+
+            node_shape = {f'N{n}': 'o' for n in node_pos.keys()} | {f'E{e}': 's' for e in edge_pos.keys()}
+            annotations = {f'E{e}': machine_names[int(e)] for e in edge_pos.keys()}
+
+            plot_instance = InteractiveGraph(
+                g, node_size=combined_node_size, node_color=node_color,
+                node_labels=combined_node_labels, node_label_offset=0, node_label_fontdict=dict(size=20),
+                edge_width=0.5, arrows=True, node_layout=combined_pos, node_edge_width=0.2, node_shape=node_shape,
+                annotations=annotations, node_alpha=0.7
+            )
+            # xgi.draw_bipartite(
+            #     self.hypergraph, node_labels=node_labels, node_size=47, node_fc=node_fc, aspect='auto', pos=pos
+            # )
 
         print(f'\nTotal Inputs per {time_interval_name}:')
         print(', '.join([f'{"{:.3f}".format(-amount)} {material}' for amount, material in total_materials if amount < 0]) + '\n')

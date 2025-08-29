@@ -3,6 +3,7 @@ from typing import Dict
 
 from .material import Material
 from .machine import Machine
+from .voltage_tiers import VoltageTier
 
 
 class Recipe:
@@ -10,25 +11,33 @@ class Recipe:
     input: Dict[Material, float]
     output: Dict[Material, float]
     machine: Machine
-    voltage_tier: int
     processing_time: float  # in seconds
     weight: float
+    cap: float
 
     def __init__(
         self,
         id: int,
         materials: Dict[Material, float],
         machine: Machine,
-        voltage_tier: int,
         processing_time: float,
-        weight: float
+        weight: float,
+        cap: float
     ):
         self.id = id
         self.materials = materials
         self.machine = machine
-        self.voltage_tier = voltage_tier
         self.processing_time = processing_time
         self.weight = weight
+        self.cap = cap
+
+    @property
+    def voltage_tier(self) -> int:
+        return self.machine.voltage_tier
+
+    @property
+    def voltage_tier_name(self) -> str:
+        return self.machine.voltage_tier_name
 
     def __repr__(self) -> str:
         return (f'Recipe {self.id}: {self.materials}. Machine: {self.machine}, '
@@ -66,27 +75,5 @@ class Recipe:
             result.append(f'{"{:.2f}".format(factor * (abs(self.material_quantity(material))))} {material.name}')
         return ', '.join(result)
 
-    def voltage_tier_name(self) -> str:
-        match self.voltage_tier:
-            case -1:
-                return '-'
-            case 0:
-                return 'ULV'
-            case 1:
-                return 'LV'
-            case 2:
-                return 'MV'
-            case 3:
-                return 'HV'
-            case 4:
-                return 'EV'
-            case 5:
-                return 'IV'
-            case 6:
-                return 'LUV'
-            case 7:
-                return 'ZPM'
-            case 8:
-                return 'UV'
-            case 9:
-                return 'UHV'
+    def non_empty(self) -> bool:
+        return (True if self.get_inputs() else False) and (True if self.get_outputs() else False)

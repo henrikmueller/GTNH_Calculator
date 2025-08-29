@@ -14,7 +14,9 @@ dependencies = [
     "matplotlib (>=3.10.3,<4.0.0)",
     "scipy (>=1.16.0,<2.0.0)",
     "networkx (>=3.5,<4.0)",
-    "pycddlib (>=3.0.2,<4.0.0)"
+    "pycddlib (>=3.0.2,<4.0.0)",
+    "ttkbootstrap (>=1.14.2,<2.0.0)",
+    "netgraph (>=4.13.2,<5.0.0)"
 ]
 
 [tool.poetry]
