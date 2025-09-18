@@ -1,0 +1,39 @@
+inputs: 
+  - Platinum Metallic Powder Dust = -0.156
+outputs:
+  - Iridium Dust
+  - Osmium Dust
+  - Rhodium Dust
+  - Ruthenium Dust
+  - Platinum Dust
+  - Palladium Dust
+infinite_materials:
+  - Water
+  - Oxygen
+  - Hydrogen
+  - Nitrogen
+  - EU
+  - Chlorine
+  - Potassium Dust
+  - Sulfur Dust
+  - Salt
+  - Saltpeter Dust
+  - Carbon Dust
+restrictions:
+  - Sludge Dust Residue Dust <= 0
+  - Metallic Sludge Dust Residue Dust <= 0
+  - Molten Potassium <= 0
+  - Potassium Ingot <= 0
+  - Platinum Salt Dust <= 0
+  - Refined Platinum Salt Dust <= 0
+weights:
+  Iridium Dust: 100
+  Osmium Dust: 100
+  Rhodium Dust: 100
+  Ruthenium Dust: 100
+  Platinum Dust: 100
+  Palladium Dust: 100
+time: 2s
+display_interval: 1s
+mode: Max
+table_gid: 0

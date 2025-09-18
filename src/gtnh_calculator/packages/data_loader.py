@@ -49,17 +49,19 @@ def load_data(gid: int) -> RecipeBook:
     material_list = MaterialList(materials_by_name=materials, materials_by_id=materials_by_id)
 
     def create_recipe_from(row) -> Recipe | None:
-        def convert_entry(entry):
-            if isinstance(entry, str):
-                return entry.replace(',', '.')
-            return entry
+        def str_to_float(text: str) -> float | None:
+            if text == '':
+                return None
+            if isinstance(text, str):
+                text = text.replace(',', '.')
+            return float(text)
 
         if row['Exclude'] != '':
             return None
 
-        processing_time = float(convert_entry(row['Processing Time'])) if row['Processing Time'] else None
-        eu_per_tick = float(convert_entry(row['EU/t'])) if row['EU/t'] else None
-        total_eu = float(convert_entry(row['Total EU'])) if row['Total EU'] else None
+        processing_time = str_to_float(row['Processing Time'])
+        eu_per_tick = str_to_float(row['EU/t'])
+        total_eu = str_to_float(row['Total EU'])
 
         missing_information = sum([processing_time is None, eu_per_tick is None, total_eu is None])
         if missing_information != 1:

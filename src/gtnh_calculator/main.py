@@ -3,9 +3,9 @@ import logging
 from packages.recipes.recipe_graph import RecipeHypergraph
 from packages.recipes.material import get_materials, get_material_dict
 from packages.crafting_chains.crafting_chain_finder import CraftingChainFinder
-from packages.data_loader import load_data
+from packages.configs.config import load_config
+from packages.utility.general_utility import time_to_seconds
 
-logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
@@ -17,11 +17,16 @@ _LOGGER.setLevel(logging.INFO)
 """
 
 default_gid = 0
+air_filter_gid = 1730504225
 hog_gid = 1514208585
 gid_rocket_fuel = 23007754
-gid_nitrobenzene = 172535012
-recipe_book = load_data(default_gid)
-materials = recipe_book.material_list.materials_by_name
+
+path_nitrobenzene = 'config/config_nitrobenzene.yaml'
+path_plat_line = 'config/config_plat_line.yaml'
+
+config, recipe_book = load_config(path_plat_line)
+print(config)
+
 recipe_hypergraph = RecipeHypergraph(recipe_book)
 recipe_graph = recipe_hypergraph.get_recipe_graph()
 
@@ -46,7 +51,7 @@ recipe_graph = recipe_hypergraph.get_recipe_graph()
 #     'EU': 1
 # }
 # time = '60s'
-# time_interval = '1s'
+# display_interval = '1s'
 # recipe_weight_factor = 0.0001
 
 """
@@ -55,35 +60,26 @@ recipe_graph = recipe_hypergraph.get_recipe_graph()
 ------------------------------------------------------------------------------------------------------------------------
 """
 
-mode = 'Fixed_Output'
-infinite_materials = ['Water', 'Oxygen', 'Hydrogen', 'Nitrogen', 'EU']
-inputs = ['Palladium Enriched Ammonia', 'Carbon Dust', 'Ammonia', 'Sulfuric Acid', 'Sodium Hydroxide Dust']
-outputs = ['Palladium Dust']
-fixed_amount = 1
-material_weights = {
-    'Palladium Enriched Ammonia': -1000,
-    'Carbon Dust': -1,
-    'Ammonia': -1,
-    'Sulfuric Acid': -1,
-    'Sodium Hydroxide Dust': -1,
-}
-material_caps = {
-
-}
-time = '10s'
-time_interval = '1s'
-recipe_weight_factor = 0.00001
-
 # mode = 'Fixed_Output'
-# infinite_materials = ['Water', 'Sulfur Dust']
-# inputs = ['Wood Log']
-# outputs = ['EU']
-# fixed_amount = 4000  # 9400
+# infinite_materials = ['Water', 'Oxygen', 'Hydrogen', 'Quicklime Dust', 'Carbon Dust', 'Saltpeter Dust']
+# inputs = ['Lepidolite Dust', 'Chrome Dust', 'Benzene', 'Ethylene',
+#           '1.2-Dimethylbenzene', 'Anthracene', 'Sulfuric Acid']
+# outputs = ['Air Filter [Tier 2]']
+# fixed_amount = 1
 # material_weights = {
-#     'Wood Log': -1,
+#     'Lepidolite Dust': -1,
+#     'Chrome Dust': -1,
+#     'Benzene': -1,
+#     'Ethylene': -1,
+#     '1.2-Dimethylbenzene': -1,
+#     'Anthracene': -1,
+#     'Sulfuric Acid': -1
 # }
-# time = '1t'
-# time_interval = '1t'
+# material_caps = {
+#
+# }
+# time = '60s'
+# display_interval = '1s'
 # recipe_weight_factor = 0.00001
 
 """
@@ -92,14 +88,24 @@ recipe_weight_factor = 0.00001
 ------------------------------------------------------------------------------------------------------------------------
 """
 
-infinite_materials = set(get_materials(materials, infinite_materials))
-inputs = set(get_materials(materials, inputs))
-outputs = set(get_materials(materials, outputs))
-material_weights = get_material_dict(materials, material_weights)
-material_caps = get_material_dict(materials, material_caps)
+# infinite_materials = set(get_materials(materials, infinite_materials))
+# inputs = set(get_materials(materials, inputs))
+# outputs = set(get_materials(materials, outputs))
+# material_weights = get_material_dict(materials, material_weights)
+# material_caps = get_material_dict(materials, material_caps)
+
 crafting_chain_finder = CraftingChainFinder(recipe_book)
-crafting_chain_finder.draw_optimal_crafting_chain(
-    inputs=inputs, outputs=outputs, fixed_amount=fixed_amount, time=time, time_interval=time_interval,
-    material_weights=material_weights, recipe_weight_factor=recipe_weight_factor, mode=mode,
-    infinite_materials=infinite_materials, material_caps=material_caps
-)
+crafting_chain = crafting_chain_finder.draw_optimal_crafting_chain(config, recipe_weight_factor=0.00001)
+
+if crafting_chain is not None:
+    time, _ = time_to_seconds(config.time)
+    display_interval, display_interval_name = time_to_seconds(config.display_interval)
+
+    crafting_chain.draw(
+        materials=recipe_book.material_list.materials_by_id,
+        recipes=recipe_book.recipes,
+        time=time,
+        time_factor=display_interval / time,
+        time_interval_name=display_interval_name,
+        input_materials=config.inputs.union(config.infinite_materials)
+    )

@@ -44,7 +44,9 @@ class CraftingChain:
         else:
             recipe_indices = list(recipes.keys())
 
-        columns = ['Machine', f'Inputs per {time_interval_name}', f'Outputs per {time_interval_name}']
+        columns = ['Machine', f'Inputs per {time_interval_name}', f'Outputs per {time_interval_name}',
+                   'EU/t']
+        eu = materials[0]
         n, q = len(columns), len(recipes)
         machine_amounts = {i: self.recipe_amounts[i] * recipes[i].processing_time / time for i in recipe_indices}
         machine_names = {i: (f'{f'{"{:.2f}".format(machine_amounts[i])}'} {recipes[i].machine.name} '
@@ -53,6 +55,8 @@ class CraftingChain:
         data[:, 0] = [machine_names[i] for i in recipe_indices]
         data[:, 1] = [recipes[i].input_string(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
         data[:, 2] = [recipes[i].output_string(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
+        data[:, 3] = [-recipes[i].materials[eu] * machine_amounts[i] / (20 * recipes[i].processing_time)
+                      if recipes[i].processing_time > 0 else 0 for i in recipe_indices]
         df = pd.DataFrame(data=data, columns=columns)
 
         recipe_vector = np.array([amount for _, amount in self.recipe_amounts.items()])

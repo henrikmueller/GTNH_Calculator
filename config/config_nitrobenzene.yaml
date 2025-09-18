@@ -1,0 +1,13 @@
+inputs: 
+  - Wood Log
+outputs:
+  - EU = 26800
+infinite_materials:
+  - Water
+restrictions:
+weights:
+  Wood Log: -1
+time: 1t
+display_interval: 1s
+mode: Min
+table_gid: 172535012

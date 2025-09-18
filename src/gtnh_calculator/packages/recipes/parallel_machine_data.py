@@ -1,4 +1,3 @@
-from asyncio.windows_events import INFINITE
 from dataclasses import dataclass
 from typing import Callable
 from math import log, floor
@@ -39,7 +38,9 @@ data = {
     'Electrolyzer': ParallelData('Industrial Electrolyzer', 2.8, 0.9, lambda v: 2 * v, 0),
     'Chemical Bath': ParallelData('Chemical Bath Multiblock', 5, 1, lambda v: 4 * v, 0),
     'Macerator': ParallelData('Industrial Maceration Stack (Upgraded)', 1.6, 1, lambda v: 8 * v, 0),
-    'Distillation Tower': ParallelData('Dangote Distillus (Upgraded)', 3.5, 1, lambda v: 12, 0)
+    'Distillation Tower': ParallelData('Dangote Distillus (Upgraded)', 3.5, 1, lambda v: 12, 0),
+    'Compressor': ParallelData('Large Electric Compressor', 2, 0.9, lambda v: 2 * v, 0),
+    'Fluid Extractor': ParallelData('Large Fluid Extractor', 1.5, 0.8, lambda v: 8, 0),
 }
 
 
