@@ -64,11 +64,10 @@ class CraftingChainFinder:
         recipe_matrix = X.copy()
         recipe_weights = np.array([r.weight for r in recipes.values()])
 
-        # Convert to optimization problem
-        # If a material is specified as infinite: Remove it as output from every recipe.
         for material in infinite_materials:
             X[material.id][X[material.id] > 0] = 0
 
+        # Convert to optimization problem
         c = np.array(
             [material_weights[material] if material in material_weights.keys() else 0 for material in
              materials], dtype=np.float64)
@@ -79,8 +78,10 @@ class CraftingChainFinder:
                 cost_vector = np.matmul(c, X) + cost_summand_from_weights
             case 'Max':
                 cost_vector = - (np.matmul(c, X) - cost_summand_from_weights)
+            case _:
+                raise ValueError(f'Please specify a valid mode: Min or Max')
 
-        bounds = [(0, None if isnan(recipe.cap) else recipe.cap * time / recipe.processing_time)
+        bounds = [(0, None if recipe.cap is None else recipe.cap * time / recipe.processing_time)
                   for recipe in recipes.values()]
         A_ub, b_ub = [], []
         A_eq, b_eq = [], []
@@ -110,6 +111,7 @@ class CraftingChainFinder:
             A_eq = np.zeros((1, q))
             b_eq = np.zeros((1,))
 
+        # Optimize via lin prog
         result = linprog(
             c=cost_vector,
             A_ub=A_ub,
@@ -119,11 +121,13 @@ class CraftingChainFinder:
             bounds=bounds,
             method='highs'
         )
+
+        # Handle errors
         if not self._handle_errors(result, materials, cost_vector, recipes):
             return None
-
         recipe_vector = result.x
 
+        # Print results
         print('\n+---------+')
         print('| Results |')
         print('+---------+\n')
@@ -158,9 +162,6 @@ class CraftingChainFinder:
         return hypergraph
 
     def _validate_parameters(self, config: Config) -> None:
-        if config.mode not in ['Min', 'Max']:
-            raise ValueError(f'Please specify a valid mode: Min or Max')
-
         for material in config.inputs.intersection(config.infinite_materials):
             _LOGGER.warning(f'Material {material} was specified both as input and infinite.')
         if self.materials_by_name['EU'] not in config.outputs.union(config.infinite_materials):

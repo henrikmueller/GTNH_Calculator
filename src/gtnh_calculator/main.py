@@ -1,11 +1,13 @@
 import logging
+import sys
 
 from packages.recipes.recipe_graph import RecipeHypergraph
-from packages.recipes.material import get_materials, get_material_dict
 from packages.crafting_chains.crafting_chain_finder import CraftingChainFinder
 from packages.configs.config import load_config
 from packages.utility.general_utility import time_to_seconds
+from packages.recipes.machine_options.machine_option_books import load_possible_machine_options
 
+logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
@@ -19,13 +21,18 @@ _LOGGER.setLevel(logging.INFO)
 default_gid = 0
 air_filter_gid = 1730504225
 hog_gid = 1514208585
-gid_rocket_fuel = 23007754
 
 path_nitrobenzene = 'config/config_nitrobenzene.yaml'
 path_plat_line = 'config/config_plat_line.yaml'
 
-config, recipe_book = load_config(path_plat_line)
+machine_options_path = 'config/fixed_settings/machine_options.yaml'
+
+machine_options_book = load_possible_machine_options(machine_options_path)
+print(machine_options_book)
+config, recipe_book = load_config(path_plat_line, machine_options_book)
+
 print(config)
+# print(asfghjk)
 
 recipe_hypergraph = RecipeHypergraph(recipe_book)
 recipe_graph = recipe_hypergraph.get_recipe_graph()

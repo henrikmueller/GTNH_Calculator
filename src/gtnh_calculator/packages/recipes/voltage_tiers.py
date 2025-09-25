@@ -1,3 +1,4 @@
+from math import log, ceil
 
 
 class VoltageTier:
@@ -21,22 +22,22 @@ class VoltageTier:
     @classmethod
     def to_voltage_tier(cls, name: str) -> int:
         match name:
-            case 'ULV': return 0
-            case 'LV': return 1
-            case 'MV': return 2
-            case 'HV': return 3
-            case 'EV': return 4
-            case 'IV': return 5
-            case 'LuV': return 6
-            case 'ZPM': return 7
-            case 'UV': return 8
-            case 'UHV': return 9
-            case 'UEV': return 10
-            case 'UIV': return 11
-            case 'UMV': return 12
-            case 'UXV': return 13
-            case 'MAX': return 14
-            case _: return -1
+            case 'ULV': return VoltageTier.ULV
+            case 'LV': return VoltageTier.LV
+            case 'MV': return VoltageTier.MV
+            case 'HV': return VoltageTier.HV
+            case 'EV': return VoltageTier.EV
+            case 'IV': return VoltageTier.IV
+            case 'LuV': return VoltageTier.LUV
+            case 'ZPM': return VoltageTier.ZPM
+            case 'UV': return VoltageTier.UV
+            case 'UHV': return VoltageTier.UHV
+            case 'UEV': return VoltageTier.UEV
+            case 'UIV': return VoltageTier.UIV
+            case 'UMV': return VoltageTier.UMV
+            case 'UXV': return VoltageTier.UXV
+            case 'MAX': return VoltageTier.MAX
+            case _: return VoltageTier.NO_REQUIREMENT
 
     @classmethod
     def voltage_tier_name(cls, voltage_tier) -> str:
@@ -69,3 +70,17 @@ class VoltageTier:
         if voltage_tier < 0:
             return 0
         return 8 * 4**voltage_tier
+
+    @classmethod
+    def voltage_tier_by_eu(cls, eu_per_tick: float) -> int:
+        if eu_per_tick <= 0:
+            return VoltageTier.NO_REQUIREMENT
+        return max(ceil((log(abs(eu_per_tick), 2) - 1) / 2) - 1, 0)
+
+    @classmethod
+    def max_overclocks(cls, base_voltage_tier: int, actual_voltage_tier: int) -> int:
+        if base_voltage_tier >= VoltageTier.LV:
+            return max(actual_voltage_tier - base_voltage_tier, 0)
+        if base_voltage_tier == VoltageTier.ULV:
+            return max(actual_voltage_tier - base_voltage_tier - 1, 0)
+        return 0

@@ -1,35 +1,44 @@
+from __future__ import annotations
 import numpy as np
 from typing import Dict
+import logging
 
 from .material import Material
 from .machine import Machine
-from .voltage_tiers import VoltageTier
+from .raw_recipes import RawRecipe
+
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel(logging.INFO)
 
 
 class Recipe:
     id: int
-    input: Dict[Material, float]
-    output: Dict[Material, float]
+    raw_recipe: RawRecipe
     machine: Machine
-    processing_time: float  # in seconds
     weight: float
-    cap: float
+    cap: float | None
 
     def __init__(
         self,
         id: int,
-        materials: Dict[Material, float],
+        raw_recipe: RawRecipe,
         machine: Machine,
-        processing_time: float,
         weight: float,
-        cap: float
+        cap: float | None
     ):
         self.id = id
-        self.materials = materials
+        self.raw_recipe = raw_recipe
         self.machine = machine
-        self.processing_time = processing_time
         self.weight = weight
         self.cap = cap
+
+    @property
+    def materials(self) -> Dict[Material, float]:
+        return self.raw_recipe.materials
+
+    @property
+    def processing_time(self) -> float:
+        return self.raw_recipe.processing_time
 
     @property
     def voltage_tier(self) -> int:

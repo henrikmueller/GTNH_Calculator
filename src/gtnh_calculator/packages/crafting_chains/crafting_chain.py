@@ -49,7 +49,7 @@ class CraftingChain:
         eu = materials[0]
         n, q = len(columns), len(recipes)
         machine_amounts = {i: self.recipe_amounts[i] * recipes[i].processing_time / time for i in recipe_indices}
-        machine_names = {i: (f'{f'{"{:.2f}".format(machine_amounts[i])}'} {recipes[i].machine.name} '
+        machine_names = {i: (f'{f'{"{:.2f}".format(machine_amounts[i])}'} {recipes[i].machine.__str__()} '
                              f'({recipes[i].voltage_tier_name})') for i in recipe_indices}
         data = np.zeros((q, n), dtype=object)
         data[:, 0] = [machine_names[i] for i in recipe_indices]

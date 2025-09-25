@@ -36,4 +36,5 @@ weights:
 time: 2s
 display_interval: 1s
 mode: Max
+default_coil: HSS-G Coil
 table_gid: 0

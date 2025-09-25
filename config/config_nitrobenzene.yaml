@@ -10,4 +10,5 @@ weights:
 time: 1t
 display_interval: 1s
 mode: Min
+default_coil: HSS-G Coil
 table_gid: 172535012

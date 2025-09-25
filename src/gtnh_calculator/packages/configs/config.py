@@ -5,8 +5,10 @@ from typing import Dict
 
 from ..recipes.material import Material
 from ..utility.general_utility import str_to_float
-from ..data_loader import load_data
+from ..data_loader import load_data, load_materials
 from ..recipes.recipe_book import RecipeBook
+from ..recipes.machine_options.machine_option_books import MachineOptionsBook
+from ..recipes.machine_options.machine_options import Coil
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -23,10 +25,12 @@ class Config:
     time: str
     display_interval: str
     mode: str
+    default_coil: Coil | None
 
     def __init__(
         self,
         materials: Dict[str, Material],
+        machine_options_book: MachineOptionsBook,
         inputs: list[str],
         outputs: list[str],
         infinite_materials: list[str],
@@ -35,6 +39,7 @@ class Config:
         time: str,
         display_interval: str,
         mode: str,
+        default_coil: str
     ):
         input_specifications = [extract_substrings(input_string, materials) for input_string in inputs]
         self.inputs = set()
@@ -63,6 +68,7 @@ class Config:
         self.time = time
         self.display_interval = display_interval
         self.mode = mode
+        self.default_coil = machine_options_book.get_coil(default_coil)
 
         material_specifications = [t for t in input_specifications + output_specifications if isinstance(t, tuple)]
         if restrictions is not None:
@@ -93,10 +99,11 @@ class Config:
     time: {self.time}
     display_interval: {self.display_interval}
     mode: {self.mode}
+    default_coil: {self.default_coil}
         """
 
 
-def load_config(path: str) -> tuple[Config, RecipeBook]:
+def load_config(path: str, machine_options_book: MachineOptionsBook) -> tuple[Config, RecipeBook]:
     class ConfigSchema(Schema):
         inputs = fields.List(fields.String(), required=True)
         outputs = fields.List(fields.String(), required=True)
@@ -106,10 +113,11 @@ def load_config(path: str) -> tuple[Config, RecipeBook]:
         time = fields.String(required=True)
         display_interval = fields.String(required=True)
         mode = fields.String(required=True)
+        default_coil = fields.String(required=True)
 
         @post_load
         def create_config(self, data, **kwargs) -> Config:
-            return Config(materials, **data)
+            return Config(materials, machine_options_book, **data)
 
         @validates('inputs')
         def validate_inputs(self, inputs: list[str], data_key: str) -> None:
@@ -148,15 +156,24 @@ def load_config(path: str) -> tuple[Config, RecipeBook]:
             if mode not in ['Min', 'Max']:
                 raise ValidationError(f'Invalid mode: "{mode}"')
 
+        @validates('default_coil')
+        def validate_default_coil(self, default_coil: str, data_key: str) -> None:
+            if default_coil not in [c.name for c in machine_options_book.coils]:
+                raise ValidationError(f'Invalid maximal coil: "{default_coil}"')
+
     with open(path, 'r') as f:
         yaml_data = yaml.load(f, Loader=yaml.SafeLoader)
+        table_gid = yaml_data['table_gid']
 
-        recipe_book = load_data(yaml_data['table_gid'])
-        materials = recipe_book.material_list.materials_by_name
+        material_list = load_materials(table_gid)
+        materials = material_list.materials_by_name
 
         del yaml_data['table_gid']
         schema = ConfigSchema()
-        return schema.load(yaml_data), recipe_book
+        config = schema.load(yaml_data)
+
+        recipe_book = load_data(table_gid, material_list, machine_options_book, config)
+        return config, recipe_book
 
 
 def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Material, str, float] | Material | None:
