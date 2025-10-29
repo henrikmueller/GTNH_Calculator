@@ -26,6 +26,9 @@ class MachineOptionsBook:
     def get_coil(self, input_string: str) -> Coil | None:
         return self._get_machine_option(input_string, self.coils)
 
+    def get_pipe_casing(self, input_string: str) -> PipeCasing | None:
+        return self._get_machine_option(input_string, self.pipe_casings)
+
     def get_machine_option(self, input_string: str) -> MachineOption | None:
         return self._get_machine_option(input_string, self.all_options)
 
@@ -55,9 +58,11 @@ class MachineOptionsBook:
         match machine_type.name:
             case 'Blast Furnace':
                 return MachineOptions(coil=self.get_minimal_coil(raw_recipe.recipe_options.temperature))
-            case 'Pyrolyse Oven':
-                return MachineOptions(coil=self.coils[0])
+            case 'ExxonMobil Chemical Plant':
+                return MachineOptions(coil=self.coils[0], pipe_casing=self.pipe_casings[0])
             case 'Oil Cracking Unit':
+                return MachineOptions(coil=self.coils[0])
+            case 'Pyrolyse Oven':
                 return MachineOptions(coil=self.coils[0])
             case _:
                 return MachineOptions()

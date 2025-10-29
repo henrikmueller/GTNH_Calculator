@@ -8,7 +8,7 @@ from ..utility.general_utility import str_to_float
 from ..data_loader import load_data, load_materials
 from ..recipes.recipe_book import RecipeBook
 from ..recipes.machine_options.machine_option_books import MachineOptionsBook
-from ..recipes.machine_options.machine_options import Coil
+from ..recipes.machine_options.machine_options import Coil, PipeCasing
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -26,6 +26,7 @@ class Config:
     display_interval: str
     mode: str
     default_coil: Coil | None
+    default_pipe_casing: PipeCasing | None
 
     def __init__(
         self,
@@ -39,7 +40,8 @@ class Config:
         time: str,
         display_interval: str,
         mode: str,
-        default_coil: str
+        default_coil: str,
+        default_pipe_casing: str,
     ):
         input_specifications = [extract_substrings(input_string, materials) for input_string in inputs]
         self.inputs = set()
@@ -69,6 +71,7 @@ class Config:
         self.display_interval = display_interval
         self.mode = mode
         self.default_coil = machine_options_book.get_coil(default_coil)
+        self.default_pipe_casing = machine_options_book.get_pipe_casing(default_pipe_casing)
 
         material_specifications = [t for t in input_specifications + output_specifications if isinstance(t, tuple)]
         if restrictions is not None:
@@ -100,6 +103,7 @@ class Config:
     display_interval: {self.display_interval}
     mode: {self.mode}
     default_coil: {self.default_coil}
+    default_pipe_casing: {self.default_pipe_casing}
         """
 
 
@@ -113,7 +117,8 @@ def load_config(path: str, machine_options_book: MachineOptionsBook) -> tuple[Co
         time = fields.String(required=True)
         display_interval = fields.String(required=True)
         mode = fields.String(required=True)
-        default_coil = fields.String(required=True)
+        default_coil = fields.String(required=False, load_default=machine_options_book.coils[0].name)
+        default_pipe_casing = fields.String(required=False, load_default=machine_options_book.pipe_casings[0].name)
 
         @post_load
         def create_config(self, data, **kwargs) -> Config:
@@ -159,7 +164,12 @@ def load_config(path: str, machine_options_book: MachineOptionsBook) -> tuple[Co
         @validates('default_coil')
         def validate_default_coil(self, default_coil: str, data_key: str) -> None:
             if default_coil not in [c.name for c in machine_options_book.coils]:
-                raise ValidationError(f'Invalid maximal coil: "{default_coil}"')
+                raise ValidationError(f'Invalid default coil: "{default_coil}"')
+
+        @validates('default_pipe_casing')
+        def validate_default_pipe_casing(self, default_pipe_casing: str, data_key: str) -> None:
+            if default_pipe_casing not in [c.name for c in machine_options_book.pipe_casings]:
+                raise ValidationError(f'Invalid default pipe casing: "{default_pipe_casing}"')
 
     with open(path, 'r') as f:
         yaml_data = yaml.load(f, Loader=yaml.SafeLoader)

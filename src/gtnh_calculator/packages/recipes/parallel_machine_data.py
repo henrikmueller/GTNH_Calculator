@@ -41,6 +41,7 @@ data = {
     'Distillation Tower': ParallelData('Dangote Distillus (Upgraded)', 3.5, 1, lambda v: 12, 0),
     'Compressor': ParallelData('Large Electric Compressor', 2, 0.9, lambda v: 2 * v, 0),
     'Fluid Extractor': ParallelData('Large Fluid Extractor', 1.5, 0.8, lambda v: 8, 0),
+    'Mixer': ParallelData('Industrial Mixing Machine', 3.5, 1.0, lambda v: 8 * v, 0),
 }
 
 

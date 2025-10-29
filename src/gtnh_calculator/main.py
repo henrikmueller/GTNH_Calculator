@@ -24,12 +24,13 @@ hog_gid = 1514208585
 
 path_nitrobenzene = 'config/config_nitrobenzene.yaml'
 path_plat_line = 'config/config_plat_line.yaml'
+path_bastnasite = 'config/config_bastnasite.yaml'
 
 machine_options_path = 'config/fixed_settings/machine_options.yaml'
 
 machine_options_book = load_possible_machine_options(machine_options_path)
 print(machine_options_book)
-config, recipe_book = load_config(path_plat_line, machine_options_book)
+config, recipe_book = load_config(path_bastnasite, machine_options_book)
 
 print(config)
 # print(asfghjk)
@@ -102,17 +103,19 @@ recipe_graph = recipe_hypergraph.get_recipe_graph()
 # material_caps = get_material_dict(materials, material_caps)
 
 crafting_chain_finder = CraftingChainFinder(recipe_book)
-crafting_chain = crafting_chain_finder.draw_optimal_crafting_chain(config, recipe_weight_factor=0.00001)
+crafting_chain = crafting_chain_finder.draw_optimal_crafting_chain(config, recipe_weight_factor=0.0000001)
 
 if crafting_chain is not None:
     time, _ = time_to_seconds(config.time)
     display_interval, display_interval_name = time_to_seconds(config.display_interval)
+    if display_interval != 1:
+        display_interval_name = display_interval_name + 's'
 
     crafting_chain.draw(
         materials=recipe_book.material_list.materials_by_id,
         recipes=recipe_book.recipes,
         time=time,
         time_factor=display_interval / time,
-        time_interval_name=display_interval_name,
+        time_interval=f'{display_interval} {display_interval_name}',
         input_materials=config.inputs.union(config.infinite_materials)
     )

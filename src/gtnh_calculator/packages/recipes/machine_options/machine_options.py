@@ -142,7 +142,7 @@ class CoilSchema(Schema):
 @dataclass
 class PipeCasing(MachineOption):
     name: str
-    tier: str
+    tier: int
 
     def fits(self, raw_option: str) -> bool:
         return raw_option == self.name
@@ -152,6 +152,14 @@ class PipeCasing(MachineOption):
 
     def __repr__(self) -> str:
         return f'PipeCasing = {self.name}'
+
+    @classmethod
+    def maximum(cls, option1: PipeCasing | None, option2: PipeCasing | None) -> PipeCasing | None:
+        if option2 is None:
+            return option1
+        if option1 is None or option2 > option1:
+            return option2
+        return option1
 
 
 class PipeCasingSchema(Schema):

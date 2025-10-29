@@ -43,8 +43,8 @@ class MachineTypeSchema(Schema):
 
     @validates('base_parallels')
     def validate_base_parallels(self, base_parallels: int, data_key: str) -> None:
-        if base_parallels <= 1:
-            raise ValidationError(f'Base parallels must be at least 1: "{base_parallels}"')
+        if base_parallels < 0:
+            raise ValidationError(f'Base parallels must be at least 0: "{base_parallels}"')
 
     @validates('parallels_per_voltage_tier')
     def validate_parallels_per_voltage_tier(self, parallels_per_voltage_tier: int, data_key: str) -> None:
@@ -61,8 +61,17 @@ class MachineTypeSchema(Schema):
 class MachineTypeBook:
     machine_types: Dict[str, list[MachineType]]
 
-    def get_default(self, machine_type: MachineType) -> MachineType:
-        pass
+    def get_parallel_option(self, machine_type: MachineType) -> MachineType:
+        machine_type_options = self.get_machine_type_options(machine_type)
+        if len(machine_type_options) >= 2:
+            return machine_type_options[1]
+        return machine_type
+
+    def get_machine_type_options(self, machine_type: MachineType) -> list[MachineType]:
+        for machine_type_options in self.machine_types.values():
+            if machine_type in machine_type_options:
+                return machine_type_options
+        return []
 
     def get_machine_type(self, machine_type_name: str) -> MachineType:
         for types in self.machine_types.values():

@@ -1,17 +1,23 @@
 import logging
+from dataclasses import dataclass
 
+import xlsxwriter.worksheet
+from xlsxwriter.format import Format
+import networkx as nx
+import itertools
 import xgi
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from typing import Dict
-import networkx as nx
 from netgraph import InteractiveGraph
+from random import shuffle
 
 from ..recipes.material import Material
 from ..recipes.recipe import Recipe
 from ..graphs.graded_layout import graded_layout
 from ..graphs.graph_conversion import to_full_digraph
+from ..utility.general_utility import get_n_colors
 
 
 class CraftingChain:
@@ -25,10 +31,15 @@ class CraftingChain:
         self.recipe_matrix = recipe_matrix
 
     def draw(self, materials: Dict[int, Material], recipes: Dict[int, Recipe], time, time_factor,
-             time_interval_name: str, input_materials: set[Material]):
+             time_interval: str, input_materials: set[Material]):
         recipes = {i: recipe for i, recipe in recipes.items() if self.recipe_amounts[i] > 0}
 
-        # first sort the recipes topologically along the graph
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            Sort recipes topologically along the crafting chain graph
+        ----------------------------------------------------------------------------------------------------------------
+        """
+
         graph = nx.DiGraph()
         graph.add_nodes_from(recipes.keys())
         graph.add_nodes_from(materials.values())
@@ -44,24 +55,39 @@ class CraftingChain:
         else:
             recipe_indices = list(recipes.keys())
 
-        columns = ['Machine', f'Inputs per {time_interval_name}', f'Outputs per {time_interval_name}',
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            Prepare recipe chain data for printing and drawing
+        ----------------------------------------------------------------------------------------------------------------
+        """
+
+        columns = ['Machine', f'Inputs per {time_interval}', f'Outputs per {time_interval}',
                    'EU/t']
         eu = materials[0]
         n, q = len(columns), len(recipes)
         machine_amounts = {i: self.recipe_amounts[i] * recipes[i].processing_time / time for i in recipe_indices}
         machine_names = {i: (f'{f'{"{:.2f}".format(machine_amounts[i])}'} {recipes[i].machine.__str__()} '
                              f'({recipes[i].voltage_tier_name})') for i in recipe_indices}
+        eu_per_tick = [-recipes[i].materials[eu] * machine_amounts[i] / (20 * recipes[i].processing_time)
+                      if recipes[i].processing_time > 0 else 0 for i in recipe_indices]
+        total_eu_per_tick = sum(eu_per_tick)
+        eu_per_tick = ["{:.3f}".format(entry) for entry in eu_per_tick]
         data = np.zeros((q, n), dtype=object)
         data[:, 0] = [machine_names[i] for i in recipe_indices]
         data[:, 1] = [recipes[i].input_string(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
         data[:, 2] = [recipes[i].output_string(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
-        data[:, 3] = [-recipes[i].materials[eu] * machine_amounts[i] / (20 * recipes[i].processing_time)
-                      if recipes[i].processing_time > 0 else 0 for i in recipe_indices]
+        data[:, 3] = eu_per_tick
         df = pd.DataFrame(data=data, columns=columns)
 
         recipe_vector = np.array([amount for _, amount in self.recipe_amounts.items()])
         total_material_needs = time_factor * np.matmul(self.recipe_matrix, recipe_vector)
         total_materials = list(zip(total_material_needs, materials.values()))
+
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            Draw Graph
+        ----------------------------------------------------------------------------------------------------------------
+        """
 
         node_labels = {materials[material_id].id: materials[material_id].get_abbreviation() for material_id
                        in self.hypergraph.nodes if material_id >= 0}
@@ -110,10 +136,159 @@ class CraftingChain:
             #     self.hypergraph, node_labels=node_labels, node_size=47, node_fc=node_fc, aspect='auto', pos=pos
             # )
 
-        print(f'\nTotal Inputs per {time_interval_name}:')
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            Print crafting chain to console
+        ----------------------------------------------------------------------------------------------------------------
+        """
+
+        print(f'\nTotal Inputs per {time_interval}:')
         print(', '.join([f'{"{:.3f}".format(-amount)} {material}' for amount, material in total_materials if amount < 0]) + '\n')
-        print(f'Total Outputs per {time_interval_name}:')
+        print(f'Total Outputs per {time_interval}:')
         print(', '.join([f'{"{:.3f}".format(amount)} {material}' for amount, material in total_materials if amount > 0]) + '\n')
+        print(f'Total EU per tick {"{:.3f}".format(total_eu_per_tick)}:')
         print(f'Complete Recipe List{' (ordered)' if nx.is_directed_acyclic_graph(graph) else ''}:')
         print(df.to_string() + '\n')
+
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            Write to Excel sheet
+        ----------------------------------------------------------------------------------------------------------------
+        """
+
+        @dataclass
+        class ExcelCell:
+            entry: str
+            format: Format | None = None
+
+        excel_writer = pd.ExcelWriter('Test.xlsx', engine='xlsxwriter')
+        workbook = excel_writer.book
+        header_format = workbook.add_format({'bold': True})
+
+        recipe_inputs = [recipes[i].input_string_array(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
+        recipe_outputs = [recipes[i].output_string_array(time_factor * self.recipe_amounts[i]) for i in recipe_indices]
+
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            Determine material colors
+        ----------------------------------------------------------------------------------------------------------------
+        """
+
+        def get_material_colors() -> Dict[Material, int]:
+            g = nx.Graph()
+            for inputs, outputs in zip(recipe_inputs, recipe_outputs):
+                recipe_materials = [entry[1] for entry in inputs + outputs]
+                g.add_nodes_from(recipe_materials)
+                g.add_edges_from(list(itertools.combinations(recipe_materials, 2)))
+            return nx.coloring.greedy_color(g, strategy="largest_first")
+
+        def get_material_colors_full() -> Dict[Material, int]:
+            displayed_materials = [entry[1] for m in recipe_inputs + recipe_outputs for entry in m]
+            shuffle(displayed_materials)
+            return {material: i for i, material in enumerate(displayed_materials)}
+
+        material_colors = get_material_colors_full()
+        number_of_colors = max(material_colors.values()) + 1
+        material_formats = []
+        for color in get_n_colors(number_of_colors, saturation=0.8):
+            material_formats.append(workbook.add_format({"font_color": color.hex}))
+
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            Sort recipes topologically along the crafting chain graph
+        ----------------------------------------------------------------------------------------------------------------
+        """
+
+        def material_cell_entry(entry) -> ExcelCell:
+            if isinstance(entry, str):
+                return ExcelCell(entry)
+            if isinstance(entry, tuple):
+                amount, material = entry
+                format = material_formats[material_colors[material]]
+                return ExcelCell(f'{"{:.3f}".format(amount)} {material.name}', format=format)
+            try:
+                cell = ExcelCell(str(entry))
+                return cell
+            except ValueError:
+                return ExcelCell('')
+
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            IO Sheet
+        ----------------------------------------------------------------------------------------------------------------
+        """
+
+        input_material_table = np.array([[material.name, "{:.3f}".format(-amount)] for amount, material in total_materials if amount < 0])
+        output_material_table = np.array([[material.name, "{:.3f}".format(amount)] for amount, material in total_materials if amount > 0])
+        cell_array_io_rows = max(input_material_table.shape[0], output_material_table.shape[0]) + 1
+        cell_array_io = np.full((cell_array_io_rows, 5), '', dtype=object)
+        cell_array_io[0, 0] = f'Input Material'
+        cell_array_io[0, 1] = f'Amount per {time_interval}:'
+        cell_array_io[0, 3] = f'Output Material'
+        cell_array_io[0, 4] = f'Amount per {time_interval}:'
+        cell_array_io[1:input_material_table.shape[0]+1, 0:2] = input_material_table
+        cell_array_io[1:output_material_table.shape[0]+1, 3:5] = output_material_table
+        cell_array_io = np.vectorize(material_cell_entry)(cell_array_io)
+
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            Crafting chain sheet
+        ----------------------------------------------------------------------------------------------------------------
+        """
+
+        max_inputs = max(
+            [len(recipes[i].input_string_array(time_factor * self.recipe_amounts[i])) for i in recipe_indices]
+        )
+        max_outputs = max(
+            [len(recipes[i].output_string_array(time_factor * self.recipe_amounts[i])) for i in recipe_indices]
+        )
+        cell_array_recipes = np.full((len(recipe_indices) + 1, 2 + max_inputs + max_outputs), '', dtype=object)
+
+        input_array = np.full((len(recipe_indices), max_inputs), '', dtype=object)
+        output_array = np.full((len(recipe_indices), max_outputs), '', dtype=object)
+        for i in range(len(recipe_indices)):
+            input_array[i, :len(recipe_inputs[i])] = recipe_inputs[i]
+            output_array[i, :len(recipe_outputs[i])] = recipe_outputs[i]
+        cell_array_recipes[0, :] = ([columns[0]] + [f'Input {i}' for i in range(1, max_inputs+1)] +
+                             [f'Output {i}' for i in range(1, max_outputs+1)] + columns[3:])
+        first_input_index, first_output_index = 1, 1 + max_inputs
+        cell_array_recipes[1:, 0] = [machine_names[i] for i in recipe_indices]
+        cell_array_recipes[1:, first_input_index:first_output_index] = input_array
+        cell_array_recipes[1:, first_output_index:-1] = output_array
+        cell_array_recipes[1:, -1] = eu_per_tick
+        cell_array_recipes = np.vectorize(material_cell_entry)(cell_array_recipes)
+
+        for cell in cell_array_io[0, :]:
+            cell.format = header_format
+        for cell in cell_array_recipes[0, :]:
+            cell.format = header_format
+
+        """
+        ----------------------------------------------------------------------------------------------------------------
+            Create excel file
+        ----------------------------------------------------------------------------------------------------------------
+        """
+
+        @dataclass
+        class ExcelWorksheet:
+            worksheet: xlsxwriter.worksheet.Worksheet
+            cell_array: np.ndarray
+
+        excel_worksheets = [
+            ExcelWorksheet(workbook.add_worksheet('IO'), cell_array_io),
+            ExcelWorksheet(workbook.add_worksheet('Recipes'), cell_array_recipes)
+        ]
+
+        # Apply formatting row by row
+        for excel_worksheet in excel_worksheets:
+            for row_index, row in enumerate(excel_worksheet.cell_array):
+                for column_index, excel_cell in enumerate(row):
+                    if excel_cell.format is None:
+                        excel_worksheet.worksheet.write(row_index, column_index, excel_cell.entry)
+                    else:
+                        excel_worksheet.worksheet.write(row_index, column_index, excel_cell.entry, excel_cell.format)
+
+        for excel_worksheet in excel_worksheets:
+            excel_worksheet.worksheet.autofit()
+        excel_writer.close()
         plt.show()

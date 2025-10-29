@@ -137,6 +137,7 @@ class CraftingChainFinder:
         if combined_cost != 0:
             print(f'Material cost: {"{:.2f}%".format(100 * material_cost / combined_cost)}')
             print(f'Machine cost: {"{:.2f}%".format(100 * machine_cost / combined_cost)}')
+            print(f'Total cost: {combined_cost}')
         else:
             print(f'Material cost = Machine cost = 0.')
 

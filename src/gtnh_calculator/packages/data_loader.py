@@ -12,7 +12,7 @@ from .recipes.voltage_tiers import VoltageTier
 from .recipes.machine_options.machine_option_books import MachineOptionsBook
 from .recipes.recipe_options.recipe_options import RecipeOptions
 from .recipes.machine_types import MachineTypeBook
-from .recipes.machine_options.machine_options import Coil
+from .recipes.machine_options.machine_options import Coil, PipeCasing
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -105,44 +105,40 @@ def load_data(gid: int, material_list: MaterialList, machine_options_book: Machi
 
         recipe_options = RecipeOptions.get_recipe_options(row['Recipe Options'])
         raw_recipe = RawRecipe(recipe_materials, processing_time, recipe_options)
+
+        machine_type = machine_type_book.get_machine_type(row['Machine'])
+        if machine_type is None:
+            _LOGGER.warning(f'Machine type not found: "{row['Machine']}". Please specify in machine_types.yaml')
+            machine_type = MachineType(row['Machine'])
+
         parallel_voltage_tier = VoltageTier.to_voltage_tier(row['Parallel Voltage'])
         if parallel_voltage_tier >= 1:
-            parallel_data = parallel_machine_data(row['Machine'])
-            machine_type = machine_type_book.get_machine_type(row['Machine'])  # TODO: Wrong type in parallel case
-            if machine_type is None:
-                machine_type = MachineType(row['Machine'])
-            specified_options = machine_options_book.get_machine_options(row['Machine Options'])
-            default_options = machine_options_book.get_default_options(raw_recipe, machine_type)
-            machine = Machine(
-                machine_type=machine_type,
-                parallels=parallel_data.get_parallels(parallel_voltage_tier),
-                voltage_tier=parallel_voltage_tier,
-                machine_options=specified_options.maximum(default_options)
-            )
-            effective_parallels, overclocks = parallel_data.effective_parallels_and_overclocks(eu_per_tick,
-                                                                                               parallel_voltage_tier)
-            perfect_overclocks = min(overclocks, parallel_data.perfect_overclocks)
-            total_eu *= parallel_data.energy_multiplier * effective_parallels * 2**(overclocks - perfect_overclocks)
-            processing_time /= 4**perfect_overclocks * 2**(overclocks - perfect_overclocks)
-            recipe_materials = ({n: effective_parallels * a for n, a in inputs.items()} |
-                                {n: effective_parallels * a for n, a in outputs.items()} | {materials['EU']: -total_eu})
-            raw_recipe = RawRecipe(recipe_materials, processing_time, recipe_options)
-        else:
-            machine_type = machine_type_book.get_machine_type(row['Machine'])
-            if machine_type is None:
-                machine_type = MachineType(row['Machine'])
-            specified_options = machine_options_book.get_machine_options(row['Machine Options'])
-            default_options = machine_options_book.get_default_options(raw_recipe, machine_type)
-            machine = Machine(
-                machine_type=machine_type, parallels=1, voltage_tier=voltage_tier,
-                machine_options=specified_options.maximum(default_options)
-            )
+            machine_type = machine_type_book.get_parallel_option(machine_type)
+            voltage_tier = parallel_voltage_tier
+
+        specified_options = machine_options_book.get_machine_options(row['Machine Options'])
+        default_options = machine_options_book.get_default_options(raw_recipe, machine_type)
+        machine = Machine(
+            machine_type=machine_type, voltage_tier=voltage_tier,
+            machine_options=specified_options.maximum(default_options)
+        )
+
+        """
+            Update machine options to specified default
+        """
 
         if machine.machine_options.coil is not None:
             machine.machine_options.coil = (
                 Coil.maximum(recipe.machine.machine_options.coil, config.default_coil))
             if machine.machine_type.name == 'Oil Cracking Unit' and machine.machine_options.coil.tier > 5:
                 machine.machine_options.coil = machine_options_book.coils[4]
+        if machine.machine_options.pipe_casing is not None:
+            machine.machine_options.pipe_casing = (
+                PipeCasing.maximum(recipe.machine.machine_options.pipe_casing, config.default_pipe_casing))
+
+        """
+            Create recipe
+        """
 
         # Adapt recipe based on machine and its setting (e.g. EBF coils)
         raw_recipe = machine.fit_recipe(raw_recipe)
@@ -162,3 +158,7 @@ def load_data(gid: int, material_list: MaterialList, machine_options_book: Machi
             recipes[row['Recipe ID']] = recipe
 
     return RecipeBook(recipes, material_list)
+
+
+def find_machine_for_recipe(raw_recipe: RawRecipe, machine_types: list[MachineType]) -> Machine:
+    pass

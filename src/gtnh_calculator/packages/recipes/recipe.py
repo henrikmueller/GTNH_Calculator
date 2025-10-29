@@ -70,19 +70,27 @@ class Recipe:
     def recipe_vector(self, materials: list[Material]):
         return np.array([self.material_quantity(material) for material in materials])
 
-    def input_string(self, factor: float):
+    def input_string_array(self, factor: float) -> list[tuple[float, Material]]:
         result = []
         for material in self.get_inputs():
             if material.name == 'EU':
                 continue
-            result.append(f'{"{:.2f}".format(factor * (abs(self.material_quantity(material))))} {material.name}')
-        return ', '.join(result)
+            result.append((factor * (abs(self.material_quantity(material))), material))
+        return result
 
-    def output_string(self, factor: float):
+    def input_string(self, factor: float) -> str:
+        array = self.input_string_array(factor)
+        return ', '.join([f'{"{:.3f}".format(amount)} {material.name}' for amount, material in array])
+
+    def output_string_array(self, factor: float) -> list[tuple[float, Material]]:
         result = []
         for material in self.get_outputs():
-            result.append(f'{"{:.2f}".format(factor * (abs(self.material_quantity(material))))} {material.name}')
-        return ', '.join(result)
+            result.append((factor * (abs(self.material_quantity(material))), material))
+        return result
+
+    def output_string(self, factor: float) -> str:
+        array = self.output_string_array(factor)
+        return ', '.join([f'{"{:.3f}".format(amount)} {material.name}' for amount, material in array])
 
     def non_empty(self) -> bool:
         return (True if self.get_inputs() else False) and (True if self.get_outputs() else False)
