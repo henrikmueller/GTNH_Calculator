@@ -46,8 +46,10 @@ st.markdown('# GTNH Calculator')
 # if 'rows' not in st.session_state:
 #     st.session_state['rows'] = 1
 
+st.markdown('## Recipe Lists')
+st.markdown('Recipes are stored in the following Google Spreadsheet: https://docs.google.com/spreadsheets/d/1OSog0iIKua5T7ms0Iv9OZxCR1Qw45QSPtZd7EDP-FK4/edit?usp=sharing')
+st.markdown('Please **DO NOT** change any recipes in existing tabs, but create a separate tab!')
 
-st.markdown('---')
 st.markdown('## Config File')
 crafting_chain = None
 recipe_book = None
