@@ -1,6 +1,7 @@
 [project]
 name = "gtnh-calculator"
 version = "1.0.0"
+license = "MIT"
 description = ""
 authors = [
     {name = "Henrik Mueller",email = "henrik.mueller@nefkom.net"}
