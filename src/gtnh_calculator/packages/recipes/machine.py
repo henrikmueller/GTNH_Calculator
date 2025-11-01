@@ -8,7 +8,7 @@ from .raw_recipes import RawRecipe
 from .machine_types import MachineType
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.INFO)
+_LOGGER.setLevel(logging.DEBUG)
 INFINITE_PERFECT_OVERCLOCKS = 1000
 
 

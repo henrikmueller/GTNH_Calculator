@@ -1,0 +1,137 @@
+machine_types:
+  air_intake_hatch:
+  - name: Air Intake Hatch
+  alloy_smelter:
+  - name: Alloy Smelter
+  autoclave:
+  - name: Autoclave
+  blast_furnace:
+  - name: Blast Furnace
+  centrifuge:
+  - name: Centrifuge
+  - name: Industrial Centrifuge
+    speedup: 2.25
+    energy_multiplier: 0.9
+    base_parallels: 0
+    parallels_per_voltage_tier: 6
+  chemical_bath:
+  - name: Chemical Bath
+  - name: Ore Washing Plant (Chemical Bath)
+    speedup: 5.0
+    base_parallels: 0
+    parallels_per_voltage_tier: 4
+  chemical_plant:
+  - name: ExxonMobil Chemical Plant
+  chemical_reactor:
+  - name: Chemical Reactor
+  - name: Large Chemical Reactor
+  combustion_generator:
+  - name: Advanced Combustion Generator
+  - name: Turbo Combustion Generator
+  - name: Large Combustion Engine
+  compressor:
+  - name: Compressor
+  - name: Large Electric Compressor
+    speedup: 2.0
+    energy_multiplier: 0.9
+    base_parallels: 0
+    parallels_per_voltage_tier: 2
+  crafting:
+  - name: Crafting
+  dehydrator:
+  - name: Dehydrator
+  digester:
+  - name: Digester
+  dissolution_tank:
+  - name: Dissolution Tank
+  distillation_tower:
+  - name: Distillation Tower
+  - name: Dangote Distillus (Distillation Tower)
+    speedup: 3.5
+    base_parallels: 12
+  distillery:
+  - name: Distillery
+  - name: Dangote Distillus (Distillery)
+    speedup: 2.0
+    base_parallels: 0
+    parallels_per_voltage_tier: 8
+  electromagnetic_separator:
+  - name: Electromagnetic Separator
+  electrolyzer:
+  - name: Electrolyzer
+  - name: Industrial Electrolyzer
+    speedup: 2.8
+    energy_multiplier: 0.9
+    base_parallels: 0
+    parallels_per_voltage_tier: 2
+  fluid_canner:
+  - name: Fluid Canner
+  - name: TurboCan Pro (Fluid Canner)
+    speedup: 2.0
+    base_parallels: 0
+    parallels_per_voltage_tier: 8
+  fluid_extractor:
+  - name: Fluid Extractor
+  fluid_heater:
+  - name: Fluid Heater
+  - name: Thermal Heating Device (Fluid Heater)
+    speedup: 2.2
+    energy_multiplier: 0.9
+    base_parallels: 0
+    parallels_per_voltage_tier: 8
+  fluid_solidifier:
+  - name: Fluid Solidifier
+  forge_hammer:
+  - name: Forge Hammer
+  gas_turbine:
+  - name: Advanced Gas Turbine
+    efficiency: 0.9
+  - name: Turbo Gas Turbine
+    efficiency: 0.85
+  - name: Large Gas Turbine
+  fluid_extractor:
+  - name: Fluid Extractor
+  macerator:
+  - name: Macerator
+  - name: Industrial Maceration Stack
+    speedup: 1.6
+    base_parallels: 0
+    parallels_per_voltage_tier: 2
+  - name: Industrial Maceration Stack (Upgraded)
+    speedup: 1.6
+    base_parallels: 0
+    parallels_per_voltage_tier: 8
+  mixer:
+  - name: Mixer
+  - name: Industrial Mixing Machine (Mixer)
+    speedup: 3.5
+    base_parallels: 0
+    parallels_per_voltage_tier: 8
+  neutron_activator:
+  - name: Neutron Activator
+  oil_cracker:
+  - name: Oil Cracking Unit
+  pyrolyse_oven:
+  - name: Pyrolyse Oven
+  sifter:
+  - name: Sifter
+  - name: Large Sifter Control Block
+    speedup: 5.0
+    energy_multiplier: 0.75
+    base_parallels: 0
+    parallels_per_voltage_tier: 4
+  simple_washer:
+  - name: Simple Dust Washer
+  - name: Ore Washing Plant (Simple Washer)
+    speedup: 5.0
+    base_parallels: 0
+    parallels_per_voltage_tier: 4
+  thermal_centrifuge:
+  - name: Thermal Centrifuge
+  - name: Large Thermal Refinery
+    speedup: 2.5
+    energy_multiplier: 0.8
+    base_parallels: 0
+    parallels_per_voltage_tier: 8
+  vacuum_freezer:
+  - name: Vacuum Freezer

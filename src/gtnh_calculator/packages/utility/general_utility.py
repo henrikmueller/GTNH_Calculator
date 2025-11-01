@@ -61,3 +61,7 @@ def time_to_seconds(time_string: str) -> tuple[float, str]:
         return tmp, 'second'
     else:
         raise ValueError('time and display_interval need to end with s or t')
+
+
+def is_empty(text: str) -> bool:
+    return text == '' or text.isspace()

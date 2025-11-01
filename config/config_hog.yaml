@@ -1,0 +1,16 @@
+inputs: 
+  - Oil Comb = -38.8
+outputs:
+  - EU
+infinite_materials:
+  - Wood Log
+  - Salt Comb
+  - Water
+restrictions:
+weights:
+  EU: 1
+time: 60s
+display_interval: 60s
+mode: Max
+default_coil: HSS-G Coil
+table_gid: 1514208585

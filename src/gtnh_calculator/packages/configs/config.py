@@ -1,5 +1,6 @@
 import logging
 import yaml
+from io import BytesIO
 from marshmallow import Schema, fields, post_load, validates, ValidationError
 from typing import Dict
 
@@ -107,7 +108,7 @@ class Config:
         """
 
 
-def load_config(path: str, machine_options_book: MachineOptionsBook) -> tuple[Config, RecipeBook]:
+def load_config(file_or_filepath: BytesIO | str, machine_options_book: MachineOptionsBook) -> tuple[Config, RecipeBook]:
     class ConfigSchema(Schema):
         inputs = fields.List(fields.String(), required=True)
         outputs = fields.List(fields.String(), required=True)
@@ -171,19 +172,24 @@ def load_config(path: str, machine_options_book: MachineOptionsBook) -> tuple[Co
             if default_pipe_casing not in [c.name for c in machine_options_book.pipe_casings]:
                 raise ValidationError(f'Invalid default pipe casing: "{default_pipe_casing}"')
 
-    with open(path, 'r') as f:
-        yaml_data = yaml.load(f, Loader=yaml.SafeLoader)
-        table_gid = yaml_data['table_gid']
+    if isinstance(file_or_filepath, BytesIO):
+        yaml_data = yaml.load(file_or_filepath, Loader=yaml.SafeLoader)
+    elif isinstance(file_or_filepath, str):
+        with open(file_or_filepath, 'r') as f:
+            yaml_data = yaml.load(f, Loader=yaml.SafeLoader)
+    else:
+        raise ValueError(f'Config file not valid.')
 
-        material_list = load_materials(table_gid)
-        materials = material_list.materials_by_name
+    table_gid = yaml_data['table_gid']
+    material_list = load_materials(table_gid)
+    materials = material_list.materials_by_name
 
-        del yaml_data['table_gid']
-        schema = ConfigSchema()
-        config = schema.load(yaml_data)
+    del yaml_data['table_gid']
+    schema = ConfigSchema()
+    config = schema.load(yaml_data)
 
-        recipe_book = load_data(table_gid, material_list, machine_options_book, config)
-        return config, recipe_book
+    recipe_book = load_data(table_gid, material_list, machine_options_book, config)
+    return config, recipe_book
 
 
 def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Material, str, float] | Material | None:

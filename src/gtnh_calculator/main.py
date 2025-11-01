@@ -23,6 +23,7 @@ air_filter_gid = 1730504225
 hog_gid = 1514208585
 
 path_nitrobenzene = 'config/config_nitrobenzene.yaml'
+path_hog = 'config/config_hog.yaml'
 path_plat_line = 'config/config_plat_line.yaml'
 path_bastnasite = 'config/config_bastnasite.yaml'
 
@@ -33,74 +34,15 @@ print(machine_options_book)
 config, recipe_book = load_config(path_bastnasite, machine_options_book)
 
 print(config)
-# print(asfghjk)
 
 recipe_hypergraph = RecipeHypergraph(recipe_book)
 recipe_graph = recipe_hypergraph.get_recipe_graph()
-
-
-"""
-------------------------------------------------------------------------------------------------------------------------
-    Mode Fixed_Input
-------------------------------------------------------------------------------------------------------------------------
-"""
-
-# infinite_materials = [
-#     'Water', 'Sodium Dust', 'Zinc Dust', 'Chlorine', 'Hydrofluoric Acid', 'Saltpeter Dust', 'Sulfuric Acid',
-#     'Calcium Dust', 'Potassium Dust', 'Hydrogen', 'Oxygen', 'Nitrogen', 'Fluorine', 'Hydrogen Sulfide', 'Salt',
-#     'Carbon Dust', 'Sulfur Dust'
-# ]
-# infinite_materials = ['Water', 'Wood Log', 'Salt Comb']
-# mode = 'Fixed_Input'
-# inputs = ['Oil Comb']
-# outputs = ['EU']
-# fixed_amount = 9.8  # 130.909 / 60
-# material_weights = {
-#     'EU': 1
-# }
-# time = '60s'
-# display_interval = '1s'
-# recipe_weight_factor = 0.0001
-
-"""
-------------------------------------------------------------------------------------------------------------------------
-    Mode Fixed_Output
-------------------------------------------------------------------------------------------------------------------------
-"""
-
-# mode = 'Fixed_Output'
-# infinite_materials = ['Water', 'Oxygen', 'Hydrogen', 'Quicklime Dust', 'Carbon Dust', 'Saltpeter Dust']
-# inputs = ['Lepidolite Dust', 'Chrome Dust', 'Benzene', 'Ethylene',
-#           '1.2-Dimethylbenzene', 'Anthracene', 'Sulfuric Acid']
-# outputs = ['Air Filter [Tier 2]']
-# fixed_amount = 1
-# material_weights = {
-#     'Lepidolite Dust': -1,
-#     'Chrome Dust': -1,
-#     'Benzene': -1,
-#     'Ethylene': -1,
-#     '1.2-Dimethylbenzene': -1,
-#     'Anthracene': -1,
-#     'Sulfuric Acid': -1
-# }
-# material_caps = {
-#
-# }
-# time = '60s'
-# display_interval = '1s'
-# recipe_weight_factor = 0.00001
 
 """
 ------------------------------------------------------------------------------------------------------------------------
     Recipe Chain Calculation
 ------------------------------------------------------------------------------------------------------------------------
 """
-
-# infinite_materials = set(get_materials(materials, infinite_materials))
-# inputs = set(get_materials(materials, inputs))
-# outputs = set(get_materials(materials, outputs))
-# material_weights = get_material_dict(materials, material_weights)
-# material_caps = get_material_dict(materials, material_caps)
 
 crafting_chain_finder = CraftingChainFinder(recipe_book)
 crafting_chain = crafting_chain_finder.draw_optimal_crafting_chain(config, recipe_weight_factor=0.0000001)
@@ -111,11 +53,17 @@ if crafting_chain is not None:
     if display_interval != 1:
         display_interval_name = display_interval_name + 's'
 
-    crafting_chain.draw(
-        materials=recipe_book.material_list.materials_by_id,
-        recipes=recipe_book.recipes,
-        time=time,
+    crafting_chain.draw_graph(
         time_factor=display_interval / time,
         time_interval=f'{display_interval} {display_interval_name}',
         input_materials=config.inputs.union(config.infinite_materials)
+    )
+    crafting_chain.print(
+        time_factor=display_interval / time,
+        time_interval=f'{display_interval} {display_interval_name}'
+    )
+    crafting_chain.to_excel(
+        time=time,
+        time_factor=display_interval / time,
+        time_interval=f'{display_interval} {display_interval_name}'
     )

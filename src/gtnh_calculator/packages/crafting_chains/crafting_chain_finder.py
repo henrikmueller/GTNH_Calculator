@@ -142,9 +142,12 @@ class CraftingChainFinder:
             print(f'Material cost = Machine cost = 0.')
 
         crafting_chain = CraftingChain(
-            self.create_hypergraph([recipe for i, recipe in enumerate(recipes.values()) if recipe_vector[i] > 0]),
-            {recipe.id: amount for amount, recipe in zip(result.x, recipes.values())},
-            recipe_matrix
+            hypergraph=self.create_hypergraph([recipe for i, recipe in enumerate(recipes.values()) if recipe_vector[i] > 0]),
+            recipe_amounts={recipe.id: amount for amount, recipe in zip(result.x, recipes.values())},
+            recipe_matrix=recipe_matrix,
+            materials=self.recipe_book.material_list.materials_by_id,
+            recipes=self.recipe_book.recipes,
+            time=time,
         )
         return crafting_chain
 

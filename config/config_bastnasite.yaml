@@ -1,0 +1,45 @@
+inputs: 
+  - Crushed Bastnasite Ore = -2.26
+outputs:
+  - Samarium Dust
+  - Terbium Dust
+  - Lanthanum Dust
+  - Cerium Dust
+  - Neodymium Dust
+infinite_materials:
+  - EU
+  - Water
+  - Oxygen
+  - Hydrogen
+  - Nitrogen
+  - Chlorine
+  - Copper Dust
+  - Fluorine
+  - Saltpeter Dust
+  - Carbon Dust
+  - Vanadium Dust
+  - Salt Dust
+  - Steam
+  - Ammonia
+  - Nitric Acid
+  - Hydrochloric Acid
+  - Methanol
+  - Carbon Monoxide
+  - Acetic Acid
+  - Acetone
+restrictions:
+  - Cerium Dioxide Dust <= 0
+  - Diluted Acetone <= 0
+  - Hydrofluoric Acid <= 0
+  - Sodiumfluorosilicate <= 0
+weights:
+  Samarium Dust: 1
+  Terbium Dust: 1
+  Lanthanum Dust: 1
+  Cerium Dust: 1
+  Neodymium Dust: 1
+time: 60s
+display_interval: 60s
+mode: Max
+default_coil: HSS-G Coil
+table_gid: 0

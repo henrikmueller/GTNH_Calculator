@@ -1,0 +1,52 @@
+coils:
+  - name: Cupronickel Coil
+    tier: 1
+    temperature: 1801
+  - name: Kanthal Coil
+    tier: 2
+    temperature: 2701
+  - name: Nichrome Coil
+    tier: 3
+    temperature: 3601
+  - name: TPV-Alloy Coil
+    tier: 4
+    temperature: 4501
+  - name: HSS-G Coil
+    tier: 5
+    temperature: 5401
+  - name: HSS-S Coil
+    tier: 6
+    temperature: 6301
+  - name: Naquadah Coil
+    tier: 7
+    temperature: 7201
+  - name: Naquadah Alloy Coil
+    tier: 8
+    temperature: 8101
+  - name: Trinium Coil
+    tier: 9
+    temperature: 9001
+  - name: Electrum Flux Coil
+    tier: 10
+    temperature: 9901
+  - name: Awakened Draconium Coil
+    tier: 11
+    temperature: 10801
+  - name: Infinity Coil
+    tier: 12
+    temperature: 11701
+  - name: Hypogen Coil
+    tier: 13
+    temperature: 12601
+  - name: Eternal Coil
+    tier: 14
+    temperature: 13501
+pipe_casings:
+  - name: Bronze Pipe Casing
+    tier: 1
+  - name: Steel Pipe Casing
+    tier: 2
+  - name: Titanium Pipe Casing
+    tier: 3
+  - name: Tungstensteel Pipe Casing
+    tier: 4
