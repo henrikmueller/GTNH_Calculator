@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from dataclasses import dataclass
 from colorsys import hsv_to_rgb
 
@@ -65,3 +66,20 @@ def time_to_seconds(time_string: str) -> tuple[float, str]:
 
 def is_empty(text: str) -> bool:
     return text == '' or text.isspace()
+
+
+def get_differences(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
+    diff = df1.compare(df2, keep_shape=True)
+    result = pd.DataFrame(index=df1.index, columns=df1.columns)
+    for col in df1.columns:
+        if col in diff.columns.levels[0]:
+            old_vals = diff[(col, "self")]
+            new_vals = diff[(col, "other")]
+
+            result[col] = [
+                (old, new) if not pd.isna(old) or not pd.isna(new) else np.nan
+                for old, new in zip(old_vals, new_vals)
+            ]
+        else:
+            result[col] = np.nan
+    return result

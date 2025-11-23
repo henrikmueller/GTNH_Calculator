@@ -9,6 +9,7 @@ from ..utility.general_utility import str_to_float
 from ..data_loader import load_data, load_materials
 from ..recipes.recipe_book import RecipeBook
 from ..recipes.machine_options.machine_option_books import MachineOptionsBook
+from ..recipes.machine_type_books import MachineTypeBook
 from ..recipes.machine_options.machine_options import Coil, PipeCasing
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,6 +29,8 @@ class Config:
     mode: str
     default_coil: Coil | None
     default_pipe_casing: PipeCasing | None
+    max_singleblock_machines: int | None
+    max_multiblock_machines: int | None
 
     def __init__(
         self,
@@ -43,6 +46,8 @@ class Config:
         mode: str,
         default_coil: str,
         default_pipe_casing: str,
+        max_singleblock_machines: int | None = None,
+        max_multiblock_machines: int | None = None,
     ):
         input_specifications = [extract_substrings(input_string, materials) for input_string in inputs]
         self.inputs = set()
@@ -73,6 +78,8 @@ class Config:
         self.mode = mode
         self.default_coil = machine_options_book.get_coil(default_coil)
         self.default_pipe_casing = machine_options_book.get_pipe_casing(default_pipe_casing)
+        self.max_singleblock_machines = max_singleblock_machines
+        self.max_multiblock_machines = max_multiblock_machines
 
         material_specifications = [t for t in input_specifications + output_specifications if isinstance(t, tuple)]
         if restrictions is not None:
@@ -105,10 +112,15 @@ class Config:
     mode: {self.mode}
     default_coil: {self.default_coil}
     default_pipe_casing: {self.default_pipe_casing}
+    max_singleblock_machines: {self.max_singleblock_machines}
+    max_multiblock_machines: {self.max_multiblock_machines}
         """
 
 
-def load_config(file_or_filepath: BytesIO | str, machine_options_book: MachineOptionsBook) -> tuple[Config, RecipeBook]:
+def load_config(
+        file_or_filepath: BytesIO | str,
+        machine_options_book: MachineOptionsBook
+) -> tuple[Config, RecipeBook, MachineTypeBook]:
     class ConfigSchema(Schema):
         inputs = fields.List(fields.String(), required=True)
         outputs = fields.List(fields.String(), required=True)
@@ -120,6 +132,8 @@ def load_config(file_or_filepath: BytesIO | str, machine_options_book: MachineOp
         mode = fields.String(required=True)
         default_coil = fields.String(required=False, load_default=machine_options_book.coils[0].name)
         default_pipe_casing = fields.String(required=False, load_default=machine_options_book.pipe_casings[0].name)
+        max_singleblock_machines = fields.Integer(required=False, allow_none=True, load_default=None)
+        max_multiblock_machines = fields.Integer(required=False, allow_none=True, load_default=None)
 
         @post_load
         def create_config(self, data, **kwargs) -> Config:
@@ -172,6 +186,16 @@ def load_config(file_or_filepath: BytesIO | str, machine_options_book: MachineOp
             if default_pipe_casing not in [c.name for c in machine_options_book.pipe_casings]:
                 raise ValidationError(f'Invalid default pipe casing: "{default_pipe_casing}"')
 
+        @validates('max_singleblock_machines')
+        def validate_max_singleblock_machines(self, max_singleblock_machines: int | None, data_key: str) -> None:
+            if max_singleblock_machines is not None and max_singleblock_machines < 1:
+                raise ValidationError(f'Invalid maximum of singleblock machines: "{max_singleblock_machines}"')
+
+        @validates('max_multiblock_machines')
+        def validate_max_multiblock_machines(self, max_multiblock_machines: int | None, data_key: str) -> None:
+            if max_multiblock_machines is not None and max_multiblock_machines < 1:
+                raise ValidationError(f'Invalid maximum of multiblock machines: "{max_multiblock_machines}"')
+
     if isinstance(file_or_filepath, BytesIO):
         yaml_data = yaml.load(file_or_filepath, Loader=yaml.SafeLoader)
     elif isinstance(file_or_filepath, str):
@@ -188,8 +212,8 @@ def load_config(file_or_filepath: BytesIO | str, machine_options_book: MachineOp
     schema = ConfigSchema()
     config = schema.load(yaml_data)
 
-    recipe_book = load_data(table_gid, material_list, machine_options_book, config)
-    return config, recipe_book
+    recipe_book, machine_type_book = load_data(table_gid, material_list, machine_options_book, config)
+    return config, recipe_book, machine_type_book
 
 
 def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Material, str, float] | Material | None:

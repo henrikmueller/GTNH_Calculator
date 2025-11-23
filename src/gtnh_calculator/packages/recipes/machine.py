@@ -8,13 +8,12 @@ from .raw_recipes import RawRecipe
 from .machine_types import MachineType
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.DEBUG)
+_LOGGER.setLevel(logging.INFO)
 INFINITE_PERFECT_OVERCLOCKS = 1000
 
 
 class Machine:
     machine_type: MachineType
-    parallels: int
     voltage_tier: int
     machine_options: MachineOptions
 
@@ -79,7 +78,7 @@ class Machine:
             case 'ExxonMobil Chemical Plant':
                 return 0.5 * self.machine_options.coil.tier
             case _:
-                return 1
+                return self.machine_type.speedup
 
     @property
     def max_parallels(self) -> int:
@@ -97,14 +96,18 @@ class Machine:
             return raw_recipe
 
         _LOGGER.debug(f'Before: {raw_recipe}')
-        base_voltage_tier = raw_recipe.base_voltage_tier
+        base_voltage_tier = raw_recipe.voltage_tier
         energy_discount = self._energy_discount_for_recipe(raw_recipe)
         max_parallels = self.max_parallels
 
+        _LOGGER.debug(f'voltage_tier: {self.voltage_tier}')
         max_eu_per_tick = VoltageTier.eu_per_tick(self.voltage_tier)
         reduced_eu_per_tick = abs(energy_discount * raw_recipe.eu_per_tick)
+        _LOGGER.debug(f'max_eu_per_tick: {max_eu_per_tick}')
+        _LOGGER.debug(f'reduced_eu_per_tick: {reduced_eu_per_tick}')
         if reduced_eu_per_tick > 0:
             used_parallels = min(floor(max_eu_per_tick // reduced_eu_per_tick), max_parallels)
+            _LOGGER.debug(f'used_parallels: {used_parallels}')
             overclocks = floor(log(max_eu_per_tick // (used_parallels * reduced_eu_per_tick), 4))
         else:
             used_parallels = max_parallels
@@ -134,7 +137,6 @@ class Machine:
                     catalyst_consumption = 1 - 0.2 * self.machine_options.pipe_casing.tier
                     recipe_materials = {m: (catalyst_consumption if m.name in catalyst_names else a)
                                         for m, a in recipe_materials.items()}
-
 
         _LOGGER.debug((VoltageTier.voltage_tier_name(base_voltage_tier), VoltageTier.voltage_tier_name(self.voltage_tier)))
         _LOGGER.debug(f'Used_parallels: {used_parallels}, overclocks: {overclocks}, perfect_overclocks: {perfect_overclocks}')

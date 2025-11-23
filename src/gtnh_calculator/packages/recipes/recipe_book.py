@@ -3,6 +3,7 @@ from typing import Dict
 
 from .recipe import Recipe
 from .material import Material, MaterialList
+from ..crafting_chains.crafting_chain import CraftingChain
 
 
 class RecipeBook:
@@ -40,3 +41,17 @@ class RecipeBook:
 
     def recipe_by_id(self, id: int) -> Recipe:
         return self.recipes[id]
+
+    def recipe_by_recipe_id(self, id: int) -> Recipe | None:
+        for recipe in self.recipes.values():
+            if id == recipe.id:
+                return recipe
+        return None
+
+    @classmethod
+    def from_crafting_chain(cls, crafting_chain: CraftingChain) -> RecipeBook:
+        material_list = MaterialList(crafting_chain.materials_by_name(), crafting_chain.materials)
+        return RecipeBook(
+            recipes=crafting_chain.recipes,
+            material_list=material_list
+        )

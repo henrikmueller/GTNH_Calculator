@@ -33,3 +33,9 @@ class RecipeOptions:
         return RecipeOptions(
             temperature=None
         )
+
+    def markdown_string(self) -> str:
+        result = []
+        if self.temperature is not None:
+            result.append(f'**Temperature**: {self.temperature} K')
+        return ', '.join(result)

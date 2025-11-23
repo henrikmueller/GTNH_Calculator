@@ -57,13 +57,23 @@ class VoltageTier:
             case 5:
                 return 'IV'
             case 6:
-                return 'LUV'
+                return 'LuV'
             case 7:
                 return 'ZPM'
             case 8:
                 return 'UV'
             case 9:
                 return 'UHV'
+            case 10:
+                return 'UEV'
+            case 11:
+                return 'UIV'
+            case 12:
+                return 'UMV'
+            case 13:
+                return 'UXV'
+            case 14:
+                return 'MAX'
 
     @classmethod
     def eu_per_tick(cls, voltage_tier: int) -> int:
@@ -84,3 +94,14 @@ class VoltageTier:
         if base_voltage_tier == VoltageTier.ULV:
             return max(actual_voltage_tier - base_voltage_tier - 1, 0)
         return 0
+
+    @classmethod
+    def voltage_tiers(cls, minimum: int | None = None) -> list[str]:
+        """
+        List does not include the "No Requirement"-Voltage Tier
+        :return:
+        """
+        if minimum is None:
+            return [VoltageTier.voltage_tier_name(v) for v in range(15)]
+        return [VoltageTier.voltage_tier_name(v) for v in range(minimum, 15)]
+

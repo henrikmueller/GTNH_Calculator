@@ -7,6 +7,7 @@ machine_types:
   - name: Autoclave
   blast_furnace:
   - name: Blast Furnace
+    multiblock: True
   centrifuge:
   - name: Centrifuge
   - name: Industrial Centrifuge
@@ -14,21 +15,26 @@ machine_types:
     energy_multiplier: 0.9
     base_parallels: 0
     parallels_per_voltage_tier: 6
+    multiblock: True
   chemical_bath:
   - name: Chemical Bath
   - name: Ore Washing Plant (Chemical Bath)
     speedup: 5.0
     base_parallels: 0
     parallels_per_voltage_tier: 4
+    multiblock: True
   chemical_plant:
   - name: ExxonMobil Chemical Plant
+    multiblock: True
   chemical_reactor:
   - name: Chemical Reactor
   - name: Large Chemical Reactor
+    multiblock: True
   combustion_generator:
   - name: Advanced Combustion Generator
   - name: Turbo Combustion Generator
   - name: Large Combustion Engine
+    multiblock: True
   compressor:
   - name: Compressor
   - name: Large Electric Compressor
@@ -36,25 +42,31 @@ machine_types:
     energy_multiplier: 0.9
     base_parallels: 0
     parallels_per_voltage_tier: 2
+    multiblock: True
   crafting:
   - name: Crafting
   dehydrator:
   - name: Dehydrator
   digester:
   - name: Digester
+    multiblock: True
   dissolution_tank:
   - name: Dissolution Tank
+    multiblock: True
   distillation_tower:
   - name: Distillation Tower
+    multiblock: True
   - name: Dangote Distillus (Distillation Tower)
     speedup: 3.5
     base_parallels: 12
+    multiblock: True
   distillery:
   - name: Distillery
   - name: Dangote Distillus (Distillery)
     speedup: 2.0
     base_parallels: 0
     parallels_per_voltage_tier: 8
+    multiblock: True
   electromagnetic_separator:
   - name: Electromagnetic Separator
   electrolyzer:
@@ -64,12 +76,14 @@ machine_types:
     energy_multiplier: 0.9
     base_parallels: 0
     parallels_per_voltage_tier: 2
+    multiblock: True
   fluid_canner:
   - name: Fluid Canner
   - name: TurboCan Pro (Fluid Canner)
     speedup: 2.0
     base_parallels: 0
     parallels_per_voltage_tier: 8
+    multiblock: True
   fluid_extractor:
   - name: Fluid Extractor
   fluid_heater:
@@ -79,6 +93,7 @@ machine_types:
     energy_multiplier: 0.9
     base_parallels: 0
     parallels_per_voltage_tier: 8
+    multiblock: True
   fluid_solidifier:
   - name: Fluid Solidifier
   forge_hammer:
@@ -89,6 +104,7 @@ machine_types:
   - name: Turbo Gas Turbine
     efficiency: 0.85
   - name: Large Gas Turbine
+    multiblock: True
   fluid_extractor:
   - name: Fluid Extractor
   macerator:
@@ -97,22 +113,28 @@ machine_types:
     speedup: 1.6
     base_parallels: 0
     parallels_per_voltage_tier: 2
+    multiblock: True
   - name: Industrial Maceration Stack (Upgraded)
     speedup: 1.6
     base_parallels: 0
     parallels_per_voltage_tier: 8
+    multiblock: True
   mixer:
   - name: Mixer
   - name: Industrial Mixing Machine (Mixer)
     speedup: 3.5
     base_parallels: 0
     parallels_per_voltage_tier: 8
+    multiblock: True
   neutron_activator:
   - name: Neutron Activator
+    multiblock: True
   oil_cracker:
   - name: Oil Cracking Unit
+    multiblock: True
   pyrolyse_oven:
   - name: Pyrolyse Oven
+    multiblock: True
   sifter:
   - name: Sifter
   - name: Large Sifter Control Block
@@ -120,12 +142,14 @@ machine_types:
     energy_multiplier: 0.75
     base_parallels: 0
     parallels_per_voltage_tier: 4
+    multiblock: True
   simple_washer:
   - name: Simple Dust Washer
   - name: Ore Washing Plant (Simple Washer)
     speedup: 5.0
     base_parallels: 0
     parallels_per_voltage_tier: 4
+    multiblock: True
   thermal_centrifuge:
   - name: Thermal Centrifuge
   - name: Large Thermal Refinery
@@ -133,5 +157,7 @@ machine_types:
     energy_multiplier: 0.8
     base_parallels: 0
     parallels_per_voltage_tier: 8
+    multiblock: True
   vacuum_freezer:
   - name: Vacuum Freezer
+    multiblock: True

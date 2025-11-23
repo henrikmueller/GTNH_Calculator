@@ -7,11 +7,10 @@ from .recipes.recipe import Recipe, RawRecipe
 from .recipes.material import Material, MaterialList
 from .recipes.machine import Machine
 from .recipes.machine_types import MachineType
-from .recipes.parallel_machine_data import parallel_machine_data
+from .recipes.machine_type_books import MachineTypeBook
 from .recipes.voltage_tiers import VoltageTier
 from .recipes.machine_options.machine_option_books import MachineOptionsBook
 from .recipes.recipe_options.recipe_options import RecipeOptions
-from .recipes.machine_types import MachineTypeBook
 from .recipes.machine_options.machine_options import Coil, PipeCasing
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,7 +54,12 @@ def load_materials(gid: int) -> MaterialList:
     return MaterialList(materials_by_name=materials, materials_by_id=materials_by_id)
 
 
-def load_data(gid: int, material_list: MaterialList, machine_options_book: MachineOptionsBook, config) -> RecipeBook:
+def load_data(
+        gid: int,
+        material_list: MaterialList,
+        machine_options_book: MachineOptionsBook,
+        config
+) -> tuple[RecipeBook, MachineTypeBook]:
     sheet_id = "1OSog0iIKua5T7ms0Iv9OZxCR1Qw45QSPtZd7EDP-FK4"
     df = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?gid={gid}&format=csv")
 
@@ -104,20 +108,22 @@ def load_data(gid: int, material_list: MaterialList, machine_options_book: Machi
             voltage_tier = VoltageTier.voltage_tier_by_eu(eu_per_tick)
 
         recipe_options = RecipeOptions.get_recipe_options(row['Recipe Options'])
-        raw_recipe = RawRecipe(recipe_materials, processing_time, recipe_options)
+        base_recipe = RawRecipe(recipe_materials, processing_time, recipe_options)
 
-        machine_type = machine_type_book.get_machine_type(row['Machine'])
-        if machine_type is None:
+        base_machine_type = machine_type_book.get_machine_type(row['Machine'])
+        if base_machine_type is None:
             _LOGGER.warning(f'Machine type not found: "{row['Machine']}". Please specify in machine_types.yaml')
-            machine_type = MachineType(row['Machine'])
+            base_machine_type = MachineType(row['Machine'])
 
         parallel_voltage_tier = VoltageTier.to_voltage_tier(row['Parallel Voltage'])
         if parallel_voltage_tier >= 1:
-            machine_type = machine_type_book.get_parallel_option(machine_type)
+            machine_type = machine_type_book.get_parallel_option(base_machine_type)
             voltage_tier = parallel_voltage_tier
+        else:
+            machine_type = base_machine_type
 
         specified_options = machine_options_book.get_machine_options(row['Machine Options'])
-        default_options = machine_options_book.get_default_options(raw_recipe, machine_type)
+        default_options = machine_options_book.get_default_options(base_recipe, machine_type)
         machine = Machine(
             machine_type=machine_type, voltage_tier=voltage_tier,
             machine_options=specified_options.maximum(default_options)
@@ -141,11 +147,13 @@ def load_data(gid: int, material_list: MaterialList, machine_options_book: Machi
         """
 
         # Adapt recipe based on machine and its setting (e.g. EBF coils)
-        raw_recipe = machine.fit_recipe(raw_recipe)
+        raw_recipe = machine.fit_recipe(base_recipe)
 
         return Recipe(
             id=row['Recipe ID'],
+            base_recipe=base_recipe,
             raw_recipe=raw_recipe,
+            base_machine_type=base_machine_type,
             machine=machine,
             weight=float(row['Weight']) if row['Weight'] != '' else 1,
             cap=None
@@ -157,7 +165,7 @@ def load_data(gid: int, material_list: MaterialList, machine_options_book: Machi
         if recipe is not None:
             recipes[row['Recipe ID']] = recipe
 
-    return RecipeBook(recipes, material_list)
+    return RecipeBook(recipes, material_list), machine_type_book
 
 
 def find_machine_for_recipe(raw_recipe: RawRecipe, machine_types: list[MachineType]) -> Machine:

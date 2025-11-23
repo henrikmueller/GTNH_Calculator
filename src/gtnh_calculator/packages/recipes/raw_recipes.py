@@ -14,6 +14,7 @@ class RawRecipe:
     materials: Dict[Material, float]
     processing_time: float  # in seconds
     recipe_options: RecipeOptions
+    sub_one_tick: bool
 
     def __init__(
             self,
@@ -24,6 +25,8 @@ class RawRecipe:
         self.materials = materials
         self.processing_time = processing_time
         self.recipe_options = recipe_options
+        self.sub_one_tick = processing_time < 0.05  # Not necessary, as machines scale up inputs and outputs
+        # when the processing time falls below one tick.
 
     def __repr__(self) -> str:
         return (f'RawRecipe(materials={self.materials}, processing_time={self.processing_time}, '
@@ -43,5 +46,5 @@ class RawRecipe:
         return self.total_eu / (20 * self.processing_time)
 
     @property
-    def base_voltage_tier(self) -> int:
+    def voltage_tier(self) -> int:
         return VoltageTier.voltage_tier_by_eu(abs(self.eu_per_tick))

@@ -1,0 +1,33 @@
+inputs: 
+  - Naquadah Oxide Mixture Dust = -0.1
+outputs:
+  - Naquadah Ingot
+  - Hot Titanium Ingot
+infinite_materials:
+  - EU
+  - Water
+  - Oxygen
+  - Hydrogen
+  - Nitrogen
+  - Chlorine
+  - Fluorine
+  - Carbon Dust
+  - Antimony Dust
+  - Ethanol
+  - Phosphorus Comb
+  - Sodium Dust
+  - Seed Oil
+  - Quicklime Dust
+restrictions:
+  - Titanium Trifluoride Dust <= 0
+  - Hydrochloric Acid <= 0
+weights:
+  Naquadah Ingot: 1
+  Hot Titanium Ingot: 0.01
+time: 1s
+display_interval: 1s
+mode: Max
+default_coil: HSS-G Coil
+table_gid: 0
+max_singleblock_machines: 8
+max_multiblock_machines: 4

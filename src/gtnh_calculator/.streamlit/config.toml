@@ -1,0 +1,5 @@
+[theme]
+base="dark"
+secondaryBackgroundColor="#06486B"
+codeBackgroundColor="#06486B"
+dataframeHeaderBackgroundColor="#06486B"

@@ -27,6 +27,7 @@ infinite_materials:
   - Carbon Monoxide
   - Acetic Acid
   - Acetone
+  - Raw Silicon Dust
 restrictions:
   - Cerium Dioxide Dust <= 0
   - Diluted Acetone <= 0
@@ -43,3 +44,5 @@ display_interval: 60s
 mode: Max
 default_coil: HSS-G Coil
 table_gid: 0
+max_singleblock_machines: 8
+max_multiblock_machines: 4

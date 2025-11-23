@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from scipy.optimize import linprog
 import numpy as np
 import logging
-from math import isnan
 
 from ..recipes.recipe_book import RecipeBook
 from ..recipes.material import Material
@@ -14,7 +13,7 @@ from ..utility.general_utility import time_to_seconds
 from ..configs.config import Config
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.INFO)
+_LOGGER.setLevel(logging.WARNING)
 
 
 class CraftingChainFinder:
@@ -35,10 +34,10 @@ class CraftingChainFinder:
     def materials_by_id(self) -> Dict[int, Material]:
         return self.recipe_book.material_list.materials_by_id
 
-    def draw_optimal_crafting_chain(
-            self,
-            config: Config,
-            recipe_weight_factor=1
+    def optimal_crafting_chain(
+        self,
+        config: Config,
+        recipe_weight_factor=1
     ) -> CraftingChain | None:
         """
         :param config:
@@ -127,19 +126,14 @@ class CraftingChainFinder:
             return None
         recipe_vector = result.x
 
-        # Print results
-        print('\n+---------+')
-        print('| Results |')
-        print('+---------+\n')
         material_cost = np.sum(np.matmul(c, X) * recipe_vector)
         machine_cost = np.sum(cost_summand_from_weights * recipe_vector / recipe_weight_factor)
         combined_cost = material_cost + machine_cost
-        if combined_cost != 0:
-            print(f'Material cost: {"{:.2f}%".format(100 * material_cost / combined_cost)}')
-            print(f'Machine cost: {"{:.2f}%".format(100 * machine_cost / combined_cost)}')
-            print(f'Total cost: {combined_cost}')
-        else:
-            print(f'Material cost = Machine cost = 0.')
+        # if combined_cost != 0:
+        #     print(f'Material cost: {"{:.2f}%".format(100 * material_cost / combined_cost)}')
+        #     print(f'Machine cost: {"{:.2f}%".format(100 * machine_cost / combined_cost)}')
+        # else:
+        #     print(f'Material cost = Machine cost = 0.')
 
         crafting_chain = CraftingChain(
             hypergraph=self.create_hypergraph([recipe for i, recipe in enumerate(recipes.values()) if recipe_vector[i] > 0]),

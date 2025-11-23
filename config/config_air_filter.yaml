@@ -1,0 +1,28 @@
+inputs: 
+  - Lepidolite Dust
+outputs:
+  - Air Filter [Tier 2] = 1
+infinite_materials:
+  - Oxygen
+  - Hydrogen
+  - Sulfuric Acid
+  - Quicklime Dust
+  - Ethylene
+  - Benzene
+  - Phthalic Acid
+  - 1.2-Dimethylbenzene
+  - Saltpeter Dust
+  - Chrome Dust
+  - Carbon Dust
+  - Anthracene
+  - Water
+  - EU
+restrictions:
+  - Sulfuric Lithium Mix = 0
+weights:
+  Air Filter [Tier 2]: 1
+time: 60s
+display_interval: 60s
+mode: Min
+default_coil: HSS-G Coil
+table_gid: 1730504225

@@ -26,12 +26,13 @@ path_nitrobenzene = 'config/config_nitrobenzene.yaml'
 path_hog = 'config/config_hog.yaml'
 path_plat_line = 'config/config_plat_line.yaml'
 path_bastnasite = 'config/config_bastnasite.yaml'
+path_air_filter = 'config/config_air_filter.yaml'
 
 machine_options_path = 'config/fixed_settings/machine_options.yaml'
 
 machine_options_book = load_possible_machine_options(machine_options_path)
 print(machine_options_book)
-config, recipe_book = load_config(path_bastnasite, machine_options_book)
+config, recipe_book, machine_type_book = load_config(path_air_filter, machine_options_book)
 
 print(config)
 
@@ -45,7 +46,7 @@ recipe_graph = recipe_hypergraph.get_recipe_graph()
 """
 
 crafting_chain_finder = CraftingChainFinder(recipe_book)
-crafting_chain = crafting_chain_finder.draw_optimal_crafting_chain(config, recipe_weight_factor=0.0000001)
+crafting_chain = crafting_chain_finder.optimal_crafting_chain(config, recipe_weight_factor=0.0000001)
 
 if crafting_chain is not None:
     time, _ = time_to_seconds(config.time)
@@ -58,9 +59,10 @@ if crafting_chain is not None:
         time_interval=f'{display_interval} {display_interval_name}',
         input_materials=config.inputs.union(config.infinite_materials)
     )
-    crafting_chain.print(
+    crafting_chain.statistics(
         time_factor=display_interval / time,
-        time_interval=f'{display_interval} {display_interval_name}'
+        time_interval=f'{display_interval} {display_interval_name}',
+        do_print=True
     )
     crafting_chain.to_excel(
         time=time,

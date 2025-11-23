@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Dict
 
 
@@ -11,6 +12,12 @@ class Material:
 
     def __repr__(self):
         return f'{self.name}'
+
+    def __eq__(self, other: Material) -> bool:
+        return isinstance(other, Material) and self.id == other.id
+
+    def __hash__(self):
+        return self.id
 
     def get_abbreviation(self):
         return self.name

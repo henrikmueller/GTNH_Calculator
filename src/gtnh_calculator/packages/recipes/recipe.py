@@ -3,6 +3,7 @@ import numpy as np
 from typing import Dict
 import logging
 
+from .machine_types import MachineType
 from .material import Material
 from .machine import Machine
 from .raw_recipes import RawRecipe
@@ -13,7 +14,9 @@ _LOGGER.setLevel(logging.INFO)
 
 class Recipe:
     id: int
+    base_recipe: RawRecipe
     raw_recipe: RawRecipe
+    base_machine_type: MachineType
     machine: Machine
     weight: float
     cap: float | None
@@ -21,13 +24,17 @@ class Recipe:
     def __init__(
         self,
         id: int,
+        base_recipe: RawRecipe,
         raw_recipe: RawRecipe,
+        base_machine_type: MachineType,
         machine: Machine,
         weight: float,
         cap: float | None
     ):
         self.id = id
+        self.base_recipe = base_recipe
         self.raw_recipe = raw_recipe
+        self.base_machine_type = base_machine_type
         self.machine = machine
         self.weight = weight
         self.cap = cap
@@ -41,6 +48,10 @@ class Recipe:
         return self.raw_recipe.processing_time
 
     @property
+    def minimum_voltage_tier(self) -> int:
+        return self.base_recipe.voltage_tier
+
+    @property
     def voltage_tier(self) -> int:
         return self.machine.voltage_tier
 
@@ -51,6 +62,9 @@ class Recipe:
     def __repr__(self) -> str:
         return (f'Recipe {self.id}: {self.materials}. Machine: {self.machine}, '
                 f'Processing Time = {self.processing_time}, Voltage Tier = {self.voltage_tier}')
+
+    def __str__(self) -> str:
+        return f'{self.id} | {self.machine}: {self.get_inputs()} -> {self.get_outputs()}'
 
     def get_inputs(self) -> list[Material]:
         return [material for material in self.materials.keys() if self.materials[material] < 0]
@@ -94,3 +108,21 @@ class Recipe:
 
     def non_empty(self) -> bool:
         return (True if self.get_inputs() else False) and (True if self.get_outputs() else False)
+
+    def fit_to_machine(self) -> None:
+        self.raw_recipe = self.machine.fit_recipe(self.base_recipe)
+
+    def markdown_inputs(self) -> str:
+        return f'''
+#### Recipe inputs:
+
+{', \n'.join(f'- {int(abs(a)) if a.is_integer() else abs(a)} {m.name}' 
+             for m, a in self.materials.items() if a < 0 and m.name != 'EU')}
+'''
+
+    def markdown_outputs(self) -> str:
+        return f'''
+#### Recipe outputs:
+
+{', \n'.join(f'- {int(abs(a)) if a.is_integer() else abs(a)} {m.name}' for m, a in self.materials.items() if a > 0)}
+'''
