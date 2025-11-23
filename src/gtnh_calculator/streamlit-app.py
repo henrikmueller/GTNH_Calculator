@@ -21,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
 
 
-# Run via: streamlit run ./src/gtnh_calculator/streamlit_app.py
+# Run via: streamlit run ./src/gtnh_calculator/streamlit-app.py
 # Colors: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/named-color
 
 # Deploy: Install poetry plugin: poetry self add poetry-plugin-export
