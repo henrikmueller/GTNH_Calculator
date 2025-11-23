@@ -982,6 +982,9 @@ six==1.17.0 ; python_version >= "3.13" \
 smmap==5.0.2 ; python_version >= "3.13" \
     --hash=sha256:26ea65a03958fa0c8a1c7e8c7a58fdc77221b8910f6be2131affade476898ad5 \
     --hash=sha256:b30115f0def7d7531d22a0fb6502488d879e75b260a9db4d0819cfb25403af5e
+streamlit-searchbox==0.1.23 ; python_version >= "3.13" \
+    --hash=sha256:b72de0829d3b962f0d468d1115b73879607872c59c7a97642baba343543f1856 \
+    --hash=sha256:fe82cee487c5cdd45d3bff6d1d80b4296ffd1899b55e57e8f22cce6acc790518
 streamlit==1.51.0 ; python_version >= "3.13" \
     --hash=sha256:1e742a9c0b698f466c6f5bf58d333beda5a1fbe8de660743976791b5c1446ef6 \
     --hash=sha256:4008b029f71401ce54946bb09a6a3e36f4f7652cbb48db701224557738cfda38
