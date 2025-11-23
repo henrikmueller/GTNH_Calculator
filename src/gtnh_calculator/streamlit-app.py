@@ -1,19 +1,15 @@
 import streamlit as st
-from io import StringIO
 import logging
 import sys
 from streamlit_searchbox import st_searchbox
 
-from gtnh_calculator.packages.recipes.machine_type_books import MachineTypeBook
-from gtnh_calculator.packages.recipes.voltage_tiers import VoltageTier
-from gtnh_calculator.packages.utility.general_utility import get_differences
+from packages.recipes.voltage_tiers import VoltageTier
 from packages.configs.config import Config
 from packages.crafting_chains.crafting_chain import CraftingChain
 from packages.recipes.recipe_book import RecipeBook
-from packages.recipes.recipe import Recipe
 from packages.crafting_chains.crafting_chain_finder import CraftingChainFinder
 from packages.configs.config import load_config
-from packages.utility.general_utility import time_to_seconds, get_differences
+from packages.utility.general_utility import time_to_seconds
 from packages.recipes.machine_options.machine_option_books import load_possible_machine_options
 
 logging.basicConfig(stream=sys.stdout)
