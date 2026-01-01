@@ -1,0 +1,31 @@
+inputs: 
+  - Acetic Acid = -1630
+outputs:
+  - Ethyl Cyanoacrylate (Super Glue)
+infinite_materials:
+  - EU
+  - Water
+  - Oxygen
+  - Hydrogen
+  - Chlorine
+  - Methanol
+  - Methane
+  - Brown Algae Biomass
+  - Distilled Water
+  - Ammonia
+  - Sodium Hydroxide Dust
+  - Carbon Dust
+  - Ethanol
+restrictions:
+weights:
+  Ethyl Cyanoacrylate (Super Glue): 100
+time: 60s
+display_interval: 60s
+mode: Max
+default_coil: HSS-S Coil
+table_gid: 1768066449
+max_singleblock_machines: 4
+max_multiblock_machines: 1
+unlocked_voltage_tier: LuV
+default_voltage_tier: EV
+maximal_energy_increase: 1.5

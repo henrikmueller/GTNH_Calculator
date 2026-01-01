@@ -1,0 +1,56 @@
+inputs: 
+  - Crushed Monazite Ore = -2.88
+outputs:
+  - Samarium Dust
+  - Gadolinium Dust
+  - Cerium Dust
+  - Thorium Dust
+  - Uranium 235 Dust
+  - Uranium 238 Dust
+  - Hafnium Ingot
+  - Zirconium Dust
+  - Zirconium Ingot
+infinite_materials:
+  - EU
+  - Water
+  - Oxygen
+  - Hydrogen
+  - Nitrogen
+  - Chlorine
+  - Fluorine
+  - Saltpeter Dust
+  - Carbon Dust
+  - Vanadium Dust
+  - Salt
+  - Steam
+  - Ammonia
+  - Nitric Acid
+  - Hydrochloric Acid
+  - Hydrofluoric Acid
+  - Methanol
+  - Carbon Monoxide
+  - Acetic Acid
+  - Acetone
+  - Raw Silicon Dust
+restrictions:
+  - Chloromethane <= 0
+weights:
+  Samarium Dust: 1
+  Gadolinium Dust: 1
+  Cerium Dust: 1
+  Thorium Dust: 1
+  Uranium 235 Dust: 1
+  Uranium 238 Dust: 1
+  Hafnium Ingot: 1
+  Zirconium Dust: 1
+  Zirconium Ingot: 0.9
+time: 60s
+display_interval: 60s
+mode: Max
+default_coil: HSS-S Coil
+table_gid: 0
+max_singleblock_machines: 8
+max_multiblock_machines: 4
+unlocked_voltage_tier: IV
+default_voltage_tier: EV
+maximal_energy_increase: 1.5
