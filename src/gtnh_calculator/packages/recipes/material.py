@@ -22,6 +22,9 @@ class Material:
     def get_abbreviation(self):
         return self.name
 
+    def is_eu(self) -> bool:
+        return self.id == 0
+
 
 def get_materials(materials: Dict[str, Material], material_names: list[str]) -> list[Material]:
     return [

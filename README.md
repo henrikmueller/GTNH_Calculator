@@ -32,3 +32,11 @@ Recipes are stored in the following Google Sheet: https://docs.google.com/spread
 Here one can (currently) also define **upper bound on the number of machines** for each recipe (via the column 
 `Machine Cap`) and specify, whether a **multiblock** should be used for the recipe (Simply insert the voltage tier of 
 the multiblock in the `Parallel Voltage` column). 
+
+Information
+- Catalysts in Chemical Plants are to be added as an input material of amount 1.
+
+## Additional Infos
+
+- Automatically uses multiblocks for Chemical Reactors, Centrifuges, Electrolysers and Mixers
+- If too many machines: Upgrade voltage of singleblocks up to default tier, then try to upgrade to multiblock, then upgrade up to max tier.

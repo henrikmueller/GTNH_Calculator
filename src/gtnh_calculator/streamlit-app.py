@@ -23,7 +23,7 @@ _LOGGER.setLevel(logging.WARNING)
 # Deploy: Install poetry plugin: poetry self add poetry-plugin-export
 # Then create requirements.txt: poetry export -f requirements.txt -o requirements.txt
 
-_LOGGER.debug('\n\nSTARTING NEW PAGE')
+_LOGGER.warning('\n\nSTARTING NEW PAGE')
 machine_options_path = 'config/fixed_settings/machine_options.yaml'
 machine_options_book = load_possible_machine_options(machine_options_path)
 
@@ -51,7 +51,9 @@ if 'recipe_book' in st.session_state:
 
 if config is not None and recipe_book is not None:
     crafting_chain_finder = CraftingChainFinder(recipe_book)
-    crafting_chain = crafting_chain_finder.optimal_crafting_chain(config, recipe_weight_factor=0.0000001)
+    crafting_chain = crafting_chain_finder.optimal_crafting_chain(
+        machine_type_book, machine_options_book, config, recipe_weight_factor=0.0000001, use_machine_limits=True
+    )
 
 st.markdown('---')
 
@@ -223,16 +225,21 @@ def display_recipe(selected_recipe):
                 key='select_voltage_tier'
             )
 
+        new_voltage_tier = VoltageTier.to_voltage_tier(selected_voltage_tier)
+        recipe.machine.voltage_tier = new_voltage_tier
+        recipe.fit_to_machine()
+
         new_machine_type = machine_type_book.get_machine_type(selected_machine)
         _LOGGER.debug(f'New machine: {new_machine_type}')
         if new_machine_type is not None:
-            recipe.machine.machine_type = new_machine_type
-        new_voltage_tier = VoltageTier.to_voltage_tier(selected_voltage_tier)
-        recipe.machine.voltage_tier = new_voltage_tier
-        recipe.machine.voltage_tier = VoltageTier.to_voltage_tier(selected_voltage_tier)
-        recipe.fit_to_machine()
-        _LOGGER.debug(f'New recipe: {recipe.__repr__()}')
-        recipe_book.recipes[recipe_id] = recipe
+            new_machine_options = machine_options_book.get_default_options(
+                recipe.raw_recipe, new_machine_type, config.default_machine_options
+            )
+            recipe.update(
+                config, machine_options_book, machine_type=new_machine_type, machine_options=new_machine_options
+            )
+            _LOGGER.debug(f'New recipe: {recipe.__repr__()}')
+            recipe_book.recipes[recipe_id] = recipe
         st.session_state['recipe_book'] = recipe_book
 
     with st.container(border=True):

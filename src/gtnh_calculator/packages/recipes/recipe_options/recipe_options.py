@@ -18,6 +18,7 @@ class RecipeOptions:
         if input_string == '':
             return recipe_options
         for raw_option in input_string.split(','):
+            raw_option = raw_option.strip()
             if raw_option.endswith(' K'):
                 temperature = str_to_float(raw_option[:-2].strip())
                 if temperature is not None:

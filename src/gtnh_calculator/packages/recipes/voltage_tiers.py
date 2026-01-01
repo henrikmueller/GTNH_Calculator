@@ -20,6 +20,14 @@ class VoltageTier:
     MAX: int = 14
 
     @classmethod
+    def int_to_voltage_tier(cls, voltage_tier_number: int) -> int:
+        if voltage_tier_number < cls.NO_REQUIREMENT:
+            return cls.NO_REQUIREMENT
+        if voltage_tier_number > cls.MAX:
+            return cls.MAX
+        return voltage_tier_number
+
+    @classmethod
     def to_voltage_tier(cls, name: str) -> int:
         match name:
             case 'ULV': return VoltageTier.ULV

@@ -14,8 +14,8 @@ INFINITE_PERFECT_OVERCLOCKS = 1000
 
 class Machine:
     machine_type: MachineType
-    voltage_tier: int
-    machine_options: MachineOptions
+    _voltage_tier: int
+    _machine_options: MachineOptions
 
     def __init__(
             self,
@@ -24,8 +24,8 @@ class Machine:
             machine_options: MachineOptions
     ):
         self.machine_type = machine_type
-        self.voltage_tier = voltage_tier if voltage_tier != VoltageTier.ULV else VoltageTier.LV
-        self.machine_options = machine_options
+        self._voltage_tier = voltage_tier if voltage_tier != VoltageTier.ULV else VoltageTier.LV
+        self._machine_options = machine_options
 
     @property
     def name(self) -> str:
@@ -38,6 +38,33 @@ class Machine:
     @property
     def voltage_tier_name(self) -> str:
         return VoltageTier.voltage_tier_name(self.voltage_tier)
+
+    @property
+    def voltage_tier(self) -> int:
+        return self._voltage_tier
+
+    @voltage_tier.setter
+    def voltage_tier(self, voltage_tier: int) -> None:
+        if VoltageTier.MAX >= voltage_tier > VoltageTier.NO_REQUIREMENT != self.voltage_tier:
+            self._voltage_tier = voltage_tier
+        else:
+            _LOGGER.warning(f'Voltage tier could not be updated for {self}: {self.voltage_tier} -> {voltage_tier}')
+
+    @property
+    def machine_options(self) -> MachineOptions:
+        return self._machine_options
+
+    @machine_options.setter
+    def machine_options(self, machine_options: MachineOptions) -> None:
+        if all(
+            (getattr(machine_options, t[:-1]) is not None) == (t in self.machine_type.valid_machine_options)
+            for t in MachineOptions.all_option_types()
+        ):
+            self._machine_options = machine_options
+        else:
+            raise ValueError(f'Could not update machine options for {self.machine_type} to {machine_options}\n'
+                             f'Reason: Valid machine options = {self.machine_type.valid_machine_options} and'
+                             f'new machine options = {machine_options}')
 
     def maximal_perfect_overclocks(self, raw_recipe: RawRecipe) -> int:
         match self.machine_type.name:
@@ -61,6 +88,10 @@ class Machine:
                 recipe_temperature = raw_recipe.recipe_options.temperature
 
                 return 0.95 ** max((blast_furnace_temperature - recipe_temperature) // 900, 0)
+            case 'Industrial Coke Oven':
+                return max(1 - 0.04 * self.voltage_tier, 0)
+            case 'Magnetic Flux Exhibitor':
+                return self.machine_options.electromagnet.eu_usage
             case 'Oil Cracking Unit':
                 return 1 - max(self.machine_options.coil.tier * 0.1, 0.5)
             case _:
@@ -77,6 +108,8 @@ class Machine:
                 return 0.5 * self.machine_options.coil.tier
             case 'ExxonMobil Chemical Plant':
                 return 0.5 * self.machine_options.coil.tier
+            case 'Magnetic Flux Exhibitor':
+                return self.machine_options.electromagnet.speed
             case _:
                 return self.machine_type.speedup
 
@@ -87,6 +120,8 @@ class Machine:
         match self.machine_type.name:
             case 'ExxonMobil Chemical Plant':
                 return 2 * self.machine_options.pipe_casing.tier
+            case 'Magnetic Flux Exhibitor':
+                return self.machine_options.electromagnet.parallels
             case _:
                 return self.machine_type.base_parallels + self.voltage_tier * self.machine_type.parallels_per_voltage_tier
 

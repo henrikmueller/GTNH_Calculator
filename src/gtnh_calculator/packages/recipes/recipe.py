@@ -4,9 +4,11 @@ from typing import Dict
 import logging
 
 from .machine_types import MachineType
+from .machine_options.machine_options import MachineOptions
 from .material import Material
 from .machine import Machine
 from .raw_recipes import RawRecipe
+from .machine_options.machine_option_books import MachineOptionsBook
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -20,6 +22,7 @@ class Recipe:
     machine: Machine
     weight: float
     cap: float | None
+    cap_specified: bool
 
     def __init__(
         self,
@@ -28,16 +31,16 @@ class Recipe:
         raw_recipe: RawRecipe,
         base_machine_type: MachineType,
         machine: Machine,
-        weight: float,
-        cap: float | None
+        cap: float | None,
+        cap_specified: bool
     ):
         self.id = id
         self.base_recipe = base_recipe
         self.raw_recipe = raw_recipe
         self.base_machine_type = base_machine_type
         self.machine = machine
-        self.weight = weight
         self.cap = cap
+        self.cap_specified = cap_specified
 
     @property
     def materials(self) -> Dict[Material, float]:
@@ -58,6 +61,10 @@ class Recipe:
     @property
     def voltage_tier_name(self) -> str:
         return self.machine.voltage_tier_name
+
+    @property
+    def weight(self) -> float:
+        return self.machine.machine_type.weight
 
     def __repr__(self) -> str:
         return (f'Recipe {self.id}: {self.materials}. Machine: {self.machine}, '
@@ -87,7 +94,7 @@ class Recipe:
     def input_string_array(self, factor: float) -> list[tuple[float, Material]]:
         result = []
         for material in self.get_inputs():
-            if material.name == 'EU':
+            if material.is_eu():
                 continue
             result.append((factor * (abs(self.material_quantity(material))), material))
         return result
@@ -112,12 +119,76 @@ class Recipe:
     def fit_to_machine(self) -> None:
         self.raw_recipe = self.machine.fit_recipe(self.base_recipe)
 
+    def update(
+        self,
+        config=None,
+        machine_options_book: MachineOptionsBook | None = None,
+        machine_type: MachineType | None = None,
+        machine_options: MachineOptions | None = None,
+        voltage_tier: int | None = None,
+    ) -> None:
+        if machine_type is not None:
+            if config is None:
+                raise ValueError(f'Specify config to update the machine type')
+            self.machine.machine_type = machine_type
+            if not self.cap_specified:
+                self.cap = config.max_multiblock_machines if machine_type.multiblock else (
+                    config.max_singleblock_machines)
+            if machine_options is None:
+                if machine_options_book is None:
+                    raise ValueError(f'Specify machine options book to update the machine type')
+                default_options = machine_options_book.get_default_options(
+                    self.raw_recipe, machine_type, config.default_machine_options
+                )
+                self.machine.machine_options = default_options
+        if machine_options is not None:
+            self.machine.machine_options = machine_options
+        if voltage_tier is not None:
+            self.machine.voltage_tier = voltage_tier
+        self.fit_to_machine()
+
+    def energy_per_base_recipe(self) -> float:
+        return self.raw_recipe.total_eu / self.base_recipe_count()
+
+    def base_recipe_count(self) -> float:
+        materials = self.raw_recipe.non_eu_materials
+        if materials == self.base_recipe.non_eu_materials:
+            ratios = set(self.raw_recipe.materials[m] / self.base_recipe.materials[m] for m in materials)
+            if len(ratios) == 1:
+                return list(ratios)[0]
+            raise AssertionError(f'Raw recipe and base recipe are not linearly dependent')
+        raise AssertionError(f'Raw recipe and base recipe use different materials')
+
+    def select_suitable_voltage_tier(
+        self,
+        max_voltage_tier: int,
+        machine_amount: float,
+        max_machine_amount: float,
+        maximal_energy_increase: float | None
+    ) -> None:
+        current_voltage_tier = self.voltage_tier
+        current_energy_per_base_recipe = self.energy_per_base_recipe()
+        current_throughput = machine_amount * self.base_recipe_count() / self.processing_time
+        _LOGGER.info(f'Tier: {self.voltage_tier}, Amount: {machine_amount}')
+        for voltage_tier in range(self.voltage_tier + 1, max_voltage_tier + 1):
+            self.update(voltage_tier=voltage_tier)
+            energy_percentage = self.energy_per_base_recipe() / current_energy_per_base_recipe
+            _LOGGER.info(f'Tier: {voltage_tier}, energy_percentage: {energy_percentage}')
+            if maximal_energy_increase is not None and energy_percentage > maximal_energy_increase:
+                self.update(voltage_tier=current_voltage_tier)
+                return
+            current_voltage_tier = voltage_tier
+            new_machine_amount = current_throughput * self.processing_time / self.base_recipe_count()
+            _LOGGER.info(f'Tier: {voltage_tier}, Amount: {new_machine_amount}')
+            if new_machine_amount <= max_machine_amount:
+                return
+
     def markdown_inputs(self) -> str:
         return f'''
 #### Recipe inputs:
 
 {', \n'.join(f'- {int(abs(a)) if a.is_integer() else abs(a)} {m.name}' 
-             for m, a in self.materials.items() if a < 0 and m.name != 'EU')}
+             for m, a in self.materials.items() if a < 0 and not m.is_eu())}
 '''
 
     def markdown_outputs(self) -> str:

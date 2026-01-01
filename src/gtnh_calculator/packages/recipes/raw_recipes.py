@@ -48,3 +48,7 @@ class RawRecipe:
     @property
     def voltage_tier(self) -> int:
         return VoltageTier.voltage_tier_by_eu(abs(self.eu_per_tick))
+
+    @property
+    def non_eu_materials(self) -> set[Material]:
+        return set(m for m, a in self.materials.items() if a != 0 and not m.is_eu())

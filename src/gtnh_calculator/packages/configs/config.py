@@ -2,15 +2,16 @@ import logging
 import yaml
 from io import BytesIO
 from marshmallow import Schema, fields, post_load, validates, ValidationError
-from typing import Dict
+from typing import Dict, Any
 
 from ..recipes.material import Material
+from ..recipes.voltage_tiers import VoltageTier
 from ..utility.general_utility import str_to_float
 from ..data_loader import load_data, load_materials
 from ..recipes.recipe_book import RecipeBook
+from ..recipes.machine_options.machine_options import MachineOptions
 from ..recipes.machine_options.machine_option_books import MachineOptionsBook
 from ..recipes.machine_type_books import MachineTypeBook
-from ..recipes.machine_options.machine_options import Coil, PipeCasing
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -27,10 +28,13 @@ class Config:
     time: str
     display_interval: str
     mode: str
-    default_coil: Coil | None
-    default_pipe_casing: PipeCasing | None
+    max_voltage_tier: int
+    unlocked_voltage_tier: int
+    default_voltage_tier: int
+    maximal_energy_increase: float
     max_singleblock_machines: int | None
     max_multiblock_machines: int | None
+    default_machine_options: MachineOptions
 
     def __init__(
         self,
@@ -46,6 +50,14 @@ class Config:
         mode: str,
         default_coil: str,
         default_pipe_casing: str,
+        default_item_pipe_casing: str,
+        default_solenoid_coil: str,
+        default_electromagnet: str,
+        default_anvil: str,
+        unlocked_voltage_tier: str,
+        default_voltage_tier: str,
+        max_voltage_tier: str | None,
+        maximal_energy_increase: float,
         max_singleblock_machines: int | None = None,
         max_multiblock_machines: int | None = None,
     ):
@@ -73,13 +85,6 @@ class Config:
         self.weights = {
             materials[material_name]: weight for material_name, weight in weights.items()
         }
-        self.time = time
-        self.display_interval = display_interval
-        self.mode = mode
-        self.default_coil = machine_options_book.get_coil(default_coil)
-        self.default_pipe_casing = machine_options_book.get_pipe_casing(default_pipe_casing)
-        self.max_singleblock_machines = max_singleblock_machines
-        self.max_multiblock_machines = max_multiblock_machines
 
         material_specifications = [t for t in input_specifications + output_specifications if isinstance(t, tuple)]
         if restrictions is not None:
@@ -98,23 +103,43 @@ class Config:
                 case _:
                     pass
 
+        self.time = time
+        self.display_interval = display_interval
+        self.mode = mode
+        self.unlocked_voltage_tier = VoltageTier.to_voltage_tier(unlocked_voltage_tier)
+        self.max_voltage_tier = min(VoltageTier.to_voltage_tier(max_voltage_tier) if max_voltage_tier is not None
+                                    else VoltageTier.MAX, self.unlocked_voltage_tier)
+        self.default_voltage_tier = VoltageTier.to_voltage_tier(default_voltage_tier)
+        self.maximal_energy_increase = maximal_energy_increase
+        self.max_singleblock_machines = max_singleblock_machines
+        self.max_multiblock_machines = max_multiblock_machines
+
+        self.default_machine_options = MachineOptions(
+            coil=machine_options_book.get_coil(default_coil),
+            pipe_casing=machine_options_book.get_pipe_casing(default_pipe_casing),
+            item_pipe_casing=machine_options_book.get_item_pipe_casing(default_item_pipe_casing),
+            electromagnet=machine_options_book.get_electromagnet(default_electromagnet),
+            solenoid_coil=machine_options_book.get_solenoid_coil(default_solenoid_coil),
+            anvil=machine_options_book.get_anvil(default_anvil)
+        )
+
     def __repr__(self) -> str:
-        return f"""Config Object:
-    inputs: {self.inputs}
-    outputs: {self.outputs}
-    infinite_materials: {self.infinite_materials}
-    weights: {self.weights}
-    lower_bounds: {self.lower_bounds}
-    upper_bounds: {self.upper_bounds}
-    equalities: {self.equalities}
-    time: {self.time}
-    display_interval: {self.display_interval}
-    mode: {self.mode}
-    default_coil: {self.default_coil}
-    default_pipe_casing: {self.default_pipe_casing}
-    max_singleblock_machines: {self.max_singleblock_machines}
-    max_multiblock_machines: {self.max_multiblock_machines}
-        """
+        def value_string(attr: str, value: Any) -> Any:
+            match attr:
+                case 'max_voltage_tier':
+                    return VoltageTier.voltage_tier_name(value)
+                case 'default_voltage_tier':
+                    return VoltageTier.voltage_tier_name(value)
+                case 'unlocked_voltage_tier':
+                    return VoltageTier.voltage_tier_name(value)
+                case _:
+                    return value
+
+        variable_string = '\n'.join([f'{attr}: {value_string(attr, value)}' for attr, value in vars(self).items()])
+        return f'Config:\n{variable_string}'
+
+    def max_machines(self, multiblock: bool) -> int:
+        return self.max_multiblock_machines if multiblock else self.max_singleblock_machines
 
 
 def load_config(
@@ -130,10 +155,20 @@ def load_config(
         time = fields.String(required=True)
         display_interval = fields.String(required=True)
         mode = fields.String(required=True)
-        default_coil = fields.String(required=False, load_default=machine_options_book.coils[0].name)
-        default_pipe_casing = fields.String(required=False, load_default=machine_options_book.pipe_casings[0].name)
+        unlocked_voltage_tier = fields.String(required=True)
+        default_voltage_tier = fields.String(required=True)
+        max_voltage_tier = fields.String(required=False, allow_none=True, load_default=None)
         max_singleblock_machines = fields.Integer(required=False, allow_none=True, load_default=None)
         max_multiblock_machines = fields.Integer(required=False, allow_none=True, load_default=None)
+        maximal_energy_increase = fields.Float(required=True)
+
+        default_coil = fields.String(required=False, load_default=machine_options_book.coils[0].name)
+        default_pipe_casing = fields.String(required=False, load_default=machine_options_book.pipe_casings[0].name)
+        default_item_pipe_casing = fields.String(required=False,
+                                                 load_default=machine_options_book.item_pipe_casings[0].name)
+        default_solenoid_coil = fields.String(required=False, load_default=machine_options_book.solenoid_coils[0].name)
+        default_electromagnet = fields.String(required=False, load_default=machine_options_book.electromagnets[0].name)
+        default_anvil = fields.String(required=False, load_default=machine_options_book.anvils[0].name)
 
         @post_load
         def create_config(self, data, **kwargs) -> Config:
@@ -186,6 +221,26 @@ def load_config(
             if default_pipe_casing not in [c.name for c in machine_options_book.pipe_casings]:
                 raise ValidationError(f'Invalid default pipe casing: "{default_pipe_casing}"')
 
+        @validates('default_item_pipe_casing')
+        def validate_default_item_pipe_casing(self, default_item_pipe_casing: str, data_key: str) -> None:
+            if default_item_pipe_casing not in [c.name for c in machine_options_book.item_pipe_casings]:
+                raise ValidationError(f'Invalid default item pipe casing: "{default_item_pipe_casing}"')
+
+        @validates('default_solenoid_coil')
+        def validate_default_solenoid_coil(self, default_solenoid_coil: str, data_key: str) -> None:
+            if default_solenoid_coil not in [c.name for c in machine_options_book.solenoid_coils]:
+                raise ValidationError(f'Invalid default solenoid coil: "{default_solenoid_coil}"')
+
+        @validates('default_electromagnet')
+        def validate_default_electromagnet(self, default_electromagnet: str, data_key: str) -> None:
+            if default_electromagnet not in [c.name for c in machine_options_book.electromagnets]:
+                raise ValidationError(f'Invalid default electromagnet: "{default_electromagnet}"')
+
+        @validates('default_anvil')
+        def validate_default_anvil(self, default_anvil: str, data_key: str) -> None:
+            if default_anvil not in [c.name for c in machine_options_book.anvils]:
+                raise ValidationError(f'Invalid default anvil: "{default_anvil}"')
+
         @validates('max_singleblock_machines')
         def validate_max_singleblock_machines(self, max_singleblock_machines: int | None, data_key: str) -> None:
             if max_singleblock_machines is not None and max_singleblock_machines < 1:
@@ -195,6 +250,26 @@ def load_config(
         def validate_max_multiblock_machines(self, max_multiblock_machines: int | None, data_key: str) -> None:
             if max_multiblock_machines is not None and max_multiblock_machines < 1:
                 raise ValidationError(f'Invalid maximum of multiblock machines: "{max_multiblock_machines}"')
+
+        @validates('unlocked_voltage_tier')
+        def validate_unlocked_voltage_tier(self, unlocked_voltage_tier: str, data_key: str) -> None:
+            if unlocked_voltage_tier not in VoltageTier.voltage_tiers(minimum=0):
+                raise ValidationError(f'Invalid unlocked voltage tier: "{unlocked_voltage_tier}"')
+
+        @validates('default_voltage_tier')
+        def validate_default_voltage_tier(self, default_voltage_tier: str, data_key: str) -> None:
+            if default_voltage_tier not in VoltageTier.voltage_tiers(minimum=0):
+                raise ValidationError(f'Invalid default voltage tier: "{default_voltage_tier}"')
+
+        @validates('max_voltage_tier')
+        def validate_max_voltage_tier(self, max_voltage_tier: str, data_key: str) -> None:
+            if max_voltage_tier is not None and max_voltage_tier not in VoltageTier.voltage_tiers(minimum=0):
+                raise ValidationError(f'Invalid maximal voltage tier: "{max_voltage_tier}"')
+
+        @validates('maximal_energy_increase')
+        def validate_maximal_energy_increase(self, maximal_energy_increase: float, data_key: str) -> None:
+            if maximal_energy_increase < 1:
+                raise ValidationError(f'Invalid maximal energy increase: "{maximal_energy_increase}"')
 
     if isinstance(file_or_filepath, BytesIO):
         yaml_data = yaml.load(file_or_filepath, Loader=yaml.SafeLoader)

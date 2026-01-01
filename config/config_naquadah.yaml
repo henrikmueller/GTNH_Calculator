@@ -27,7 +27,12 @@ weights:
 time: 1s
 display_interval: 1s
 mode: Max
-default_coil: HSS-G Coil
 table_gid: 0
-max_singleblock_machines: 8
-max_multiblock_machines: 4
+max_singleblock_machines: 4
+max_multiblock_machines: 1
+unlocked_voltage_tier: LuV
+default_voltage_tier: EV
+maximal_energy_increase: 1.5
+default_coil: HSS-S Coil
+default_pipe_casing: Tungstensteel Pipe Casing
+default_item_pipe_casing: Osmium Item Pipe Casing

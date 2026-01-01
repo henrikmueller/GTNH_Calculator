@@ -50,3 +50,80 @@ pipe_casings:
     tier: 3
   - name: Tungstensteel Pipe Casing
     tier: 4
+item_pipe_casings:
+  - name: Tin Item Pipe Casing
+    tier: 1
+  - name: Brass Item Pipe Casing
+    tier: 2
+  - name: Electrum Item Pipe Casing
+    tier: 3
+  - name: Platinum Item Pipe Casing
+    tier: 4
+  - name: Osmium Item Pipe Casing
+    tier: 5
+  - name: Quantium Item Pipe Casing
+    tier: 6
+  - name: Fluxed Electrum Item Pipe Casing
+    tier: 7
+  - name: Black Plutonium Item Pipe Casing
+    tier: 8
+electromagnets:
+  - name: Iron Electromagnet
+    tier: 1
+    speed: 1.1
+    eu_usage: 0.8
+    parallels: 8
+  - name: Steel Electromagnet
+    tier: 2
+    speed: 1.25
+    eu_usage: 0.75
+    parallels: 24
+  - name: Neodymium Electromagnet
+    tier: 3
+    speed: 1.5
+    eu_usage: 0.7
+    parallels: 48
+  - name: Samarium Electromagnet
+    tier: 4
+    speed: 2.0
+    eu_usage: 0.6
+    parallels: 96
+  - name: Tengam Electromagnet
+    tier: 5
+    speed: 2.5
+    eu_usage: 0.5
+    parallels: 256
+solenoid_coils:
+  - name: MV Solenoid Superconductor Coil
+    tier: 1
+  - name: HV Solenoid Superconductor Coil
+    tier: 2
+  - name: EV Solenoid Superconductor Coil
+    tier: 3
+  - name: IV Solenoid Superconductor Coil
+    tier: 4
+  - name: LuV Solenoid Superconductor Coil
+    tier: 5
+  - name: ZPM Solenoid Superconductor Coil
+    tier: 6
+  - name: UV Solenoid Superconductor Coil
+    tier: 7
+  - name: UHV Solenoid Superconductor Coil
+    tier: 8
+  - name: UEV Solenoid Superconductor Coil
+    tier: 9
+  - name: UIV Solenoid Superconductor Coil
+    tier: 10
+  - name: UMV Solenoid Superconductor Coil
+    tier: 11
+anvils:
+  - name: Anvil
+    tier: 1
+  - name: Steel Anvil
+    tier: 2
+  - name: Dark Steel Anvil
+    tier: 3
+  - name: Thaumium Anvil
+    tier: 3
+  - name: Void Metal Anvil
+    tier: 4

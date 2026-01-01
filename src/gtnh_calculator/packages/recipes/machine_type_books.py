@@ -6,7 +6,6 @@ import yaml
 from marshmallow import Schema, fields, post_load
 
 from .machine_types import MachineType, MachineTypeSchema
-from .recipe import Recipe
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)

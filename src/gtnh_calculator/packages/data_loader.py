@@ -101,46 +101,42 @@ def load_data(
 
         inputs = {materials[name]: -amount for name, amount in _get_material_data(row['Inputs'])}
         outputs = {materials[name]: amount for name, amount in _get_material_data(row['Outputs'])}
-        recipe_materials = inputs | outputs | {materials['EU']: -total_eu}
+        recipe_materials = inputs | {materials['EU']: -total_eu}
+        for material, amount in outputs.items():
+            if material in recipe_materials:
+                # to not overwrite the input material
+                recipe_materials[material] += amount
+            else:
+                recipe_materials[material] = amount
 
-        voltage_tier = VoltageTier.to_voltage_tier(row['Used Voltage'])
-        if voltage_tier == VoltageTier.NO_REQUIREMENT:
-            voltage_tier = VoltageTier.voltage_tier_by_eu(eu_per_tick)
-
+        voltage_tier = VoltageTier.voltage_tier_by_eu(eu_per_tick)
         recipe_options = RecipeOptions.get_recipe_options(row['Recipe Options'])
         base_recipe = RawRecipe(recipe_materials, processing_time, recipe_options)
 
         base_machine_type = machine_type_book.get_machine_type(row['Machine'])
         if base_machine_type is None:
-            _LOGGER.warning(f'Machine type not found: "{row['Machine']}". Please specify in machine_types.yaml')
-            base_machine_type = MachineType(row['Machine'])
+            raise ValueError(f'Machine type not found: "{row['Machine']}". Please specify in machine_types.yaml')
+        if base_machine_type.avoid_to_use:
+            parallel_machine_type = machine_type_book.get_parallel_option(base_machine_type)
+            if config.unlocked_voltage_tier >= parallel_machine_type.unlock_tier:
+                base_machine_type = parallel_machine_type
+        machine_type = base_machine_type
 
-        parallel_voltage_tier = VoltageTier.to_voltage_tier(row['Parallel Voltage'])
-        if parallel_voltage_tier >= 1:
-            machine_type = machine_type_book.get_parallel_option(base_machine_type)
-            voltage_tier = parallel_voltage_tier
-        else:
-            machine_type = base_machine_type
+        # parallel_voltage_tier = VoltageTier.to_voltage_tier(row['Parallel Voltage'])
+        # if parallel_voltage_tier >= 1:
+        #     machine_type = machine_type_book.get_parallel_option(base_machine_type)
+        #     voltage_tier = parallel_voltage_tier
+        # else:
+        #     machine_type = base_machine_type
 
-        specified_options = machine_options_book.get_machine_options(row['Machine Options'])
-        default_options = machine_options_book.get_default_options(base_recipe, machine_type)
+        specified_options = machine_options_book.get_machine_options_from_string(row['Machine Options'])
+        default_options = machine_options_book.get_default_options(
+            base_recipe, machine_type, config.default_machine_options
+        )
         machine = Machine(
             machine_type=machine_type, voltage_tier=voltage_tier,
             machine_options=specified_options.maximum(default_options)
         )
-
-        """
-            Update machine options to specified default
-        """
-
-        if machine.machine_options.coil is not None:
-            machine.machine_options.coil = (
-                Coil.maximum(recipe.machine.machine_options.coil, config.default_coil))
-            if machine.machine_type.name == 'Oil Cracking Unit' and machine.machine_options.coil.tier > 5:
-                machine.machine_options.coil = machine_options_book.coils[4]
-        if machine.machine_options.pipe_casing is not None:
-            machine.machine_options.pipe_casing = (
-                PipeCasing.maximum(recipe.machine.machine_options.pipe_casing, config.default_pipe_casing))
 
         """
             Create recipe
@@ -148,6 +144,9 @@ def load_data(
 
         # Adapt recipe based on machine and its setting (e.g. EBF coils)
         raw_recipe = machine.fit_recipe(base_recipe)
+        cap = str_to_float(row['Cap']) if row['Cap'] != '' else (
+            config.max_multiblock_machines if machine.machine_type.multiblock else config.max_singleblock_machines
+        )
 
         return Recipe(
             id=row['Recipe ID'],
@@ -155,8 +154,8 @@ def load_data(
             raw_recipe=raw_recipe,
             base_machine_type=base_machine_type,
             machine=machine,
-            weight=float(row['Weight']) if row['Weight'] != '' else 1,
-            cap=None
+            cap=cap,
+            cap_specified=row['Cap'] != ''
         )
 
     recipes = {}
@@ -166,7 +165,3 @@ def load_data(
             recipes[row['Recipe ID']] = recipe
 
     return RecipeBook(recipes, material_list), machine_type_book
-
-
-def find_machine_for_recipe(raw_recipe: RawRecipe, machine_types: list[MachineType]) -> Machine:
-    pass

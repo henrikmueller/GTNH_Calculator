@@ -18,7 +18,7 @@ infinite_materials:
   - Saltpeter Dust
   - Carbon Dust
   - Vanadium Dust
-  - Salt Dust
+  - Salt
   - Steam
   - Ammonia
   - Nitric Acid
@@ -46,3 +46,6 @@ default_coil: HSS-G Coil
 table_gid: 0
 max_singleblock_machines: 8
 max_multiblock_machines: 4
+unlocked_voltage_tier: IV
+default_voltage_tier: EV
+maximal_energy_increase: 1.5

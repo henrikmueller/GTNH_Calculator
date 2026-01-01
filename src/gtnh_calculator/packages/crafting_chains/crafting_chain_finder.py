@@ -1,19 +1,25 @@
+import copy
+
 import xgi
 from typing import Dict
 import matplotlib.pyplot as plt
 from scipy.optimize import linprog
 import numpy as np
 import logging
+from copy import deepcopy
 
 from ..recipes.recipe_book import RecipeBook
 from ..recipes.material import Material
 from ..recipes.recipe import Recipe
-from ..crafting_chains.crafting_chain import CraftingChain
+from ..recipes.machine_type_books import MachineTypeBook
+from ..recipes.machine_options.machine_option_books import MachineOptionsBook
 from ..utility.general_utility import time_to_seconds
 from ..configs.config import Config
+from ..crafting_chains.crafting_chain import CraftingChain
+from ..recipes.voltage_tiers import VoltageTier
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.WARNING)
+_LOGGER.setLevel(logging.INFO)
 
 
 class CraftingChainFinder:
@@ -36,12 +42,82 @@ class CraftingChainFinder:
 
     def optimal_crafting_chain(
         self,
+        machine_type_book: MachineTypeBook,
+        machine_options_book: MachineOptionsBook,
         config: Config,
-        recipe_weight_factor=1
+        recipe_weight_factor: float = 1,
+        use_machine_limits: bool = False
+    ) -> CraftingChain | None:
+        def _select_higher_machine(recipe_id: int) -> None:
+            recipe = self.recipes[recipe_id]
+            if recipe.processing_time <= 0:
+                return
+
+            machine_amount = crafting_chain.machine_amounts[recipe_id]
+            if recipe.cap is not None and machine_amount > recipe.cap:
+                _LOGGER.info(f'\n\nUpdating {recipe}...')
+                if not recipe.machine.machine_type.multiblock:
+                    _LOGGER.info('Update singleblock')
+                    recipe.select_suitable_voltage_tier(
+                        max_voltage_tier=config.default_voltage_tier,
+                        machine_amount=machine_amount,
+                        max_machine_amount=config.max_singleblock_machines,
+                        maximal_energy_increase=None  # as we only update to the default voltage tier
+                    )
+                    # Now: Default voltage tier is not enough. Try to upgrade to a parallel machine type next.
+                    # This time up to the maximal voltage tier
+
+                # old_recipe = copy.deepcopy(recipe)
+                old_throughput = machine_amount * recipe.base_recipe_count() / recipe.processing_time
+                new_machine_type = machine_type_book.get_parallel_option(recipe.base_machine_type)
+                if new_machine_type != recipe.machine.machine_type:
+                    _LOGGER.info(f'Update machine type for recipe {recipe}. Old: {recipe.machine.machine_type} '
+                                 f'New: {new_machine_type}. \nReason: Machine amount {machine_amount} '
+                                 f'exceeds limit {recipe.cap}')
+                    recipe.update(
+                        config=config, machine_options_book=machine_options_book, machine_type=new_machine_type
+                    )
+
+                new_machine_amount = old_throughput * recipe.processing_time / recipe.base_recipe_count()
+                if new_machine_amount <= config.max_machines(multiblock=new_machine_type.multiblock):
+                    return
+                recipe.select_suitable_voltage_tier(
+                    max_voltage_tier=config.max_voltage_tier,
+                    machine_amount=new_machine_amount,
+                    max_machine_amount=config.max_machines(multiblock=new_machine_type.multiblock),
+                    maximal_energy_increase=config.maximal_energy_increase
+                )
+
+        # ---------------- START OF METHOD  ----------------
+
+        crafting_chain = self._optimal_crafting_chain(
+            config=config,
+            recipe_weight_factor=recipe_weight_factor,
+            use_machine_limits=False
+        )
+        if not use_machine_limits:
+            return crafting_chain
+
+        # Try to increase machine types and voltage tier to stick to the machine limits
+        for recipe_id in crafting_chain.recipes.keys():
+            _select_higher_machine(recipe_id)
+
+        return self._optimal_crafting_chain(
+            config=config,
+            recipe_weight_factor=recipe_weight_factor,
+            use_machine_limits=False
+        )
+
+    def _optimal_crafting_chain(
+        self,
+        config: Config,
+        recipe_weight_factor: float = 1,
+        use_machine_limits: bool = False
     ) -> CraftingChain | None:
         """
         :param config:
         :param recipe_weight_factor:
+        :param use_machine_limits: If True, add additional constraints to limit the number of machines for each recipe
         :return:
         """
         self._validate_parameters(config)
@@ -80,8 +156,10 @@ class CraftingChainFinder:
             case _:
                 raise ValueError(f'Please specify a valid mode: Min or Max')
 
-        bounds = [(0, None if recipe.cap is None else recipe.cap * time / recipe.processing_time)
-                  for recipe in recipes.values()]
+        bounds = [
+            (0, None if not use_machine_limits or recipe.cap is None or recipe.processing_time == 0
+             else recipe.cap * time / recipe.processing_time) for recipe in recipes.values()
+        ]
         A_ub, b_ub = [], []
         A_eq, b_eq = [], []
         unrestricted_materials = inputs.union(infinite_materials)
@@ -165,14 +243,14 @@ class CraftingChainFinder:
         if self.materials_by_name['EU'] not in config.outputs.union(config.infinite_materials):
             _LOGGER.warning(f'Did you forget to add EU to infinite_materials?')
 
-        _LOGGER.info('Materials which cannot be produced from recipes and are not specified as input or '
+        _LOGGER.debug('Materials which cannot be produced from recipes and are not specified as input or '
                      'infinite materials:')
         for material in self.materials_by_name.values():
             if any([material in recipe.get_outputs() for recipe in self.recipes.values()]):
                 continue
             if material in config.infinite_materials or material in config.inputs:
                 continue
-            _LOGGER.info(material)
+            _LOGGER.debug(material)
 
         for material in config.infinite_materials:
             if material in config.lower_bounds.keys():
@@ -191,8 +269,9 @@ class CraftingChainFinder:
             if material not in material_weights.keys():
                 material_weights[material] = 0
             else:
-                _LOGGER.info(f'A weight was specified for the infinite material {material.name}. '
-                             f'Using the specified weight instead of 0.')
+                if material_weights[material] != 0:
+                    _LOGGER.info(f'A weight was specified for the infinite material {material.name}. '
+                                 f'Using the specified weight {material_weights[material]} instead of 0.')
 
     def _handle_errors(self, optimization_result, materials, cost_vector, recipes) -> bool:
         """
