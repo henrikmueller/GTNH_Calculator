@@ -176,7 +176,8 @@ class Machine:
         _LOGGER.debug((VoltageTier.voltage_tier_name(base_voltage_tier), VoltageTier.voltage_tier_name(self.voltage_tier)))
         _LOGGER.debug(f'Used_parallels: {used_parallels}, overclocks: {overclocks}, perfect_overclocks: {perfect_overclocks}')
         new_raw_recipe = RawRecipe(
-            materials=recipe_materials, processing_time=processing_time, recipe_options=raw_recipe.recipe_options
+            materials=recipe_materials, processing_time=processing_time, recipe_options=raw_recipe.recipe_options,
+            chance_based=raw_recipe.chance_based
         )
         _LOGGER.debug(f'Machine: {self}')
         _LOGGER.debug(f'Machine Options: {self.machine_options.__repr__()}')

@@ -49,11 +49,14 @@ if 'recipe_book' in st.session_state:
     _LOGGER.debug('Keep recipe book')
     recipe_book = st.session_state['recipe_book']
 
+
 if config is not None and recipe_book is not None:
     crafting_chain_finder = CraftingChainFinder(recipe_book)
     crafting_chain = crafting_chain_finder.optimal_crafting_chain(
-        machine_type_book, machine_options_book, config, recipe_weight_factor=0.0000001, use_machine_limits=True
+        machine_type_book, machine_options_book, config, recipe_weight_factor=0.0000001, use_machine_limits=False,
+        update_machine_types='recipe_book' not in st.session_state
     )
+    st.session_state['recipe_book'] = recipe_book
 
 st.markdown('---')
 

@@ -14,19 +14,19 @@ class RawRecipe:
     materials: Dict[Material, float]
     processing_time: float  # in seconds
     recipe_options: RecipeOptions
-    sub_one_tick: bool
+    chance_based: list[Material]
 
     def __init__(
             self,
             materials: Dict[Material, float],
             processing_time: float,
             recipe_options: RecipeOptions,
+            chance_based: list[Material]
     ):
         self.materials = materials
         self.processing_time = processing_time
         self.recipe_options = recipe_options
-        self.sub_one_tick = processing_time < 0.05  # Not necessary, as machines scale up inputs and outputs
-        # when the processing time falls below one tick.
+        self.chance_based = chance_based
 
     def __repr__(self) -> str:
         return (f'RawRecipe(materials={self.materials}, processing_time={self.processing_time}, '

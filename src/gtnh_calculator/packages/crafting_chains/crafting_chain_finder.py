@@ -46,7 +46,8 @@ class CraftingChainFinder:
         machine_options_book: MachineOptionsBook,
         config: Config,
         recipe_weight_factor: float = 1,
-        use_machine_limits: bool = False
+        use_machine_limits: bool = False,
+        update_machine_types: bool = True
     ) -> CraftingChain | None:
         def _select_higher_machine(recipe_id: int) -> None:
             recipe = self.recipes[recipe_id]
@@ -67,7 +68,6 @@ class CraftingChainFinder:
                     # Now: Default voltage tier is not enough. Try to upgrade to a parallel machine type next.
                     # This time up to the maximal voltage tier
 
-                # old_recipe = copy.deepcopy(recipe)
                 old_throughput = machine_amount * recipe.base_recipe_count() / recipe.processing_time
                 new_machine_type = machine_type_book.get_parallel_option(recipe.base_machine_type)
                 if new_machine_type != recipe.machine.machine_type:
@@ -93,9 +93,9 @@ class CraftingChainFinder:
         crafting_chain = self._optimal_crafting_chain(
             config=config,
             recipe_weight_factor=recipe_weight_factor,
-            use_machine_limits=False
+            use_machine_limits=use_machine_limits and not update_machine_types
         )
-        if not use_machine_limits:
+        if not update_machine_types:
             return crafting_chain
 
         # Try to increase machine types and voltage tier to stick to the machine limits
@@ -105,7 +105,7 @@ class CraftingChainFinder:
         return self._optimal_crafting_chain(
             config=config,
             recipe_weight_factor=recipe_weight_factor,
-            use_machine_limits=False
+            use_machine_limits=use_machine_limits
         )
 
     def _optimal_crafting_chain(
@@ -213,11 +213,16 @@ class CraftingChainFinder:
         # else:
         #     print(f'Material cost = Machine cost = 0.')
 
+        infinite_material_dict = {m: False for m in self.recipe_book.material_list.materials_by_id.values()}
+        for material in infinite_materials:
+            infinite_material_dict[material] = True
+
         crafting_chain = CraftingChain(
             hypergraph=self.create_hypergraph([recipe for i, recipe in enumerate(recipes.values()) if recipe_vector[i] > 0]),
             recipe_amounts={recipe.id: amount for amount, recipe in zip(result.x, recipes.values())},
             recipe_matrix=recipe_matrix,
             materials=self.recipe_book.material_list.materials_by_id,
+            infinite_materials=infinite_material_dict,
             recipes=self.recipe_book.recipes,
             time=time,
         )

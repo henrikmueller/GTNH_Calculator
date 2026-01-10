@@ -55,12 +55,14 @@ class CraftingChain:
     recipe_amounts: Dict[int, float]
     recipe_matrix: np.ndarray
     materials: Dict[int, Material]
+    infinite_materials: Dict[Material, bool]
     recipes: Dict[int, Recipe]
     recipe_indices: list[int]
     ordered_recipes: bool
     machine_amounts: Dict[int, float]
     eu_per_tick: list[float]
     total_eu_per_tick: float
+    infinite_recipes: Dict[Recipe, bool]
 
     def __init__(
             self,
@@ -68,6 +70,7 @@ class CraftingChain:
             recipe_amounts: Dict[int, float],
             recipe_matrix: np.ndarray,
             materials: Dict[int, Material],
+            infinite_materials: Dict[Material, bool],
             recipes: Dict[int, Recipe],
             time: float
     ):
@@ -75,6 +78,7 @@ class CraftingChain:
         self.recipe_amounts = recipe_amounts
         self.recipe_matrix = recipe_matrix
         self.materials = materials
+        self.infinite_materials = infinite_materials
         recipes = {i: recipe for i, recipe in recipes.items() if self.recipe_amounts[i] > 0}
         self.recipes = recipes
 
@@ -100,6 +104,36 @@ class CraftingChain:
         self.eu_per_tick = [-recipes[i].materials[eu] * self.machine_amounts[i] / (20 * recipes[i].processing_time)
                             if recipes[i].processing_time > 0 else 0 for i in self.recipe_indices]
         self.total_eu_per_tick = sum(self.eu_per_tick)
+
+        def calculate_infinites() -> None:
+
+            recipe_vector = np.array([amount for _, amount in self.recipe_amounts.items()])
+            total_material_needs = np.matmul(self.recipe_matrix, recipe_vector)
+            total_material_amounts = {m: a for a, m in zip(total_material_needs, self.materials.values())}
+            for material, infinite in self.infinite_materials.items():
+                if infinite and total_material_amounts[material] == 0:
+                    # This case probably does not occur for chance based materials
+                    self.infinite_materials[material] = False
+
+            remaining_recipes: list[Recipe] = list(self.recipes.values())
+            detected_infinites = []
+            infinite_recipes = {recipe: False for recipe in self.recipes.values()}
+
+            while True:
+                for recipe in remaining_recipes:
+                    if all(self.infinite_materials[m] for m in recipe.get_inputs()):
+                        for material in recipe.get_outputs():
+                            self.infinite_materials[material] = True
+                        infinite_recipes[recipe] = True
+                        detected_infinites.append(recipe)
+                if not detected_infinites:
+                    break
+                for recipe in detected_infinites:
+                    remaining_recipes.remove(recipe)
+                detected_infinites = []
+            self.infinite_recipes = infinite_recipes
+
+        calculate_infinites()
 
     def get_recipe(self, recipe_id: int) -> Recipe:
         return self.recipes[recipe_id]
@@ -141,7 +175,7 @@ class CraftingChain:
 
     def to_dataframe(self, time_factor, time_interval: str):
         columns = ['Recipe ID', 'Machine Amount', 'Machine', 'Voltage', f'Inputs per {time_interval}', f'Outputs per {time_interval}',
-                   'EU/t']
+                   'EU/t', 'Infinite']
         n, q = len(columns), len(self.recipes)
         eu_per_tick = ["{:.3f}".format(entry) for entry in self.eu_per_tick]
         data = np.zeros((q, n), dtype=object)
@@ -152,6 +186,7 @@ class CraftingChain:
         data[:, 4] = [self.recipes[i].input_string(time_factor * self.recipe_amounts[i]) for i in self.recipe_indices]
         data[:, 5] = [self.recipes[i].output_string(time_factor * self.recipe_amounts[i]) for i in self.recipe_indices]
         data[:, 6] = eu_per_tick
+        data[:, 7] = [self.infinite_recipes[self.recipes[i]] for i in self.recipe_indices]
         return pd.DataFrame(data=data, columns=columns)
 
     def to_excel(self, time, time_factor, time_interval: str):

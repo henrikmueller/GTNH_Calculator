@@ -1,17 +1,16 @@
 import pandas as pd
 from math import isnan
 import logging
+from typing import Dict
 
 from .recipes.recipe_book import RecipeBook
 from .recipes.recipe import Recipe, RawRecipe
 from .recipes.material import Material, MaterialList
 from .recipes.machine import Machine
-from .recipes.machine_types import MachineType
 from .recipes.machine_type_books import MachineTypeBook
 from .recipes.voltage_tiers import VoltageTier
 from .recipes.machine_options.machine_option_books import MachineOptionsBook
 from .recipes.recipe_options.recipe_options import RecipeOptions
-from .recipes.machine_options.machine_options import Coil, PipeCasing
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -27,6 +26,14 @@ def _get_material_data(data: str) -> list[tuple[str, float]]:
         except ValueError:
             continue
     return material_data
+
+
+def _get_materials(data: str, materials: Dict[str, Material]) -> list[Material]:
+    material_names = [m.strip() for m in data.split(',') if m and not m.isspace()]
+    for name in material_names:
+        if name not in materials.keys():
+            raise ValueError(f'{name} is not a valid material.')
+    return [materials[name] for name in material_names]
 
 
 def load_materials(gid: int) -> MaterialList:
@@ -108,10 +115,30 @@ def load_data(
                 recipe_materials[material] += amount
             else:
                 recipe_materials[material] = amount
+        chance_based = _get_materials(row['Chance Based'], materials)
+
+        # This following for-loop is used to modify the amount of chance based materials, such that they will probably
+        # never appear with total amount 0 in a recipe chain
+        for material in chance_based:
+            if material not in recipe_materials.keys():
+                _LOGGER.warning(f'Chance based material {material} not specified as input or output '
+                                f'for recipe with ID {row['Recipe ID']}')
+                continue
+            if recipe_materials[material] > 0:  # output
+                recipe_materials[material] *= 0.9999999
+            elif recipe_materials[material] < 0:  # input
+                recipe_materials[material] *= 1.0000001
+            else:
+                _LOGGER.warning(f'Chance based material {material} has amount 0 in recipe with ID {row['Recipe ID']}')
 
         voltage_tier = VoltageTier.voltage_tier_by_eu(eu_per_tick)
         recipe_options = RecipeOptions.get_recipe_options(row['Recipe Options'])
-        base_recipe = RawRecipe(recipe_materials, processing_time, recipe_options)
+        base_recipe = RawRecipe(
+            materials=recipe_materials,
+            processing_time=processing_time,
+            recipe_options=recipe_options,
+            chance_based=chance_based
+        )
 
         base_machine_type = machine_type_book.get_machine_type(row['Machine'])
         if base_machine_type is None:
