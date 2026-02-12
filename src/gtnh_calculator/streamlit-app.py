@@ -63,10 +63,10 @@ def select_weights():
 
         selected_material_name = st_searchbox(
             valid_materials,
-            placeholder="Select Material",
+            placeholder="Select additional material for weights",
             key="select_material_weight",
             rerun_scope='fragment',
-            label='Material',
+            label='Add Weight',
             default_options=[m.name for m in recipe_book.material_list.materials_by_id.values()]
         )
         if (selected_material_name is not None and
