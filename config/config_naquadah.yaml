@@ -1,29 +1,30 @@
 inputs: 
-  - Naquadah Oxide Mixture Dust = -0.1
+  - Naquadah Oxide Mixture Dust = -0.125
 outputs:
   - Naquadah Ingot
   - Hot Titanium Ingot
 infinite_materials:
   - EU
   - Water
-  - Oxygen
-  - Hydrogen
-  - Nitrogen
-  - Chlorine
+  - Salt Comb
   - Fluorine
-  - Carbon Dust
   - Antimony Dust
   - Ethanol
   - Phosphorus Comb
-  - Sodium Dust
   - Seed Oil
-  - Quicklime Dust
 restrictions:
   - Titanium Trifluoride Dust <= 0
   - Hydrochloric Acid <= 0
+  - Carbon Dioxide <= 0
+  - Gallium Hydroxide Dust <= 0
+  - Fluorine-Rich Waste Liquid <= 0
+  - Fluorspar Dust <= 0
+  - Waste Liquid <= 0
+  - Adamantine Dust <= 0
 weights:
-  Naquadah Ingot: 1
-  Hot Titanium Ingot: 0.01
+  Naquadah Ingot: 1000
+  Hot Titanium Ingot: 1
+  Fluorine: 0.00001
 time: 1s
 display_interval: 1s
 mode: Max

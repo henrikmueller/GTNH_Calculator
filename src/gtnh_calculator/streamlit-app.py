@@ -1,6 +1,7 @@
 import streamlit as st
 import logging
 import sys
+import math
 from streamlit_searchbox import st_searchbox
 
 from packages.recipes.voltage_tiers import VoltageTier
@@ -42,20 +43,95 @@ update = 'update' in st.session_state and st.session_state['update']
 
 uploaded_file = st.file_uploader("Choose a config file to specify the recipe chain", type='yaml')
 if uploaded_file is not None:
-    config, recipe_book, machine_type_book = load_config(uploaded_file, machine_options_book)
-    st.write(config)
+    loaded_config, recipe_book, machine_type_book = load_config(uploaded_file, machine_options_book)
+    if 'config' not in st.session_state:
+        st.session_state['config'] = loaded_config
+    config = st.session_state['config']
 
 if 'recipe_book' in st.session_state:
     _LOGGER.debug('Keep recipe book')
     recipe_book = st.session_state['recipe_book']
 
 
+@st.fragment()
+def select_weights():
+    container = st.container(border=True, width=1000)
+    with container:
+        def valid_materials(text: str) -> list:
+            return [m.name for m in recipe_book.material_list.materials_by_name.values()
+                    if text.lower() in m.name.lower()]
+
+        selected_material_name = st_searchbox(
+            valid_materials,
+            placeholder="Select Material",
+            key="select_material_weight",
+            rerun_scope='fragment',
+            label='Material',
+            default_options=[m.name for m in recipe_book.material_list.materials_by_id.values()]
+        )
+        if (selected_material_name is not None and
+                selected_material_name in recipe_book.material_list.materials_by_name.keys()):
+            material = recipe_book.material_list.materials_by_name[selected_material_name]
+            if material not in st.session_state['weight_materials']:
+                config.weights[material] = 1  # default value: 1
+                st.session_state['weight_materials'].append(material)
+
+        for material in st.session_state['weight_materials']:
+            def button_clicked(m):
+                if m in config.weights.keys():
+                    del config.weights[m]
+                st.session_state['weight_materials'].remove(m)
+
+            col_left, col_middle, col_right = st.columns([1, 3, 1])
+
+            with col_left:
+                value_placeholder = st.empty()
+            with col_middle:
+                weight_exponent = math.log10(config.weights[material])
+                weight_exponent = st.slider(
+                    label=f'{material.name}',
+                    value=weight_exponent,
+                    format=None,
+                    min_value=-5.0,
+                    max_value=10.0,
+                    step=0.01,
+                    label_visibility='collapsed',
+                    width=500
+                )
+                weight = 10**weight_exponent
+            with col_right:
+                st.button(
+                    label='(Remove weight)',
+                    key=f'remove_{material.name}',
+                    type='tertiary',
+                    on_click=button_clicked,
+                    args=(material,)
+                )
+            value_placeholder.markdown(f'{material.name}: {"{:.5f}".format(weight)}')
+            config.weights[material] = weight
+
+        if st.button(label='Update weights', key=f'update_weights', type='primary'):
+            st.rerun(scope='app')
+
+
 if config is not None and recipe_book is not None:
+    if 'weight_materials' not in st.session_state:
+        st.session_state['weight_materials'] = [m for m, a in config.weights.items() if a > 0]
+    st.session_state['weight_materials'].sort(key=lambda m: m.id)
+
+    select_weights()
+    config.weights = {m: a for m, a in config.weights.items() if a != 0}
+    st.write(config)
+
     crafting_chain_finder = CraftingChainFinder(recipe_book)
     crafting_chain = crafting_chain_finder.optimal_crafting_chain(
-        machine_type_book, machine_options_book, config, recipe_weight_factor=0.0000001, use_machine_limits=False,
+        machine_type_book, machine_options_book, config, recipe_weight_factor=0.000000001, use_machine_limits=False,
         update_machine_types='recipe_book' not in st.session_state
     )
+    if crafting_chain is None:
+        st.error('Crafting Chain could not be determined', icon="❗")
+        # TODO: print material and recipe weights
+
     st.session_state['recipe_book'] = recipe_book
 
 st.markdown('---')

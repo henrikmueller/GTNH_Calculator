@@ -27,6 +27,7 @@ class CraftingChainFinder:
 
     def __init__(self, recipe_book: RecipeBook):
         self.recipe_book = recipe_book
+        self.machine_limit = 10000
 
     @property
     def recipes(self) -> Dict[int, Recipe]:
@@ -95,7 +96,8 @@ class CraftingChainFinder:
             recipe_weight_factor=recipe_weight_factor,
             use_machine_limits=use_machine_limits and not update_machine_types
         )
-        if not update_machine_types:
+        if crafting_chain is not None: _LOGGER.info('First crafting chain determined successfully!')
+        if crafting_chain is None or not update_machine_types:
             return crafting_chain
 
         # Try to increase machine types and voltage tier to stick to the machine limits
@@ -129,6 +131,11 @@ class CraftingChainFinder:
         time, display_interval, mode = config.time, config.display_interval, config.mode
         self._fill_missing_material_weights(material_weights, infinite_materials)
 
+        # tmp = {self.materials_by_name['Fluorine']}
+        # for material in tmp:
+        #     if not material.is_eu() and (material not in material_weights.keys() or material_weights[material] == 0):
+        #         material_weights[material] = 0.00001
+
         time, _ = time_to_seconds(time)
         materials = list(self.materials_by_name.values())
         recipes = self.recipes
@@ -139,32 +146,74 @@ class CraftingChainFinder:
         recipe_matrix = X.copy()
         recipe_weights = np.array([r.weight for r in recipes.values()])
 
-        for material in infinite_materials:
+        non_recycle = {m for m in infinite_materials if m.is_eu() or m not in material_weights.keys() or material_weights[m] == 0}
+        for material in non_recycle:
             X[material.id][X[material.id] > 0] = 0
+
+        # TODO: set these weights via config. Make sure they are larger than the material weight
+        infinite_production_weights = {m: (0 if m in non_recycle else material_weights[m]+0.000001) for m in infinite_materials}
+
+        infinite_material_list = list(m for m in infinite_materials)
+        X_infinite = np.zeros((p, len(infinite_material_list)), dtype=np.float64)
+        for i, material in enumerate(infinite_material_list):
+            X_infinite[:, i] = [(1 if m == material else 0) for m in materials]
+        X = np.concatenate([X, X_infinite], axis=1)
 
         # Convert to optimization problem
         c = np.array(
             [material_weights[material] if material in material_weights.keys() else 0 for material in
              materials], dtype=np.float64)
         cost_summand_from_weights = recipe_weight_factor * recipe_weights
+        cost_summand_from_weights = np.concatenate([
+            cost_summand_from_weights, [infinite_production_weights[m] for m in infinite_material_list]
+        ])
 
         match mode:
             case 'Min':
-                cost_vector = np.matmul(c, X) + cost_summand_from_weights
+                cost_vector = - np.matmul(c, X[:, :]) + cost_summand_from_weights  # this will be minimized
+                # cost_vector = np.concatenate([cost_vector, [(0 if m in non_recycle else 0.000009) for m in infinite_material_list]])
             case 'Max':
-                cost_vector = - (np.matmul(c, X) - cost_summand_from_weights)
+                cost_vector = - np.matmul(c, X[:, :]) + cost_summand_from_weights  # this will be minimized
+                # cost_vector = np.concatenate([cost_vector, [(0 if m in non_recycle else 0.000009) for m in infinite_material_list]])
             case _:
                 raise ValueError(f'Please specify a valid mode: Min or Max')
+        # for i, recipe in enumerate(recipes.values()):
+        #     if set(recipe.get_inputs()).issubset({self.materials_by_name['EU']}):
+        #         cost_vector[i] = 10**10
 
-        bounds = [
-            (0, None if not use_machine_limits or recipe.cap is None or recipe.processing_time == 0
-             else recipe.cap * time / recipe.processing_time) for recipe in recipes.values()
-        ]
+        for material in materials:
+            if material in material_weights.keys():
+                _LOGGER.info(f'Weight of {material}: {material_weights[material]}')
+        for i, recipe in enumerate(recipes.values()):
+            if cost_vector[i] >= 0:
+                continue
+            _LOGGER.info(f'Cost of {recipe.id}: {cost_vector[i]}. Inputs {recipe.get_inputs()}. '
+                            f'Outputs. {recipe.get_outputs()}')
+        for i, recipe in enumerate(recipes.values()):
+            if i not in [65]:
+                continue
+            _LOGGER.info(f'Cost {cost_vector[i]}.'
+                            f'{[(m, j, X[j, i]) for j, m in enumerate(materials) if X[j, i] != 0]}. Recipe {recipe}.')
+        for i, material in enumerate(infinite_material_list):
+            _LOGGER.info(f'Cost {cost_vector[q+i]}, {np.nonzero(X[:, q+i])[0]}'
+                            f'{[(m, j, X[j, q+i]) for j, m in enumerate(materials) if X[j, q+i] != 0]}')
+
+        bounds = []
+        for recipe in recipes.values():
+            if recipe.processing_time == 0:
+                bounds.append((0, None))
+                continue
+            if not use_machine_limits or recipe.cap is None:
+                bounds.append((0, self.machine_limit * time / recipe.processing_time))
+            else:
+                bounds.append((0, min(recipe.cap * time / recipe.processing_time,
+                                      self.machine_limit * time / recipe.processing_time)))
+        bounds += [(0, None) for m in infinite_material_list]
+
         A_ub, b_ub = [], []
         A_eq, b_eq = [], []
-        unrestricted_materials = inputs.union(infinite_materials)
         for i in range(X.shape[0]):
-            if materials[i] not in unrestricted_materials:
+            if materials[i] not in inputs and not materials[i].is_eu():
                 A_ub.append(-X[i, :])
                 b_ub.append(0)
             if materials[i] in lower_bounds.keys():
@@ -203,9 +252,15 @@ class CraftingChainFinder:
         if not self._handle_errors(result, materials, cost_vector, recipes):
             return None
         recipe_vector = result.x
+        # print([x for x in list(zip(result.x.astype(float).tolist(), [b[1] for b in bounds], list(range(result.x.size)))) if x[0] >= 10])
+        # print(result.x.astype(float).tolist())
+
+        for i, x in enumerate(recipe_vector):
+            if bounds[i][1] is not None and x >= bounds[i][1]:
+                _LOGGER.warning(f'Machine Limit reached for recipe with ID {i}: {x} = {bounds[i][1]}')
 
         material_cost = np.sum(np.matmul(c, X) * recipe_vector)
-        machine_cost = np.sum(cost_summand_from_weights * recipe_vector / recipe_weight_factor)
+        machine_cost = np.sum(cost_summand_from_weights[:q] * recipe_vector[:q] / recipe_weight_factor)
         combined_cost = material_cost + machine_cost
         # if combined_cost != 0:
         #     print(f'Material cost: {"{:.2f}%".format(100 * material_cost / combined_cost)}')
@@ -273,10 +328,6 @@ class CraftingChainFinder:
         for material in infinite_materials:
             if material not in material_weights.keys():
                 material_weights[material] = 0
-            else:
-                if material_weights[material] != 0:
-                    _LOGGER.info(f'A weight was specified for the infinite material {material.name}. '
-                                 f'Using the specified weight {material_weights[material]} instead of 0.')
 
     def _handle_errors(self, optimization_result, materials, cost_vector, recipes) -> bool:
         """
@@ -301,7 +352,7 @@ class CraftingChainFinder:
             for i, recipe in enumerate(recipes.values()):
                 if cost_vector[i] < 0:
                     negative_cost_recipes.append(recipe)
-                    _LOGGER.info(f'Cost of {recipe.id}: {cost_vector[i]}. Inputs {recipe.get_inputs()}. '
+                    _LOGGER.warning(f'Cost of {recipe.id}: {cost_vector[i]}. Inputs {recipe.get_inputs()}. '
                                  f'Outputs. {recipe.get_outputs()}')
             hypergraph = self.create_hypergraph(negative_cost_recipes, start=False)
             node_labels = {materials[material_id].id: materials[material_id].get_abbreviation() for material_id

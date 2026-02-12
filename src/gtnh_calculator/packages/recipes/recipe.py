@@ -9,6 +9,7 @@ from .material import Material
 from .machine import Machine
 from .raw_recipes import RawRecipe
 from .machine_options.machine_option_books import MachineOptionsBook
+from .voltage_tiers import VoltageTier
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -154,10 +155,19 @@ class Recipe:
         materials = self.raw_recipe.non_eu_materials
         if materials == self.base_recipe.non_eu_materials:
             ratios = set(self.raw_recipe.materials[m] / self.base_recipe.materials[m] for m in materials)
+            if not ratios:
+                raise AssertionError(f'No non EU Materials in recipe {self}')
             if len(ratios) == 1:
                 return list(ratios)[0]
-            raise AssertionError(f'Raw recipe and base recipe are not linearly dependent')
-        raise AssertionError(f'Raw recipe and base recipe use different materials')
+            if min(ratios) / max(ratios) >= 0.9999:
+                # In this case get the closest ratio to an integer
+                int_distances = [(r, abs(r - round(r))) for r in ratios]
+                return min(int_distances, key=lambda x: x[1])[0]
+            raise AssertionError(f'Raw recipe and base recipe are not linearly dependent:'
+                                 f'Raw: {self.raw_recipe}. Base: {self.base_recipe}. Ratios: {ratios}'
+                                 f'More accurately: {[(m, self.raw_recipe.materials[m] / self.base_recipe.materials[m]) for m in materials]}')
+        raise AssertionError(f'Raw recipe and base recipe use different materials. '
+                             f'Raw: {self.raw_recipe}. Base: {self.base_recipe}')
 
     def select_suitable_voltage_tier(
         self,
@@ -167,11 +177,15 @@ class Recipe:
         maximal_energy_increase: float | None
     ) -> None:
         current_voltage_tier = self.voltage_tier
+        if current_voltage_tier == VoltageTier.NO_REQUIREMENT:
+            return
         current_energy_per_base_recipe = self.energy_per_base_recipe()
         current_throughput = machine_amount * self.base_recipe_count() / self.processing_time
         _LOGGER.debug(f'Tier: {self.voltage_tier}, Amount: {machine_amount}')
         for voltage_tier in range(self.voltage_tier + 1, max_voltage_tier + 1):
             self.update(voltage_tier=voltage_tier)
+            if current_energy_per_base_recipe == 0:
+                _LOGGER.error(self)
             energy_percentage = self.energy_per_base_recipe() / current_energy_per_base_recipe
             _LOGGER.debug(f'Tier: {voltage_tier}, energy_percentage: {energy_percentage}')
             if maximal_energy_increase is not None and energy_percentage > maximal_energy_increase:

@@ -18,7 +18,7 @@ infinite_materials:
   - Ethanol
 restrictions:
 weights:
-  Ethyl Cyanoacrylate (Super Glue): 100
+  Ethyl Cyanoacrylate (Super Glue): 1
 time: 60s
 display_interval: 60s
 mode: Max

@@ -30,15 +30,12 @@ infinite_materials:
   - Raw Silicon Dust
 restrictions:
   - Cerium Dioxide Dust <= 0
-  - Diluted Acetone <= 0
-  - Hydrofluoric Acid <= 0
-  - Sodiumfluorosilicate <= 0
 weights:
-  Samarium Dust: 1
-  Terbium Dust: 1
-  Lanthanum Dust: 1
-  Cerium Dust: 1
-  Neodymium Dust: 1
+  Samarium Dust: 10
+  Terbium Dust: 10
+  Lanthanum Dust: 10
+  Cerium Dust: 10
+  Neodymium Dust: 10
 time: 60s
 display_interval: 60s
 mode: Max
