@@ -9,9 +9,6 @@ infinite_materials:
   - Salt Comb
   - Fluorine
   - Antimony Dust
-  - Ethanol
-  - Phosphorus Comb
-  - Seed Oil
 restrictions:
   - Titanium Trifluoride Dust <= 0
   - Hydrochloric Acid <= 0

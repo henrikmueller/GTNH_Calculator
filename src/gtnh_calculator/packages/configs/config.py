@@ -22,6 +22,7 @@ class Config:
     outputs: set[Material]
     infinite_materials: set[Material]
     weights: Dict[Material, float]
+    infinite_production_weights: Dict[Material, float]
     lower_bounds: Dict[Material, float]
     upper_bounds: Dict[Material, float]
     equalities: Dict[Material, float]
@@ -61,7 +62,8 @@ class Config:
         machine_limit: int,
         use_individual_limits: bool,
         max_singleblock_machines: int | None = None,
-        max_multiblock_machines: int | None = None
+        max_multiblock_machines: int | None = None,
+        infinite_production_weights: Dict[str, float] | None = None
     ):
         input_specifications = [extract_substrings(input_string, materials) for input_string in inputs]
         self.inputs = set()
@@ -87,6 +89,19 @@ class Config:
         self.weights = {
             materials[material_name]: weight for material_name, weight in weights.items()
         }
+
+        # Calculate Infinite Production Weights (weights for the production of infinite materials)
+        zero_weight_infinites = {m for m in self.infinite_materials if
+                                 m.is_eu() or m not in self.weights.keys() or self.weights[m] == 0}
+        if infinite_production_weights is None:
+            infinite_production_weights = {}
+        self.infinite_production_weights = {}
+        for material in self.infinite_materials:
+            if material.name in infinite_production_weights.keys():
+                self.infinite_production_weights[material] = infinite_production_weights[material.name]
+            else:
+                self.infinite_production_weights[material] = \
+                    0 if material in zero_weight_infinites else self.weights[material] + 0.00001
 
         material_specifications = [t for t in input_specifications + output_specifications if isinstance(t, tuple)]
         if restrictions is not None:
@@ -165,6 +180,7 @@ def load_config(
         maximal_energy_increase = fields.Float(required=True)
         machine_limit = fields.Integer(required=False, load_default=10000)
         use_individual_limits = fields.Bool(required=False, load_default=False)
+        infinite_production_weights = fields.Dict(keys=fields.String(), values=fields.Float(), required=False)
 
         default_coil = fields.String(required=False, load_default=machine_options_book.coils[0].name)
         default_pipe_casing = fields.String(required=False, load_default=machine_options_book.pipe_casings[0].name)

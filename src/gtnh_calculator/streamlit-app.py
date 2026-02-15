@@ -18,6 +18,9 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
+WEIGHT_EXP_MIN = -5.0
+WEIGHT_EXP_MAX = 10.0
+
 # Run via: streamlit run ./src/gtnh_calculator/streamlit-app.py
 # Colors: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/named-color
 
@@ -60,11 +63,14 @@ if 'recipe_book' in st.session_state:
 
 @st.fragment()
 def select_weights():
-    container = st.container(border=True, width=1000)
+    container = st.container(border=True, width=1900)
     with container:
         def valid_materials(text: str) -> list:
             return [m.name for m in recipe_book.material_list.materials_by_name.values()
                     if text.lower() in m.name.lower()]
+
+        def valid_infinite_materials(text: str) -> list:
+            return [m.name for m in config.infinite_materials if text.lower() in m.name.lower()]
 
         def add_weight(text: str) -> None:
             if text in recipe_book.material_list.materials_by_name.keys():
@@ -75,52 +81,120 @@ def select_weights():
                     st.session_state['weight_materials'].append(material)
                     st.session_state['weight_materials'].sort(key=lambda m: m.id)
 
-        st.session_state['selected_material_name'] = st_searchbox(
-            valid_materials,
-            placeholder="Select additional material for weights",
-            key="select_material_weight",
-            rerun_scope='fragment',
-            label='Add Weight',
-            default_options=[m.name for m in recipe_book.material_list.materials_by_id.values()],
-            clear_on_submit=True,
-            submit_function=add_weight
-        )
+        def add_ipw(text: str) -> None:
+            if text in recipe_book.material_list.materials_by_name.keys():
+                material = recipe_book.material_list.materials_by_name[text]
+                if material not in st.session_state['ipw_materials']:
+                    # Set material weight to 1. Add it to the weights section
+                    config.infinite_production_weights[material] = 1  # default value: 1
+                    st.session_state['ipw_materials'].append(material)
+                    st.session_state['ipw_materials'].sort(key=lambda m: m.id)
 
-        for material in st.session_state['weight_materials']:
-            def button_clicked(m):
-                if m in config.weights.keys():
-                    del config.weights[m]
-                st.session_state['weight_materials'].remove(m)
-
-            col_left, col_middle, col_right = st.columns([1, 3, 1])
-
-            with col_left:
-                value_placeholder = st.empty()
-            with col_middle:
-                weight_exponent = math.log10(config.weights[material])
-                weight_exponent = st.slider(
-                    label=f'{material.name}',
-                    value=weight_exponent,
-                    format=None,
-                    min_value=-5.0,
-                    max_value=10.0,
-                    step=0.01,
-                    label_visibility='collapsed',
-                    width=500
-                )
-                weight = 10**weight_exponent
-            with col_right:
-                st.button(
-                    label='(Remove weight)',
-                    key=f'remove_{material.name}',
-                    type='tertiary',
-                    on_click=button_clicked,
-                    args=(material,)
-                )
-            value_placeholder.markdown(
-                f'{material.name}: {"{:.5f}".format(weight) if weight < 1 else "{:.2f}".format(weight)}'
+        col_left, col_right = st.columns([1, 1])
+        with col_left:
+            st_searchbox(
+                valid_materials,
+                placeholder="Select additional material for weights",
+                key="select_material_weight",
+                rerun_scope='fragment',
+                label='Add Weight',
+                default_options=[m.name for m in recipe_book.material_list.materials_by_id.values()],
+                clear_on_submit=True,
+                submit_function=add_weight
             )
-            config.weights[material] = weight
+
+            for material in st.session_state['weight_materials']:
+                def button_clicked(m):
+                    if m in config.weights.keys():
+                        del config.weights[m]
+                    st.session_state['weight_materials'].remove(m)
+
+                col_l1, col_l2, col_l3, col_l4 = st.columns([1, 0.7, 3, 1])
+
+                with col_l1:
+                    st.markdown(f'**{material.name}:**')
+                with col_l2:
+                    weight_placeholder = st.empty()
+                with col_l3:
+                    weight_exponent = max(min(math.log10(config.weights[material]), WEIGHT_EXP_MAX),
+                                          WEIGHT_EXP_MIN + 0.1)
+                    weight_exponent = st.slider(
+                        label=f'{material.name}',
+                        value=weight_exponent,
+                        format=None,
+                        min_value=WEIGHT_EXP_MIN,
+                        max_value=WEIGHT_EXP_MAX,
+                        step=0.01,
+                        label_visibility='collapsed',
+                        width=500
+                    )
+                    weight = 10 ** weight_exponent
+                with col_l4:
+                    st.button(
+                        label='(Remove)',
+                        key=f'remove_{material.name}',
+                        type='tertiary',
+                        on_click=button_clicked,
+                        args=(material,)
+                    )
+
+                weight_placeholder.markdown(
+                    f'{"{:.5f}".format(weight) if weight < 1 else "{:.2f}".format(weight)}'
+                )
+                config.weights[material] = weight
+        with col_right:
+            st_searchbox(
+                valid_infinite_materials,
+                placeholder="Select additional material for ♾️-production weights",
+                key="select_material_ipw",
+                rerun_scope='fragment',
+                label='Add ♾️-Production Weight',
+                default_options=[m.name for m in config.infinite_materials],
+                clear_on_submit=True,
+                submit_function=add_ipw
+            )
+
+            for material in st.session_state['ipw_materials']:
+                def button_clicked_ipw(m):
+                    if m in config.infinite_production_weights.keys():
+                        del config.infinite_production_weights[m]
+                    st.session_state['ipw_materials'].remove(m)
+
+                col_r1, col_r2, col_r3, col_r4 = st.columns([1, 0.7, 3, 1])
+                with col_r1:
+                    st.markdown(f'**{material.name}:**')
+                with col_r2:
+                    if material in config.infinite_materials:
+                        ipw_placeholder = st.empty()
+                with col_r3:
+                    if material in config.infinite_materials:
+                        ipw_exponent = max(
+                            min(math.log10(config.infinite_production_weights[material]), WEIGHT_EXP_MAX),
+                            WEIGHT_EXP_MIN)
+                        ipw_exponent = st.slider(
+                            label=f'{material.name}',
+                            value=ipw_exponent,
+                            format=None,
+                            min_value=WEIGHT_EXP_MIN,
+                            max_value=WEIGHT_EXP_MAX,
+                            step=0.01,
+                            label_visibility='collapsed',
+                            width=500
+                        )
+                        ipw = 10 ** ipw_exponent
+                with col_r4:
+                    st.button(
+                        label='(Remove)',
+                        key=f'remove_ipw_{material.name}',
+                        type='tertiary',
+                        on_click=button_clicked_ipw,
+                        args=(material,)
+                    )
+                if material in config.infinite_materials:
+                    ipw_placeholder.markdown(
+                        f'{"{:.5f}".format(ipw) if ipw < 1 else "{:.2f}".format(ipw)}'
+                    )
+                    config.infinite_production_weights[material] = ipw
 
         if st.button(label='Update weights', key=f'update_weights', type='primary'):
             st.session_state['update_machine_types'] = True
@@ -226,9 +300,13 @@ if config is not None and recipe_book is not None:
     if 'weight_materials' not in st.session_state:
         st.session_state['weight_materials'] = [m for m, a in config.weights.items() if a > 0]
     st.session_state['weight_materials'].sort(key=lambda m: m.id)
+    if 'ipw_materials' not in st.session_state:
+        st.session_state['ipw_materials'] = [m for m, a in config.infinite_production_weights.items() if a > 0]
+    st.session_state['ipw_materials'].sort(key=lambda m: m.id)
 
     select_weights()
     config.weights = {m: a for m, a in config.weights.items() if a != 0}
+    config.infinite_production_weights = {m: a for m, a in config.infinite_production_weights.items() if a != 0}
     st.write(config)
 
     crafting_chain_finder = CraftingChainFinder(

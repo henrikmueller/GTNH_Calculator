@@ -137,9 +137,10 @@ class CraftingChainFinder:
         inputs, outputs = config.inputs, config.outputs
         infinite_materials = config.infinite_materials
         material_weights = config.weights
+        infinite_production_weights = config.infinite_production_weights
         lower_bounds, upper_bounds, equalities = config.lower_bounds, config.upper_bounds, config.equalities
         time, display_interval = config.time, config.display_interval
-        self._fill_missing_material_weights(material_weights, infinite_materials)
+        self._fill_missing_material_weights(material_weights, infinite_materials, infinite_production_weights)
 
         time, _ = time_to_seconds(time)
         materials = list(self.materials_by_name.values())
@@ -157,7 +158,6 @@ class CraftingChainFinder:
             X[material.id][X[material.id] > 0] = 0
 
         # Infinite Production
-        infinite_production_weights = {m: (0 if m in zero_weight_infinites else material_weights[m]+0.000001) for m in infinite_materials}
         infinite_material_list = list(m for m in infinite_materials)
         X_infinite = np.zeros((p, len(infinite_material_list)), dtype=np.float64)
         for i, material in enumerate(infinite_material_list):
@@ -197,7 +197,7 @@ class CraftingChainFinder:
         A_ub, b_ub = [], []
         A_eq, b_eq = [], []
         for i in range(X.shape[0]):
-            if materials[i] not in inputs and not materials[i].is_eu():
+            if materials[i] not in inputs:
                 A_ub.append(-X[i, :])
                 b_ub.append(0)
             if materials[i] in lower_bounds.keys():
@@ -307,10 +307,12 @@ class CraftingChainFinder:
                                 f'{material.name} = {config.equalities[material]}')
 
     @staticmethod
-    def _fill_missing_material_weights(material_weights, infinite_materials) -> None:
+    def _fill_missing_material_weights(material_weights, infinite_materials, infinite_production_weights) -> None:
         for material in infinite_materials:
             if material not in material_weights.keys():
                 material_weights[material] = 0
+            if material not in infinite_production_weights.keys():
+                infinite_production_weights[material] = 0
 
     def _handle_errors(self, optimization_result, materials, cost_vector, recipes) -> bool:
         """
