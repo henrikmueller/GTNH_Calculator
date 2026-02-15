@@ -27,7 +27,6 @@ weights:
   Fluorine: 0.00001
 time: 1s
 display_interval: 1s
-mode: Max
 table_gid: 0
 max_singleblock_machines: 4
 max_multiblock_machines: 1

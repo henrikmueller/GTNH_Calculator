@@ -12,7 +12,7 @@ from .machine_options.machine_option_books import MachineOptionsBook
 from .voltage_tiers import VoltageTier
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.INFO)
+_LOGGER.setLevel(logging.WARNING)
 
 
 class Recipe:
@@ -35,7 +35,7 @@ class Recipe:
         cap: float | None,
         cap_specified: bool
     ):
-        self.id = id
+        self.id = int(id)
         self.base_recipe = base_recipe
         self.raw_recipe = raw_recipe
         self.base_machine_type = base_machine_type
@@ -174,6 +174,7 @@ class Recipe:
         max_voltage_tier: int,
         machine_amount: float,
         max_machine_amount: float,
+        default_voltage_tier: int,
         maximal_energy_increase: float | None
     ) -> None:
         current_voltage_tier = self.voltage_tier
@@ -186,12 +187,19 @@ class Recipe:
             self.update(voltage_tier=voltage_tier)
             if current_energy_per_base_recipe == 0:
                 _LOGGER.error(self)
-            energy_percentage = self.energy_per_base_recipe() / current_energy_per_base_recipe
-            _LOGGER.debug(f'Tier: {voltage_tier}, energy_percentage: {energy_percentage}')
-            if maximal_energy_increase is not None and energy_percentage > maximal_energy_increase:
-                self.update(voltage_tier=current_voltage_tier)
+
+            # Compare the energy consumption per base recipe of the two voltage tiers
+            new_energy_per_base_recipe = self.energy_per_base_recipe()
+            energy_percentage = new_energy_per_base_recipe / current_energy_per_base_recipe
+            _LOGGER.debug(f'Tier: {voltage_tier-1} -> {voltage_tier}, energy_percentage: {energy_percentage} '
+                          f'[{new_energy_per_base_recipe} / {current_energy_per_base_recipe}]')
+            if (voltage_tier > default_voltage_tier and maximal_energy_increase is not None
+                    and energy_percentage > maximal_energy_increase):
+                self.update(voltage_tier=current_voltage_tier)  # revert to previous voltage tier
                 return
+
             current_voltage_tier = voltage_tier
+            current_energy_per_base_recipe = new_energy_per_base_recipe
             new_machine_amount = current_throughput * self.processing_time / self.base_recipe_count()
             _LOGGER.debug(f'Tier: {voltage_tier}, Amount: {new_machine_amount}')
             if new_machine_amount <= max_machine_amount:

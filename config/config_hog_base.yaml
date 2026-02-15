@@ -11,7 +11,6 @@ weights:
   EU: 1
 time: 60s
 display_interval: 60s
-mode: Max
 default_coil: HSS-G Coil
 table_gid: 1514208585
 unlocked_voltage_tier: IV

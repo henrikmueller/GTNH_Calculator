@@ -21,7 +21,6 @@ weights:
   Ethyl Cyanoacrylate (Super Glue): 1
 time: 60s
 display_interval: 60s
-mode: Max
 default_coil: HSS-S Coil
 table_gid: 1768066449
 max_singleblock_machines: 4

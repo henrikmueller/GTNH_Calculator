@@ -106,7 +106,6 @@ class CraftingChain:
         self.total_eu_per_tick = sum(self.eu_per_tick)
 
         def calculate_infinites() -> None:
-
             recipe_vector = np.array([amount for _, amount in self.recipe_amounts.items()])
             total_material_needs = np.matmul(self.recipe_matrix, recipe_vector)
             total_material_amounts = {m: a for a, m in zip(total_material_needs, self.materials.values())}

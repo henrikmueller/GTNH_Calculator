@@ -45,9 +45,9 @@ recipe_graph = recipe_hypergraph.get_recipe_graph()
 ------------------------------------------------------------------------------------------------------------------------
 """
 
-crafting_chain_finder = CraftingChainFinder(recipe_book)
+crafting_chain_finder = CraftingChainFinder(recipe_book, machine_limit=config.machine_limit)
 crafting_chain = crafting_chain_finder.optimal_crafting_chain(
-    machine_type_book, machine_options_book, config, recipe_weight_factor=0.0000001, use_machine_limits=True
+    machine_type_book, machine_options_book, config, recipe_weight_factor=0.0000001
 )
 
 if crafting_chain is not None:

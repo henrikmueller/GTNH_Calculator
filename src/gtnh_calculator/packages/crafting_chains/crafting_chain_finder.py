@@ -24,10 +24,13 @@ _LOGGER.setLevel(logging.INFO)
 
 class CraftingChainFinder:
     recipe_book: RecipeBook
+    machine_limit: int
+    use_individual_limits: bool
 
-    def __init__(self, recipe_book: RecipeBook):
+    def __init__(self, recipe_book: RecipeBook, machine_limit: int, use_individual_limits: bool = True):
         self.recipe_book = recipe_book
-        self.machine_limit = 10000
+        self.machine_limit = machine_limit
+        self.use_individual_limits = use_individual_limits
 
     @property
     def recipes(self) -> Dict[int, Recipe]:
@@ -47,7 +50,6 @@ class CraftingChainFinder:
         machine_options_book: MachineOptionsBook,
         config: Config,
         recipe_weight_factor: float = 1,
-        use_machine_limits: bool = False,
         update_machine_types: bool = True
     ) -> CraftingChain | None:
         def _select_higher_machine(recipe_id: int) -> None:
@@ -57,13 +59,14 @@ class CraftingChainFinder:
 
             machine_amount = crafting_chain.machine_amounts[recipe_id]
             if recipe.cap is not None and machine_amount > recipe.cap:
-                _LOGGER.info(f'\n\nUpdating {recipe}...')
+                _LOGGER.info(f'Updating {recipe}...')
                 if not recipe.machine.machine_type.multiblock:
-                    _LOGGER.info('Update singleblock')
+                    _LOGGER.debug('Update singleblock')
                     recipe.select_suitable_voltage_tier(
                         max_voltage_tier=config.default_voltage_tier,
                         machine_amount=machine_amount,
                         max_machine_amount=config.max_singleblock_machines,
+                        default_voltage_tier=0,
                         maximal_energy_increase=None  # as we only update to the default voltage tier
                     )
                     # Now: Default voltage tier is not enough. Try to upgrade to a parallel machine type next.
@@ -72,9 +75,9 @@ class CraftingChainFinder:
                 old_throughput = machine_amount * recipe.base_recipe_count() / recipe.processing_time
                 new_machine_type = machine_type_book.get_parallel_option(recipe.base_machine_type)
                 if new_machine_type != recipe.machine.machine_type:
-                    _LOGGER.info(f'Update machine type for recipe {recipe}. Old: {recipe.machine.machine_type} '
-                                 f'New: {new_machine_type}. \nReason: Machine amount {machine_amount} '
-                                 f'exceeds limit {recipe.cap}')
+                    _LOGGER.debug(f'Update machine type for recipe {recipe}. Old: {recipe.machine.machine_type} '
+                                  f'New: {new_machine_type}. \nReason: Machine amount {machine_amount} '
+                                  f'exceeds limit {recipe.cap}')
                     recipe.update(
                         config=config, machine_options_book=machine_options_book, machine_type=new_machine_type
                     )
@@ -86,6 +89,7 @@ class CraftingChainFinder:
                     max_voltage_tier=config.max_voltage_tier,
                     machine_amount=new_machine_amount,
                     max_machine_amount=config.max_machines(multiblock=new_machine_type.multiblock),
+                    default_voltage_tier=config.default_voltage_tier,
                     maximal_energy_increase=config.maximal_energy_increase
                 )
 
@@ -94,32 +98,38 @@ class CraftingChainFinder:
         crafting_chain = self._optimal_crafting_chain(
             config=config,
             recipe_weight_factor=recipe_weight_factor,
-            use_machine_limits=use_machine_limits and not update_machine_types
+            use_individual_limits=self.use_individual_limits and not update_machine_types
         )
         if crafting_chain is not None: _LOGGER.info('First crafting chain determined successfully!')
         if crafting_chain is None or not update_machine_types:
             return crafting_chain
+        _LOGGER.info('Trying to update machine types...')
 
         # Try to increase machine types and voltage tier to stick to the machine limits
         for recipe_id in crafting_chain.recipes.keys():
             _select_higher_machine(recipe_id)
 
-        return self._optimal_crafting_chain(
+        crafting_chain = self._optimal_crafting_chain(
             config=config,
             recipe_weight_factor=recipe_weight_factor,
-            use_machine_limits=use_machine_limits
+            use_individual_limits=self.use_individual_limits
         )
+        if crafting_chain is not None:
+            _LOGGER.info('Second crafting chain determined successfully!')
+        else:
+            _LOGGER.info('Second crafting chain could not be determined!')
+        return crafting_chain
 
     def _optimal_crafting_chain(
         self,
         config: Config,
         recipe_weight_factor: float = 1,
-        use_machine_limits: bool = False
+        use_individual_limits: bool = False
     ) -> CraftingChain | None:
         """
         :param config:
         :param recipe_weight_factor:
-        :param use_machine_limits: If True, add additional constraints to limit the number of machines for each recipe
+        :param use_individual_limits: If True, add additional constraints to limit the number of machines for each recipe
         :return:
         """
         self._validate_parameters(config)
@@ -128,13 +138,8 @@ class CraftingChainFinder:
         infinite_materials = config.infinite_materials
         material_weights = config.weights
         lower_bounds, upper_bounds, equalities = config.lower_bounds, config.upper_bounds, config.equalities
-        time, display_interval, mode = config.time, config.display_interval, config.mode
+        time, display_interval = config.time, config.display_interval
         self._fill_missing_material_weights(material_weights, infinite_materials)
-
-        # tmp = {self.materials_by_name['Fluorine']}
-        # for material in tmp:
-        #     if not material.is_eu() and (material not in material_weights.keys() or material_weights[material] == 0):
-        #         material_weights[material] = 0.00001
 
         time, _ = time_to_seconds(time)
         materials = list(self.materials_by_name.values())
@@ -146,13 +151,13 @@ class CraftingChainFinder:
         recipe_matrix = X.copy()
         recipe_weights = np.array([r.weight for r in recipes.values()])
 
-        non_recycle = {m for m in infinite_materials if m.is_eu() or m not in material_weights.keys() or material_weights[m] == 0}
-        for material in non_recycle:
+        # Remove infinite materials with weight zero from outputs
+        zero_weight_infinites = {m for m in infinite_materials if m.is_eu() or m not in material_weights.keys() or material_weights[m] == 0}
+        for material in zero_weight_infinites:
             X[material.id][X[material.id] > 0] = 0
 
-        # TODO: set these weights via config. Make sure they are larger than the material weight
-        infinite_production_weights = {m: (0 if m in non_recycle else material_weights[m]+0.000001) for m in infinite_materials}
-
+        # Infinite Production
+        infinite_production_weights = {m: (0 if m in zero_weight_infinites else material_weights[m]+0.000001) for m in infinite_materials}
         infinite_material_list = list(m for m in infinite_materials)
         X_infinite = np.zeros((p, len(infinite_material_list)), dtype=np.float64)
         for i, material in enumerate(infinite_material_list):
@@ -167,47 +172,26 @@ class CraftingChainFinder:
         cost_summand_from_weights = np.concatenate([
             cost_summand_from_weights, [infinite_production_weights[m] for m in infinite_material_list]
         ])
+        cost_vector = - np.matmul(c, X[:, :]) + cost_summand_from_weights  # this will be minimized
 
-        match mode:
-            case 'Min':
-                cost_vector = - np.matmul(c, X[:, :]) + cost_summand_from_weights  # this will be minimized
-                # cost_vector = np.concatenate([cost_vector, [(0 if m in non_recycle else 0.000009) for m in infinite_material_list]])
-            case 'Max':
-                cost_vector = - np.matmul(c, X[:, :]) + cost_summand_from_weights  # this will be minimized
-                # cost_vector = np.concatenate([cost_vector, [(0 if m in non_recycle else 0.000009) for m in infinite_material_list]])
-            case _:
-                raise ValueError(f'Please specify a valid mode: Min or Max')
+        # for material in materials:
+        #     if material in material_weights.keys():
+        #         _LOGGER.info(f'Weight of {material}: {material_weights[material]}')
         # for i, recipe in enumerate(recipes.values()):
-        #     if set(recipe.get_inputs()).issubset({self.materials_by_name['EU']}):
-        #         cost_vector[i] = 10**10
-
-        for material in materials:
-            if material in material_weights.keys():
-                _LOGGER.info(f'Weight of {material}: {material_weights[material]}')
-        for i, recipe in enumerate(recipes.values()):
-            if cost_vector[i] >= 0:
-                continue
-            _LOGGER.info(f'Cost of {recipe.id}: {cost_vector[i]}. Inputs {recipe.get_inputs()}. '
-                            f'Outputs. {recipe.get_outputs()}')
-        for i, recipe in enumerate(recipes.values()):
-            if i not in [65]:
-                continue
-            _LOGGER.info(f'Cost {cost_vector[i]}.'
-                            f'{[(m, j, X[j, i]) for j, m in enumerate(materials) if X[j, i] != 0]}. Recipe {recipe}.')
-        for i, material in enumerate(infinite_material_list):
-            _LOGGER.info(f'Cost {cost_vector[q+i]}, {np.nonzero(X[:, q+i])[0]}'
-                            f'{[(m, j, X[j, q+i]) for j, m in enumerate(materials) if X[j, q+i] != 0]}')
+        #     if cost_vector[i] >= 0:
+        #         continue
+        #     _LOGGER.info(f'Cost of {recipe.id}: {cost_vector[i]}. Inputs {recipe.get_inputs()}. '
+        #                     f'Outputs. {recipe.get_outputs()}')
+        # for i, recipe in enumerate(recipes.values()):
+        #     _LOGGER.info(f'Cost {cost_vector[i]}.'
+        #                     f'{[(m, j, X[j, i]) for j, m in enumerate(materials) if X[j, i] != 0]}. Recipe {recipe}.')
+        # for i, material in enumerate(infinite_material_list):
+        #     _LOGGER.info(f'Cost {cost_vector[q+i]}, {np.nonzero(X[:, q+i])[0]}'
+        #                     f'{[(m, j, X[j, q+i]) for j, m in enumerate(materials) if X[j, q+i] != 0]}')
 
         bounds = []
         for recipe in recipes.values():
-            if recipe.processing_time == 0:
-                bounds.append((0, None))
-                continue
-            if not use_machine_limits or recipe.cap is None:
-                bounds.append((0, self.machine_limit * time / recipe.processing_time))
-            else:
-                bounds.append((0, min(recipe.cap * time / recipe.processing_time,
-                                      self.machine_limit * time / recipe.processing_time)))
+            bounds.append((0, self.machine_amount_cap(recipe, time, use_individual_limits)))
         bounds += [(0, None) for m in infinite_material_list]
 
         A_ub, b_ub = [], []
@@ -252,21 +236,13 @@ class CraftingChainFinder:
         if not self._handle_errors(result, materials, cost_vector, recipes):
             return None
         recipe_vector = result.x
-        # print([x for x in list(zip(result.x.astype(float).tolist(), [b[1] for b in bounds], list(range(result.x.size)))) if x[0] >= 10])
-        # print(result.x.astype(float).tolist())
 
         for i, x in enumerate(recipe_vector):
             if bounds[i][1] is not None and x >= bounds[i][1]:
                 _LOGGER.warning(f'Machine Limit reached for recipe with ID {i}: {x} = {bounds[i][1]}')
 
-        material_cost = np.sum(np.matmul(c, X) * recipe_vector)
-        machine_cost = np.sum(cost_summand_from_weights[:q] * recipe_vector[:q] / recipe_weight_factor)
-        combined_cost = material_cost + machine_cost
-        # if combined_cost != 0:
-        #     print(f'Material cost: {"{:.2f}%".format(100 * material_cost / combined_cost)}')
-        #     print(f'Machine cost: {"{:.2f}%".format(100 * machine_cost / combined_cost)}')
-        # else:
-        #     print(f'Material cost = Machine cost = 0.')
+        # material_cost = np.sum(np.matmul(c, X) * recipe_vector)
+        # machine_cost = np.sum(cost_summand_from_weights[:q] * recipe_vector[:q] / recipe_weight_factor)
 
         infinite_material_dict = {m: False for m in self.recipe_book.material_list.materials_by_id.values()}
         for material in infinite_materials:
@@ -274,7 +250,7 @@ class CraftingChainFinder:
 
         crafting_chain = CraftingChain(
             hypergraph=self.create_hypergraph([recipe for i, recipe in enumerate(recipes.values()) if recipe_vector[i] > 0]),
-            recipe_amounts={recipe.id: amount for amount, recipe in zip(result.x, recipes.values())},
+            recipe_amounts={recipe.id: amount for amount, recipe in zip(recipe_vector, recipes.values())},
             recipe_matrix=recipe_matrix,
             materials=self.recipe_book.material_list.materials_by_id,
             infinite_materials=infinite_material_dict,
@@ -282,6 +258,13 @@ class CraftingChainFinder:
             time=time,
         )
         return crafting_chain
+
+    def machine_amount_cap(self, recipe: Recipe, time: float, use_individual_limits: bool) -> float | None:
+        if recipe.processing_time == 0:
+            return None
+        if not use_individual_limits or recipe.cap is None:
+            return self.machine_limit * time / recipe.processing_time
+        return min(recipe.cap * time / recipe.processing_time, self.machine_limit * time / recipe.processing_time)
 
     @staticmethod
     def create_hypergraph(recipes: list[Recipe], start=False) -> xgi.DiHypergraph:

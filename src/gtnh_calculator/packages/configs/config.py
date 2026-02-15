@@ -27,7 +27,6 @@ class Config:
     equalities: Dict[Material, float]
     time: str
     display_interval: str
-    mode: str
     max_voltage_tier: int
     unlocked_voltage_tier: int
     default_voltage_tier: int
@@ -35,6 +34,8 @@ class Config:
     max_singleblock_machines: int | None
     max_multiblock_machines: int | None
     default_machine_options: MachineOptions
+    machine_limit: int
+    use_individual_limits: bool
 
     def __init__(
         self,
@@ -47,7 +48,6 @@ class Config:
         weights: Dict[str, float],
         time: str,
         display_interval: str,
-        mode: str,
         default_coil: str,
         default_pipe_casing: str,
         default_item_pipe_casing: str,
@@ -58,8 +58,10 @@ class Config:
         default_voltage_tier: str,
         max_voltage_tier: str | None,
         maximal_energy_increase: float,
+        machine_limit: int,
+        use_individual_limits: bool,
         max_singleblock_machines: int | None = None,
-        max_multiblock_machines: int | None = None,
+        max_multiblock_machines: int | None = None
     ):
         input_specifications = [extract_substrings(input_string, materials) for input_string in inputs]
         self.inputs = set()
@@ -105,7 +107,6 @@ class Config:
 
         self.time = time
         self.display_interval = display_interval
-        self.mode = mode
         self.unlocked_voltage_tier = VoltageTier.to_voltage_tier(unlocked_voltage_tier)
         self.max_voltage_tier = min(VoltageTier.to_voltage_tier(max_voltage_tier) if max_voltage_tier is not None
                                     else VoltageTier.MAX, self.unlocked_voltage_tier)
@@ -113,6 +114,8 @@ class Config:
         self.maximal_energy_increase = maximal_energy_increase
         self.max_singleblock_machines = max_singleblock_machines
         self.max_multiblock_machines = max_multiblock_machines
+        self.machine_limit = machine_limit
+        self.use_individual_limits = use_individual_limits
 
         self.default_machine_options = MachineOptions(
             coil=machine_options_book.get_coil(default_coil),
@@ -154,13 +157,14 @@ def load_config(
         weights = fields.Dict(keys=fields.String(), values=fields.Float())
         time = fields.String(required=True)
         display_interval = fields.String(required=True)
-        mode = fields.String(required=True)
         unlocked_voltage_tier = fields.String(required=True)
         default_voltage_tier = fields.String(required=True)
         max_voltage_tier = fields.String(required=False, allow_none=True, load_default=None)
         max_singleblock_machines = fields.Integer(required=False, allow_none=True, load_default=None)
         max_multiblock_machines = fields.Integer(required=False, allow_none=True, load_default=None)
         maximal_energy_increase = fields.Float(required=True)
+        machine_limit = fields.Integer(required=False, load_default=10000)
+        use_individual_limits = fields.Bool(required=False, load_default=False)
 
         default_coil = fields.String(required=False, load_default=machine_options_book.coils[0].name)
         default_pipe_casing = fields.String(required=False, load_default=machine_options_book.pipe_casings[0].name)
@@ -205,11 +209,6 @@ def load_config(
             for key in weights.keys():
                 if key not in materials.keys():
                     raise ValidationError(f'Unknown material in weights dictionary: "{key}"')
-
-        @validates('mode')
-        def validate_mode(self, mode: str, data_key: str) -> None:
-            if mode not in ['Min', 'Max']:
-                raise ValidationError(f'Invalid mode: "{mode}"')
 
         @validates('default_coil')
         def validate_default_coil(self, default_coil: str, data_key: str) -> None:
@@ -270,6 +269,11 @@ def load_config(
         def validate_maximal_energy_increase(self, maximal_energy_increase: float, data_key: str) -> None:
             if maximal_energy_increase < 1:
                 raise ValidationError(f'Invalid maximal energy increase: "{maximal_energy_increase}"')
+
+        @validates('machine_limit')
+        def validate_machine_limit(self, machine_limit: int, data_key: str) -> None:
+            if machine_limit < 0:
+                raise ValidationError(f'Invalid machine_limit: "{machine_limit}"')
 
     if isinstance(file_or_filepath, BytesIO):
         yaml_data = yaml.load(file_or_filepath, Loader=yaml.SafeLoader)

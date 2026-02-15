@@ -35,7 +35,6 @@ weights:
   Palladium Dust: 100
 time: 2s
 display_interval: 1s
-mode: Max
 default_coil: HSS-G Coil
 table_gid: 0
 unlocked_voltage_tier: EV

@@ -38,7 +38,6 @@ weights:
   Neodymium Dust: 10
 time: 60s
 display_interval: 60s
-mode: Max
 default_coil: HSS-G Coil
 table_gid: 0
 max_singleblock_machines: 8

@@ -23,7 +23,6 @@ weights:
   Air Filter [Tier 2]: 1
 time: 60s
 display_interval: 60s
-mode: Min
 default_coil: HSS-G Coil
 table_gid: 1730504225
 unlocked_voltage_tier: IV
