@@ -9,9 +9,10 @@ from packages.configs.config import Config
 from packages.crafting_chains.crafting_chain import CraftingChain
 from packages.recipes.recipe_book import RecipeBook
 from packages.crafting_chains.crafting_chain_finder import CraftingChainFinder
-from packages.configs.config import load_config
+from packages.data_loader import load_data
 from packages.utility.general_utility import time_to_seconds
 from packages.recipes.machine_options.machine_option_books import load_possible_machine_options
+from packages.exceptions import DataLoadingException
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
@@ -20,6 +21,8 @@ _LOGGER.setLevel(logging.INFO)
 
 WEIGHT_EXP_MIN = -5.0
 WEIGHT_EXP_MAX = 10.0
+
+
 
 # Run via: streamlit run ./src/gtnh_calculator/streamlit-app.py
 # Colors: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/named-color
@@ -51,10 +54,14 @@ if uploaded_file is not None:
             del st.session_state[key]
     st.session_state['file_hash'] = hash(uploaded_file)
 
-    loaded_config, recipe_book, machine_type_book = load_config(uploaded_file, machine_options_book)
-    if 'config' not in st.session_state:
-        st.session_state['config'] = loaded_config
-    config: Config = st.session_state['config']
+    try:
+        loaded_config, recipe_book, machine_type_book = load_data(uploaded_file, machine_options_book)
+        if 'config' not in st.session_state:
+            st.session_state['config'] = loaded_config
+        config: Config = st.session_state['config']
+    except DataLoadingException as e:
+        st.error(e, icon="❗")
+
 
 if 'recipe_book' in st.session_state:
     _LOGGER.debug('Keep recipe book')

@@ -3,7 +3,7 @@ import sys
 
 from packages.recipes.recipe_graph import RecipeHypergraph
 from packages.crafting_chains.crafting_chain_finder import CraftingChainFinder
-from packages.configs.config import load_config
+from packages.data_loader import load_data
 from packages.utility.general_utility import time_to_seconds
 from packages.recipes.machine_options.machine_option_books import load_possible_machine_options
 
@@ -29,10 +29,8 @@ path_bastnasite = 'config/config_bastnasite.yaml'
 path_air_filter = 'config/config_air_filter.yaml'
 
 machine_options_path = 'config/fixed_settings/machine_options.yaml'
-
 machine_options_book = load_possible_machine_options(machine_options_path)
-print(machine_options_book)
-config, recipe_book, machine_type_book = load_config(path_air_filter, machine_options_book)
+config, recipe_book, machine_type_book = load_data(path_air_filter, machine_options_book)
 
 print(config)
 

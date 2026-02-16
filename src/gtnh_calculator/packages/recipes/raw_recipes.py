@@ -17,11 +17,11 @@ class RawRecipe:
     chance_based: list[Material]
 
     def __init__(
-            self,
-            materials: Dict[Material, float],
-            processing_time: float,
-            recipe_options: RecipeOptions,
-            chance_based: list[Material]
+        self,
+        materials: Dict[Material, float],
+        processing_time: float,
+        recipe_options: RecipeOptions,
+        chance_based: list[Material]
     ):
         self.materials = materials
         self.processing_time = processing_time

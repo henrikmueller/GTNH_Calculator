@@ -48,10 +48,20 @@ def get_n_colors(n: int, saturation=0.8) -> list[RGBColor]:
 
 
 def str_to_float(text: str) -> float | None:
+    if text == '':
+        return None
+    if isinstance(text, str):
+        text = text.replace(',', '.')
     try:
         return float(text)
     except ValueError:
         return None
+
+
+def str_to_float_with_exception(text: str) -> float:
+    if isinstance(text, str):
+        text = text.replace(',', '.')
+    return float(text)
 
 
 def time_to_seconds(time_string: str) -> tuple[float, str]:

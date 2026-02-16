@@ -1,17 +1,13 @@
 import logging
-import yaml
-from io import BytesIO
 from marshmallow import Schema, fields, post_load, validates, ValidationError
 from typing import Dict, Any
 
 from ..recipes.material import Material
 from ..recipes.voltage_tiers import VoltageTier
 from ..utility.general_utility import str_to_float
-from ..data_loader import load_data, load_materials
-from ..recipes.recipe_book import RecipeBook
 from ..recipes.machine_options.machine_options import MachineOptions
 from ..recipes.machine_options.machine_option_books import MachineOptionsBook
-from ..recipes.machine_type_books import MachineTypeBook
+from ..recipes.material import MaterialList
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -161,9 +157,10 @@ class Config:
 
 
 def load_config(
-        file_or_filepath: BytesIO | str,
-        machine_options_book: MachineOptionsBook
-) -> tuple[Config, RecipeBook, MachineTypeBook]:
+    yaml_data: Any,
+    material_list: MaterialList,
+    machine_options_book: MachineOptionsBook
+) -> Config:
     class ConfigSchema(Schema):
         inputs = fields.List(fields.String(), required=True)
         outputs = fields.List(fields.String(), required=True)
@@ -291,24 +288,9 @@ def load_config(
             if machine_limit < 0:
                 raise ValidationError(f'Invalid machine_limit: "{machine_limit}"')
 
-    if isinstance(file_or_filepath, BytesIO):
-        yaml_data = yaml.load(file_or_filepath, Loader=yaml.SafeLoader)
-    elif isinstance(file_or_filepath, str):
-        with open(file_or_filepath, 'r') as f:
-            yaml_data = yaml.load(f, Loader=yaml.SafeLoader)
-    else:
-        raise ValueError(f'Config file not valid.')
-
-    table_gid = yaml_data['table_gid']
-    material_list = load_materials(table_gid)
     materials = material_list.materials_by_name
-
-    del yaml_data['table_gid']
     schema = ConfigSchema()
-    config = schema.load(yaml_data)
-
-    recipe_book, machine_type_book = load_data(table_gid, material_list, machine_options_book, config)
-    return config, recipe_book, machine_type_book
+    return schema.load(yaml_data)
 
 
 def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Material, str, float] | Material | None:
