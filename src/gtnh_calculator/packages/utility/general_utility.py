@@ -2,6 +2,27 @@ import numpy as np
 import pandas as pd
 from dataclasses import dataclass
 from colorsys import hsv_to_rgb
+from typing import Any
+import yaml
+from io import BytesIO
+import time
+import base64
+import pandas as pd
+
+
+class Timer:
+    def __init__(self, name='Block', active: bool = True):
+        self.name = name
+        self.active = active
+
+    def __enter__(self):
+        if self.active:
+            self.start = time.perf_counter()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.active:
+            end = time.perf_counter()
+            print(f'{self.name} took {end - self.start:.6f} seconds')
 
 
 @dataclass
@@ -93,3 +114,36 @@ def get_differences(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
         else:
             result[col] = np.nan
     return result
+
+
+def load_file(file_or_filepath: BytesIO | str) -> Any:
+    if isinstance(file_or_filepath, BytesIO):
+        return yaml.load(file_or_filepath, Loader=yaml.SafeLoader)
+    elif isinstance(file_or_filepath, str):
+        with open(file_or_filepath, 'r') as f:
+            return yaml.load(f, Loader=yaml.SafeLoader)
+    else:
+        raise ValueError(f'CraftingChainConfig file not valid.')
+
+
+def get_base64_image(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+
+def print_df(df: pd.DataFrame, limit_rows: bool = True, max_rows: int | None = None):
+    if limit_rows:
+        with pd.option_context(
+            "display.max_columns", None,
+            "display.width", None,
+            "display.max_colwidth", None
+        ):
+            print(df if max_rows is None else df.head(max_rows))
+    else:
+        with pd.option_context(
+            "display.max_rows", None,
+            "display.max_columns", None,
+            "display.width", None,
+            "display.max_colwidth", None
+        ):
+            print(df if max_rows is None else df.head(max_rows))

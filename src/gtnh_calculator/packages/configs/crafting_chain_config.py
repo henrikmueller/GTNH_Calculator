@@ -13,7 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
-class Config:
+class CraftingChainConfig:
     inputs: set[Material]
     outputs: set[Material]
     infinite_materials: set[Material]
@@ -150,7 +150,7 @@ class Config:
                     return value
 
         variable_string = '\n'.join([f'{attr}: {value_string(attr, value)}' for attr, value in vars(self).items()])
-        return f'Config:\n{variable_string}'
+        return f'CraftingChainConfig:\n{variable_string}'
 
     def max_machines(self, multiblock: bool) -> int:
         return self.max_multiblock_machines if multiblock else self.max_singleblock_machines
@@ -160,8 +160,8 @@ def load_config(
     yaml_data: Any,
     material_list: MaterialList,
     machine_options_book: MachineOptionsBook
-) -> Config:
-    class ConfigSchema(Schema):
+) -> CraftingChainConfig:
+    class CraftingChainConfigSchema(Schema):
         inputs = fields.List(fields.String(), required=True)
         outputs = fields.List(fields.String(), required=True)
         infinite_materials = fields.List(fields.String(), required=True)
@@ -188,8 +188,8 @@ def load_config(
         default_anvil = fields.String(required=False, load_default=machine_options_book.anvils[0].name)
 
         @post_load
-        def create_config(self, data, **kwargs) -> Config:
-            return Config(materials, machine_options_book, **data)
+        def create_config(self, data, **kwargs) -> CraftingChainConfig:
+            return CraftingChainConfig(materials, machine_options_book, **data)
 
         @validates('inputs')
         def validate_inputs(self, inputs: list[str], data_key: str) -> None:
@@ -289,7 +289,7 @@ def load_config(
                 raise ValidationError(f'Invalid machine_limit: "{machine_limit}"')
 
     materials = material_list.materials_by_name
-    schema = ConfigSchema()
+    schema = CraftingChainConfigSchema()
     return schema.load(yaml_data)
 
 

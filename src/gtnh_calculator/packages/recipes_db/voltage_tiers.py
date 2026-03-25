@@ -130,4 +130,3 @@ class VoltageTier:
         if minimum is None:
             return list(range(VoltageTier.number_of_voltage_tiers()))
         return list(range(minimum, VoltageTier.number_of_voltage_tiers()))
-

@@ -9,7 +9,7 @@ from ..recipes.machine_type_books import MachineTypeBook
 from ..recipes.voltage_tiers import VoltageTier
 from ..recipes.machine_options.machine_option_books import MachineOptionsBook
 from ..data_loading.recipe_specifications import RecipeSpecification
-from ..configs.config import Config
+from ..configs.crafting_chain_config import CraftingChainConfig
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -20,7 +20,7 @@ def load_recipe_book(
     machine_type_book: MachineTypeBook,
     machine_options_book: MachineOptionsBook,
     recipe_specifications: Dict[int, RecipeSpecification],
-    config: Config
+    config: CraftingChainConfig
 ) -> RecipeBook:
     def create_recipe_from(recipe_specification: RecipeSpecification) -> Recipe | None:
         if recipe_specification.exclude:

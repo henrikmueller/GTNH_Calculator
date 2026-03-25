@@ -14,7 +14,7 @@ from ..recipes.recipe import Recipe
 from ..recipes.machine_type_books import MachineTypeBook
 from ..recipes.machine_options.machine_option_books import MachineOptionsBook
 from ..utility.general_utility import time_to_seconds
-from ..configs.config import Config
+from ..configs.crafting_chain_config import CraftingChainConfig
 from ..crafting_chains.crafting_chain import CraftingChain
 from ..recipes.voltage_tiers import VoltageTier
 
@@ -48,7 +48,7 @@ class CraftingChainFinder:
         self,
         machine_type_book: MachineTypeBook,
         machine_options_book: MachineOptionsBook,
-        config: Config,
+        config: CraftingChainConfig,
         recipe_weight_factor: float = 1,
         update_machine_types: bool = True
     ) -> CraftingChain | None:
@@ -122,7 +122,7 @@ class CraftingChainFinder:
 
     def _optimal_crafting_chain(
         self,
-        config: Config,
+        config: CraftingChainConfig,
         recipe_weight_factor: float = 1,
         use_individual_limits: bool = False
     ) -> CraftingChain | None:
@@ -280,7 +280,7 @@ class CraftingChainFinder:
                     hypergraph.add_edge([[-1], [node]], id=-1)
         return hypergraph
 
-    def _validate_parameters(self, config: Config) -> None:
+    def _validate_parameters(self, config: CraftingChainConfig) -> None:
         for material in config.inputs.intersection(config.infinite_materials):
             _LOGGER.warning(f'Material {material} was specified both as input and infinite.')
         if self.materials_by_name['EU'] not in config.outputs.union(config.infinite_materials):
