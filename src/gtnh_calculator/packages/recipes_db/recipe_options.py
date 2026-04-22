@@ -1,8 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import logging
-
-from ..utility.general_utility import str_to_float
+from typing import Dict
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -10,19 +9,17 @@ _LOGGER.setLevel(logging.INFO)
 
 @dataclass
 class RecipeOptions:
-    temperature: int | None
+    options: Dict[str, float]
 
     @classmethod
-    def get_recipe_options(cls, input_string: str) -> RecipeOptions:
-        recipe_options = RecipeOptions.create_empty_options()
-        # TODO
-        return recipe_options
+    def get_recipe_options(cls, metadata: Dict[str, float]) -> RecipeOptions:
+        return RecipeOptions(options=metadata)
 
-    @classmethod
-    def create_empty_options(cls) -> RecipeOptions:
-        return RecipeOptions(
-            temperature=None
-        )
+    @property
+    def temperature(self) -> float | None:
+        if 'temperature' in self.options:
+            return self.options['temperature']
+        return None
 
     def markdown_string(self) -> str:
         result = []

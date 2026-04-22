@@ -51,7 +51,7 @@ class CraftingChainStatistics:
 
 
 class CraftingChain:
-    hypergraph: xgi.DiHypergraph
+    hypergraph: xgi.DiHypergraph | None
     recipe_amounts: Dict[int, float]
     recipe_matrix: np.ndarray
     materials: Dict[int, Material]
@@ -66,7 +66,7 @@ class CraftingChain:
 
     def __init__(
             self,
-            hypergraph: xgi.DiHypergraph,
+            hypergraph: xgi.DiHypergraph | None,
             recipe_amounts: Dict[int, float],
             recipe_matrix: np.ndarray,
             materials: Dict[int, Material],

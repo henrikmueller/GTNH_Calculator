@@ -8,16 +8,20 @@ from typing import Dict
 from collections import defaultdict
 import json
 from itertools import chain
-import streamlit as st
+from collections import deque
 
 from ..recipes_db.material import ExtractedItem, ExtractedFluid, Material, MaterialGroup
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.machines import Machine, MachineType
+from ..recipes_db.behaviours.machine_behaviours import MachineBehaviour
+from ..recipes_db.machine_options.machine_option_books import load_possible_machine_options, MachineOptionsBook
+from ..recipes_db.machine_options.machine_option_types import MachineOptionType
 from .database_building_options import steam_machines
 from ..utility.general_utility import str_to_float, Timer, print_df
+from ..utility.constants import GT_EU_KEY, INCLUDE_DEPRECATED_MACHINES
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.INFO)
+_LOGGER.setLevel(logging.WARNING)
 
 
 @dataclass
@@ -25,12 +29,26 @@ class GTNHDatabase:
     df_recipes: pd.DataFrame
     extracted_materials: Dict[str, Material]
     extracted_machines: Dict[str, Machine]
+    machine_options_book: MachineOptionsBook
+    includes_deprecated_machines: bool = INCLUDE_DEPRECATED_MACHINES
 
     def mod_set_materials(self) -> set[str]:
         return set(m.mod for m in self.extracted_materials.values())
 
     def mod_set_recipes(self) -> set[str]:
         return set(self.df_recipes['CATEGORY'].unique())
+
+    def add_eu(self) -> None:
+        if GT_EU_KEY in self.extracted_materials.keys():
+            raise AssertionError(f'{GT_EU_KEY} must not a key of material.')
+        self.extracted_materials[GT_EU_KEY] = Material(
+            id=GT_EU_KEY,
+            image_file_path='',
+            name='EU',
+            mod='gregtech',
+            nbt='',
+            tooltip='The Electric Unit, the standard unit of energy in GTNH.'
+        )
 
     def filter_recipes(
         self,
@@ -59,13 +77,14 @@ class GTNHDatabase:
         if categories is not None:
             df_result = df_result[df_result['CATEGORY'].isin(categories)]
         if machines is not None:
-            df_result = df_result[df_result['MACHINES'].map(lambda s: machines.issubset(s))]
+            df_result['MACHINES'] = df_result['MACHINES'].map(lambda s: s & machines)
+            df_result = df_result[df_result['MACHINES'].map(len) > 0]
         return df_result
 
     def get_reachable_recipes(
-            self, df_recipes: pd.DataFrame, extracted_materials: Dict[str, Material],
-            starting_materials: list[Material], sort=False
-        ) -> tuple[list[tuple[Material, int]], pd.DataFrame]:
+            self, df_recipes: pd.DataFrame,
+            starting_materials: set[Material], sort=False
+        ) -> tuple[Dict[Material, int], pd.DataFrame]:
         outputs = df_recipes['AVG_OUTPUTS']
         node_to_edges = defaultdict(list)
         remaining = []
@@ -79,52 +98,109 @@ class GTNHDatabase:
                     node_to_edges[material].append((edge_id, i))
             remaining.append(tmp)
 
-        material_grading = {m: -1 for m in extracted_materials.values()}  # positive values = visited
+        material_grading = {m: -1 for m in self.extracted_materials.values()}  # positive values = visited
         recipe_grading = [-1] * df_recipes.shape[0]  # positive values = visited
-        stack = starting_materials
-        for m in starting_materials:
+        double_ended_queue = deque(starting_materials)
+        for m in double_ended_queue:
             material_grading[m] = 0
 
-        while stack:
-            material = stack.pop()
+        while double_ended_queue:
+            material = double_ended_queue.popleft()
+            if material_grading[material] < 0:  # TODO: Remove later
+                raise AssertionError(f'Negative grading for material in queue: {material} | {double_ended_queue}')
             for edge_id, index in node_to_edges[material]:
                 remaining[edge_id][index] = False
 
                 if sum(remaining[edge_id]) == 0 and recipe_grading[edge_id] < 0:
-                    recipe_grading[edge_id] = material_grading[material] + 1
+                    recipe_grading[edge_id] = material_grading[material]
                     for output in outputs.iloc[edge_id].keys():
                         if material_grading[output] < 0:
                             material_grading[output] = material_grading[material] + 1
-                            stack.append(output)
+                            double_ended_queue.append(output)
 
-        reachable_materials_graded = [(m, r) for m, r in material_grading.items() if r >= 0]
-        reachable_materials_graded.sort(key=lambda x: x[1])
         df_reachable_recipes = df_recipes.assign(GRADING=recipe_grading)[[r >= 0 for r in recipe_grading]]
         if sort:
             df_reachable_recipes = df_reachable_recipes.sort_values(by='GRADING')
+        return material_grading, df_reachable_recipes
+
+    def get_ingredient_recipes(
+        self, df_recipes: pd.DataFrame,
+        target_materials: list[Material], sort=False
+    ) -> tuple[list[tuple[Material, int]], pd.DataFrame]:
+        """
+        Calculates recipes and materials which can be used to craft the target materials
+        :param df_recipes:
+        :param target_materials:
+        :param sort:
+        :return:
+        """
+        input_groups = df_recipes['TOTAL_INPUTS']
+        node_to_edges = defaultdict(list)
+        for edge_id, avg_outputs in enumerate(df_recipes['AVG_OUTPUTS']):
+            for i, (output, amount) in enumerate(avg_outputs.items()):
+                if amount <= 0:
+                    continue
+                node_to_edges[output].append(edge_id)
+
+        material_grading = {m: -1 for m in self.extracted_materials.values()}  # positive values = visited
+        recipe_grading = [-1] * df_recipes.shape[0]  # positive values = visited
+        double_ended_queue = deque(target_materials)
+        for m in target_materials:
+            material_grading[m] = 0
+
+        while double_ended_queue:
+            material = double_ended_queue.popleft()
+            for edge_id in node_to_edges[material]:
+                if recipe_grading[edge_id] < 0:
+                    recipe_grading[edge_id] = material_grading[material]
+                    for input_group in input_groups.iloc[edge_id].keys():
+                        for input in input_group.materials:
+                            if material_grading[input] < 0:
+                                material_grading[input] = material_grading[material] + 1
+                                double_ended_queue.append(input)
+
+        reachable_materials_graded = [(m, r) for m, r in material_grading.items() if r >= 0]
+        reachable_materials_graded.sort(key=lambda x: x[1])
+        df_reachable_recipes = df_recipes.assign(OUTPUT_GRADING=recipe_grading)[[r >= 0 for r in recipe_grading]]
+        if sort:
+            df_reachable_recipes = df_reachable_recipes.sort_values(by='OUTPUT_GRADING')
         return reachable_materials_graded, df_reachable_recipes
 
+    @staticmethod
+    def get_base_machines(recipe_row) -> list[Machine]:
+        groups = defaultdict(set)
+        for machine in recipe_row.MACHINES:
+            groups[(frozenset(machine.machine_types), machine.multiblock)].add(machine)
+        base_machines = [
+            min(group, key=lambda m: (m.weight, m.minimal_voltage_tier()))
+            for group in groups.values()
+        ]
+        base_machines.sort(key=lambda m: m.multiblock)
+        return base_machines
 
-def load_database() -> GTNHDatabase:
-    progress_text = 'Loading GTNH recipes...'
-    if 'database' not in st.session_state:
-        database_extractor = DatabaseExtractor(validity_check=False)
-        progress_bar = st.progress(0, text=progress_text)
-        gen = database_extractor.extract_database()
+    def get_default_machine(self, recipe_row) -> Machine | None:
+        base_machines = self.get_base_machines(recipe_row)
+        if not all(m.multiblock for m in base_machines):
+            base_machines = [m for m in base_machines if not m.multiblock]
+        base_machine_names = [m.name for m in base_machines]
+        if 'Large Chemical Reactor' in base_machine_names and 'Mega Chemical Reactor' in base_machine_names:
+            base_machines = [m for m in base_machines if m.name != 'Mega Chemical Reactor']
+        if 'Large Scale Auto-Assembler v1.01' in base_machine_names and 'Precise Auto-Assembler MT-3662' in base_machine_names:
+            base_machines = [m for m in base_machines if m.name != 'Precise Auto-Assembler MT-3662']
+        if 'Dangote Distillus' in base_machine_names and 'Mega Distillation Tower' in base_machine_names:
+            base_machines = [m for m in base_machines if m.name != 'Mega Distillation Tower']
+        if 'Distillation Tower' in base_machine_names and 'Dangote Distillus' in base_machine_names:
+            base_machines = [m for m in base_machines if m.name != 'Dangote Distillus']
+        if 'Neutronium Compressor' in base_machine_names and 'Pseudostable Black Hole Containment Field' in base_machine_names:
+            base_machines = [m for m in base_machines if m.name != 'Pseudostable Black Hole Containment Field']
 
-        try:
-            while True:
-                progress = next(gen)
-                progress_bar.progress(progress, text=progress_text)
+        if len(base_machines) == 1:
+            return base_machines[0]
+        if 'Superdense Magnetohydrodynamically Constrained Star Matter Plate' in [m.name for m in recipe_row.AVG_OUTPUTS.keys()]:
+            return [m for m in base_machines if m.name == 'Pseudostable Black Hole Containment Field'][0]
 
-        except StopIteration as e:
-            database: GTNHDatabase = e.value
-            progress_bar.progress(1.0, text=f"Successfully extracted all recipes.")
-            st.session_state['database'] = database
-    else:
-        st.progress(1.0, text=f"Successfully extracted all recipes.")
-        database = st.session_state['database']
-    return database
+        _LOGGER.warning(f'No base machine: {base_machines} | {recipe_row}')
+        return None
 
 
 @dataclass
@@ -137,21 +213,25 @@ class DatabaseExtractor:
         extracted_fluids = self.extract_fluids()
         yield 0.05
         extracted_items = self.extract_items(extracted_fluids)
+        extracted_materials = extracted_items | extracted_fluids
         yield 0.1
+        machine_options_path = 'config/fixed_settings/machine_options_db.yaml'
+        machine_options_book = load_possible_machine_options(machine_options_path, extracted_materials)
+        yield 0.15
         machines, machine_types = self.extract_machine_types(extracted_items)
         yield 0.2
         df_recipes = yield from self.extract_recipes(extracted_items, extracted_fluids, machines)
         return GTNHDatabase(
             df_recipes=df_recipes,
-            extracted_materials=extracted_items | extracted_fluids,
-            extracted_machines=machines
+            extracted_materials=extracted_materials,
+            extracted_machines=machines,
+            machine_options_book=machine_options_book
         )
 
     def extract_recipes(
         self, extracted_items: Dict[str, ExtractedItem], extracted_fluids: Dict[str, ExtractedFluid],
             extracted_machines: Dict[str, Machine]
     ):
-        extracted_materials = extracted_items | extracted_fluids
         conn = sqlite3.connect(self.database_path)
         conn.execute("PRAGMA cache_size = -200000")
         conn.execute("PRAGMA temp_store = MEMORY")
@@ -221,9 +301,11 @@ class DatabaseExtractor:
             """
             static_df = pd.read_sql_query(query, conn)
             static_df['EU_PER_TICK'] = static_df['VOLTAGE'] * static_df['AMPERAGE']
+            static_df['DURATION'] = static_df['DURATION'].fillna(0)
             static_df['TOTAL_EU'] = static_df['EU_PER_TICK'] * static_df['DURATION']
             static_df['DURATION'] /= 20
             static_df['VOLTAGE_TIER'] = static_df['VOLTAGE_TIER'].map(VoltageTier.to_voltage_tier)
+            static_df["AMPERAGE"] = static_df["AMPERAGE"].fillna(0)
             recipe_ids = static_df["ID"].to_numpy()
             yield 0.3
 
@@ -371,7 +453,7 @@ class DatabaseExtractor:
                             'fluid_id', rfo.FLUID_OUTPUTS_VALUE_FLUID_ID,
                             'amount', rfo.FLUID_OUTPUTS_VALUE_AMOUNT,
                             'probability', rfo.FLUID_OUTPUTS_VALUE_PROBABILITY,
-                            'key', rfo.FLUID_OUTPUTS_KEY
+                            'key', - rfo.FLUID_OUTPUTS_KEY - 1
                         )
                     ) AS FLUID_OUTPUTS_JSON
                 FROM RECIPE_FLUID_OUTPUTS rfo
@@ -395,12 +477,13 @@ class DatabaseExtractor:
                     result[output] += amount * probability
                 return result
 
-            outputs_all = pd.DataFrame({
+            outputs_dict = {
                 "ID": list(recipe_ids),
                 "OUTPUTS": [
                     item_outputs_all.get(id, {}) | fluid_outputs_all.get(id, {}) for id in recipe_ids
                 ]
-            })
+            }
+            outputs_all = pd.DataFrame(outputs_dict)
             outputs_all['AVG_OUTPUTS'] = outputs_all['OUTPUTS'].map(average_outputs)
             yield 0.7
 
@@ -455,12 +538,12 @@ class DatabaseExtractor:
         df_all = df_all.join(special_items_df.set_index("ID"))
         yield 0.87
         df_all = df_all.join(metadata_df.set_index("ID"))
+        mask = df_all['METADATA'].isna()
+        df_all.loc[mask, 'METADATA'] = [{} for _ in range(mask.sum())]
         yield 0.88
         df_all = df_all.join(df_valid_machines.set_index("ID"))
-        yield 0.9
-
-        df_all = df_all.drop(columns=['RECIPE_TYPE_ID'])
         df_all = df_all[df_all['MACHINES'].map(len) > 0]
+        yield 0.9
 
         # df_test = df_all[df_all['OUTPUTS'].map(lambda x: any('Sodium Hydroxide' in o[0].name for o in x.values()))]
         # df_test = df_all[df_all['MACHINES'].map(lambda x: any('Assembling Machine' in m.name for m in x))]
@@ -606,20 +689,39 @@ class DatabaseExtractor:
     def extract_machine_types(
         self, extracted_items: Dict[str, ExtractedItem]
     ) -> tuple[Dict[str, Machine], Dict[str, MachineType]]:
-        with open('config/fixed_settings/machine_types_db.yaml') as f:
+        with (open('config/fixed_settings/machine_types_db.yaml') as f):
             machine_dict = yaml.safe_load(f)
             machine_count = len(machine_dict)
             machine_types = {}
             extracted_machines = {}
             for item_id, specification in machine_dict.items():
+                deprecated = 'deprecated' in specification and specification['deprecated']
+                if deprecated and not INCLUDE_DEPRECATED_MACHINES:
+                    _LOGGER.info(f'Skipping deprecated machine {specification["name"]} ({item_id})')
+                    continue
+                try:
+                    valid_options = (
+                        [MachineOptionType(o.strip()) for o in specification['valid_options'].strip().split(',')]
+                        if 'valid_options' in specification else []
+                    )
+                except ValueError as e:
+                    raise ValueError(f'MachineOptionType could not be determined for {specification}')
+                voltage_tier = min(specification['voltage_tier'])
                 extracted_machines[item_id] = Machine(
                     name=specification['name'],
                     multiblock=specification['multiblock'],
-                    deprecated='deprecated' in specification and specification['deprecated'] == 'true',
+                    deprecated=deprecated,
                     disabled='disabled' in specification and specification['disabled'],
-                    voltage_tiers=specification['voltage_tier'],
+                    unspecified='unspecified' in specification and specification['unspecified'],
+                    voltage_tiers=[int(v) for v in specification['voltage_tier']],
+                    _voltage_tier=voltage_tier,
                     item=extracted_items[item_id],
-                    machine_types=set()
+                    weight=specification['weight'] if 'weight' in specification else 0,
+                    valid_options=valid_options,
+                    speedup=specification['speedup'] if 'speedup' in specification else 1,
+                    efficiency=specification['efficiency'] if 'efficiency' in specification else 1,
+                    machine_types=set(),
+                    machine_behaviour=MachineBehaviour.create_machine_behaviour(specification)
                 )
                 for machine_type_name in specification['machine_types']:
                     if machine_type_name not in machine_types.keys():
@@ -635,6 +737,7 @@ class DatabaseExtractor:
             if not self.validity_check:
                 return extracted_machines, machine_types
 
+            # Validity checks
             valid_voltages = VoltageTier.valid_voltage_tiers()
             for machine in extracted_machines.values():
                 for v in machine.voltage_tiers:
@@ -642,7 +745,7 @@ class DatabaseExtractor:
                         _LOGGER.error(f'Invalid voltage tier "{v}" for machine {machine}')
 
             for name, machine_type in machine_types.items():
-                machines = [m for m in machine_type.machines if not m.disabled]
+                machines = [m for m in machine_type.machines if not m.unspecified]
                 multiblocks = [m for m in machines if m.multiblock]
                 sb_voltage_tiers = [v for m in machines if not m.multiblock for v in m.voltage_tiers]
                 sb_voltage_tiers.sort()
@@ -674,13 +777,6 @@ class DatabaseExtractor:
                 'MACHINES': 'unique'
             })
         )
-        # voltage_endings = [f'({v})' for v in VoltageTier.voltage_tiers()]
-        # def remove_voltage_ending(name: str) -> str:
-        #     for ending in voltage_endings:
-        #         new_name = name.removesuffix(ending)
-        #         if new_name != name:
-        #             return new_name.strip()
-        #     return name
 
         def update_items(row):
             machines = [extracted_machines[x] for x in row['MACHINES'] if x in extracted_machines.keys()]

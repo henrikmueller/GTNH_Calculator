@@ -2,8 +2,8 @@ from __future__ import annotations
 import numpy as np
 from typing import Dict
 import logging
+from collections import defaultdict
 
-from .machines import MachineType
 from .material import Material
 from .machines import Machine
 from .raw_recipes import RawRecipe
@@ -17,9 +17,8 @@ class Recipe:
     id: str
     base_recipe: RawRecipe
     raw_recipe: RawRecipe
+    valid_machines: set[Machine]
     machine: Machine
-    category: str
-    recipe_special_value: float
     cap: float | None
     cap_specified: bool
 
@@ -28,7 +27,7 @@ class Recipe:
         id: int,
         base_recipe: RawRecipe,
         raw_recipe: RawRecipe,
-        base_machine_type: MachineType,
+        valid_machines: set[Machine],
         machine: Machine,
         cap: float | None,
         cap_specified: bool
@@ -36,14 +35,14 @@ class Recipe:
         self.id = id
         self.base_recipe = base_recipe
         self.raw_recipe = raw_recipe
-        self.base_machine_type = base_machine_type
+        self.valid_machines = valid_machines
         self.machine = machine
         self.cap = cap
         self.cap_specified = cap_specified
 
     @property
-    def materials(self) -> Dict[Material, float]:
-        return self.raw_recipe.materials
+    def total_eu(self) -> float:
+        return self.raw_recipe.total_eu
 
     @property
     def processing_time(self) -> float:
@@ -61,6 +60,9 @@ class Recipe:
     def voltage_tier_name(self) -> str:
         return VoltageTier.voltage_tier_name(self.raw_recipe.voltage_tier)
 
+    def positive_processing_time(self) -> bool:
+        return self.processing_time > 0
+
     def __repr__(self) -> str:
         return (f'Recipe {self.id}: {self.raw_recipe}. Machine: {self.machine}, '
                 f'Processing Time = {self.processing_time}, Voltage Tier = {self.voltage_tier}')
@@ -69,22 +71,46 @@ class Recipe:
         return f'{self.id} | {self.machine}: {self.get_inputs()} -> {self.get_outputs()}'
 
     def get_inputs(self) -> list[Material]:
-        return list(self.raw_recipe.inputs.keys())
+        return list(self.input_dict.keys())
+
+    @property
+    def consumed_inputs(self) -> list[Material]:
+        return [m for m, a in self.input_dict.items() if a < 0]
 
     def get_outputs(self) -> list[Material]:
-        return list(self.raw_recipe.outputs.keys())
+        return list(self.output_dict.keys())
+
+    @property
+    def input_dict(self) -> Dict[Material, float]:
+        return self.raw_recipe.inputs
+
+    @property
+    def output_dict(self) -> Dict[Material, float]:
+        # TODO: Take number of output slots into account (e.g. for plant mass)
+        result = defaultdict(float)
+        for m, a, p in self.raw_recipe.output_specifications.values():
+            result[m] += a * p
+        return result
+
+    @property
+    def material_dict(self) -> Dict[Material, float]:
+        result = defaultdict(float)
+        for input, amount in self.input_dict.items():
+            result[input] += amount
+        for output, amount in self.output_dict.items():
+            result[output] += amount
+        return result
+
+    @property
+    def materials(self) -> list[Material]:
+        return list(self.material_dict.keys())
 
     def material_quantity(self, material: Material):
-        return self.materials[material] if material in self.materials.keys() else 0
-
-    def recipe_vector(self, materials: list[Material]):
-        return np.array([self.material_quantity(material) for material in materials])
+        return self.material_dict[material] if material in self.material_dict.keys() else 0
 
     def input_string_array(self, factor: float) -> list[tuple[float, Material]]:
         result = []
-        for material in self.get_inputs():
-            if material.is_eu():
-                continue
+        for material in self.consumed_inputs:
             result.append((factor * (abs(self.material_quantity(material))), material))
         return result
 
@@ -94,7 +120,9 @@ class Recipe:
 
     def output_string_array(self, factor: float) -> list[tuple[float, Material]]:
         result = []
-        for material in self.get_outputs():
+        for material, amount in self.output_dict.items():
+            if amount == 0:
+                continue
             result.append((factor * (abs(self.material_quantity(material))), material))
         return result
 
@@ -110,12 +138,12 @@ class Recipe:
 #### Recipe inputs:
 
 {', \n'.join(f'- {int(abs(a)) if a.is_integer() else abs(a)} {m.name}' 
-             for m, a in self.materials.items() if a < 0 and not m.is_eu())}
+             for m, a in self.material_dict.items() if a < 0 and not m.is_eu())}
 '''
 
     def markdown_outputs(self) -> str:
         return f'''
 #### Recipe outputs:
 
-{', \n'.join(f'- {int(abs(a)) if a.is_integer() else abs(a)} {m.name}' for m, a in self.materials.items() if a > 0)}
+{', \n'.join(f'- {int(abs(a)) if a.is_integer() else abs(a)} {m.name}' for m, a in self.material_dict.items() if a > 0)}
 '''

@@ -112,21 +112,31 @@ class VoltageTier:
         return 0
 
     @classmethod
-    def voltage_tiers(cls, minimum: int | None = None) -> list[str]:
+    def voltage_tiers(cls, minimum: int | None = None, maximum: int | None = None) -> list[str]:
         """
         List does not include the "No Requirement"-Voltage Tier
         :return:
         """
         if minimum is None:
-            return [VoltageTier.voltage_tier_name(v) for v in range(VoltageTier.number_of_voltage_tiers())]
-        return [VoltageTier.voltage_tier_name(v) for v in range(minimum, VoltageTier.number_of_voltage_tiers())]
+            if maximum is None:
+                return [VoltageTier.voltage_tier_name(v) for v in range(VoltageTier.number_of_voltage_tiers())]
+            return [VoltageTier.voltage_tier_name(v) for v in range(min(maximum,
+                                                                        VoltageTier.number_of_voltage_tiers()))]
+        if maximum is None:
+            return [VoltageTier.voltage_tier_name(v) for v in range(minimum, VoltageTier.number_of_voltage_tiers())]
+        return [VoltageTier.voltage_tier_name(v) for v in range(minimum, min(maximum,
+                                                                             VoltageTier.number_of_voltage_tiers()))]
 
     @classmethod
-    def voltage_tiers_int(cls, minimum: int | None = None) -> list[int]:
+    def voltage_tiers_int(cls, minimum: int | None = None, maximum: int | None = None) -> list[int]:
         """
         List does not include the "No Requirement"-Voltage Tier
         :return:
         """
         if minimum is None:
-            return list(range(VoltageTier.number_of_voltage_tiers()))
-        return list(range(minimum, VoltageTier.number_of_voltage_tiers()))
+            if maximum is None:
+                return list(range(VoltageTier.number_of_voltage_tiers()))
+            return list(range(min(maximum, VoltageTier.number_of_voltage_tiers())))
+        if maximum is None:
+            return list(range(minimum, VoltageTier.number_of_voltage_tiers()))
+        return list(range(minimum, min(maximum, VoltageTier.number_of_voltage_tiers())))

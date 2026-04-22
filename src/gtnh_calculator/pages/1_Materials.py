@@ -4,7 +4,8 @@ import logging
 import sys
 from rapidfuzz import fuzz
 
-from packages.database_extraction.database_extractor import GTNHDatabase, load_database
+from packages.database_extraction.database_extractor import GTNHDatabase
+from packages.utility.streamlit_functions import load_database
 from packages.recipes_db.material import Material
 from packages.utility.streamlit_functions import display_recipe
 from packages.utility.general_utility import print_df
@@ -113,11 +114,10 @@ else:
         for i, recipe_row in enumerate(detected_recipes.itertuples()):
             if i >= 100:
                 break
-            display_recipe(recipe_row)
+            display_recipe(recipe_row, database.get_base_machines(recipe_row))
     with recipes_tab:
         detected_recipes = database.filter_recipes(df_recipes=database.df_recipes, outputs={material})
-        print_df(detected_recipes)
         for i, recipe_row in enumerate(detected_recipes.itertuples()):
             if i >= 100:
                 break
-            display_recipe(recipe_row)
+            display_recipe(recipe_row, database.get_base_machines(recipe_row))

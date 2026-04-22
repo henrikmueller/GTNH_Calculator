@@ -806,6 +806,93 @@ files = [
 ]
 
 [[package]]
+name = "highspy"
+version = "1.14.0"
+description = "A thin set of pybind11 wrappers to HiGHS"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "highspy-1.14.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:3647f57e0edebbd0a51cf45d3f07f1c62a1f76f9cbb0e72324938ec52fd048da"},
+    {file = "highspy-1.14.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ea9edf1b15dc93a8c129a0d08bad17597ef709d16026e76c2c2da1e5ec486ded"},
+    {file = "highspy-1.14.0-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d4f929802b418e0746aa6d7a0c1ab05abae300f483a8593a07c6cea653b062de"},
+    {file = "highspy-1.14.0-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ee3dd40da51f1f7f07d629044228ffd2f25d7aa561a3f08b64e2696bdf927355"},
+    {file = "highspy-1.14.0-cp310-cp310-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:39e78e5a08d29382fae67b8dd144dc9947b022ad295a0fc679f93c096603efb0"},
+    {file = "highspy-1.14.0-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:b66d48939177301b9ebee4b6e13ef97b49a0a389cc0a7360dcbb1cdd57cb31f4"},
+    {file = "highspy-1.14.0-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:2d4d8c405615bae110306531da4c0b04715aca39b34c853c1598edac5c0ca1fa"},
+    {file = "highspy-1.14.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:d417857853e440b91733418acb55b260f3c96a0d7c454c1c7a0ac5fd236c77e4"},
+    {file = "highspy-1.14.0-cp310-cp310-win32.whl", hash = "sha256:c0e27e6d2309f2a1a6ba03c54399580c9af89f736911d00a4a58569475da9d2c"},
+    {file = "highspy-1.14.0-cp310-cp310-win_amd64.whl", hash = "sha256:41c2bcca7ab720db5cfb7f89fa949a3336b476aac9c68cf0e501a3ca5beb18fc"},
+    {file = "highspy-1.14.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:69558127aabad8b5718a58009dc3d36618c3aa5aa5e733206c32ce396189a132"},
+    {file = "highspy-1.14.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:3699fc8072a70664d5bbaf1c9239f8e2e8700c5090f57486f2ce4567f9b2b6aa"},
+    {file = "highspy-1.14.0-cp311-cp311-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4dd237b94494b14693edbebd05a0068fa02ae36b2629e6353be42bc2b491c1f0"},
+    {file = "highspy-1.14.0-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:526c54ff6e0384abcc495cda08fb2f98156544031afb9ac8bb02f20968d743ba"},
+    {file = "highspy-1.14.0-cp311-cp311-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:60265c69fb9d199526b8190f3bd42bc241896a335c299570d1dfc9d6e97f8895"},
+    {file = "highspy-1.14.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:895b3450ece50c1cdcd348aa5c6efd6ee823598f3a21c23677d57a06e3c6f28a"},
+    {file = "highspy-1.14.0-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:b50202f02c7db95163b0ad92160167541dad263b19327164dcf0f827cf9f69b3"},
+    {file = "highspy-1.14.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:e12591c1d495ebb5f6d8dc50e99ed48f338dfb59741929cd68c2c2b40d97a58f"},
+    {file = "highspy-1.14.0-cp311-cp311-win32.whl", hash = "sha256:9ba82456280ef72cde8e45ecf6bdb2a244c56d80f7e44bb2e5ef7a9abf21f4d9"},
+    {file = "highspy-1.14.0-cp311-cp311-win_amd64.whl", hash = "sha256:e726092e35237dccdd8093f8c91be195a5826e48aab349d6e7856e32c0e87b41"},
+    {file = "highspy-1.14.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:2a8d0339887d65f5ef20c59be529af33115197d47f775ee21fca911a87d30f92"},
+    {file = "highspy-1.14.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:2f61406a287b19680ece9a8c0bc3926e31d26ad2b4df8ba49f22666ce762fb7d"},
+    {file = "highspy-1.14.0-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:74ee022cc8cc0e3a576f9b2309287974ea80db68adf8c9f1c5698dc725ec0497"},
+    {file = "highspy-1.14.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:eb7c564ee426355671edf6ad17b2ece5aaa74f21b326ed5e7a8ba5bdc880f207"},
+    {file = "highspy-1.14.0-cp312-cp312-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:44d80756dde11941336933d777ae85b913c303fe40c3b7eb55fae0fe62bbea08"},
+    {file = "highspy-1.14.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:6ba00a35b6c4b96eb2d20d75238c6046ecf82ac85a603706e5f588d28c3b3abf"},
+    {file = "highspy-1.14.0-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:e991b5ac8af64d686f2a56fb59391b4bb81a50d647fe1e31a1b0ff34d9d2bb51"},
+    {file = "highspy-1.14.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:c10554bd0a37d4be126f24cbb7f5aca5a4252dd6e572b51b2433ad6d94ce7a9d"},
+    {file = "highspy-1.14.0-cp312-cp312-win32.whl", hash = "sha256:7290540f0352192e43bdc790a59a82cee1f8029bd8d6b9ca20b54b651256bab4"},
+    {file = "highspy-1.14.0-cp312-cp312-win_amd64.whl", hash = "sha256:c0568d0fb514dc82776c3be1041988fe428c9df2be0ce98c1bff6382c0d2a5ba"},
+    {file = "highspy-1.14.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:777ce930bc29a984826bc4e65ca7fec0407284a30877bc0d179dacc6bb7ee972"},
+    {file = "highspy-1.14.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:479be627bbdf7646dccf5621059b9416e6480c3ffa16998e6cc4de89c40a3716"},
+    {file = "highspy-1.14.0-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:863a9363b624d0ef0a5a5bfcbe437bcd3891676c8b7c4d801462320b1387ef37"},
+    {file = "highspy-1.14.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ba290153919da6368e9144189060a496077a738522555e89403504d379e8d63f"},
+    {file = "highspy-1.14.0-cp313-cp313-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:bdc317bc2572a591cf9f0f2415d4b0879f9f0a47bdff3cda44f85a943941e64b"},
+    {file = "highspy-1.14.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:02a987e0020bf28757df9efbdfd6abde6d501b64294f8201301958095dae7979"},
+    {file = "highspy-1.14.0-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:03c9b39a9ca8fe973eb89093ac386a8606ac37beb0e637b1a9255e31bfe87ef3"},
+    {file = "highspy-1.14.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:a92b50e7508b90c6d65b315b7dd3b37c6d0db331e698052f7054da523e446eb4"},
+    {file = "highspy-1.14.0-cp313-cp313-win32.whl", hash = "sha256:e8eb72be8766717ec856cf5fa3fcadd8ddd59bee0f4d71d4f45ae0a2b861795f"},
+    {file = "highspy-1.14.0-cp313-cp313-win_amd64.whl", hash = "sha256:3d15faaab62b408320373540bfd5a7b9a48e9a01072b847f2270b8d5d881647c"},
+    {file = "highspy-1.14.0-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:cc9dfde9ad829f3463627dab84152ceb4c30c08b89b19226bf8f69d47a7fed5d"},
+    {file = "highspy-1.14.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:fc8ad7a6fc0a44c99b9aa3a3d0c3a917b50dfa8c61e332cb2ee1f7ea4c234e4f"},
+    {file = "highspy-1.14.0-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:39339a7a000998ab26eb87add814222fcdc304d38cfba2f6e098189b53ef0a79"},
+    {file = "highspy-1.14.0-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c8f31f2635517c7d370be612a1e9102481483c749b9db786760dd489fad22519"},
+    {file = "highspy-1.14.0-cp314-cp314-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:68b944014ce307e24921c3bf904253d8849799ded819bda39a4b09359074ea0a"},
+    {file = "highspy-1.14.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:03538f68dff2038582d8aa7f5d05690ce459435f498ea0022869fe962d70d8ae"},
+    {file = "highspy-1.14.0-cp314-cp314-musllinux_1_2_i686.whl", hash = "sha256:a54d687522347348639a62df270f45546a3cbd84a6cd230dc41732e9559c766f"},
+    {file = "highspy-1.14.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:88db4d1ebefb119991ff16adb624c682ebc20fc586c86156843cb4be7c965d8a"},
+    {file = "highspy-1.14.0-cp314-cp314-win32.whl", hash = "sha256:7a85730676ffc88eadca1721252bec168f6ffc0423f6141f6ad41f79bb441327"},
+    {file = "highspy-1.14.0-cp314-cp314-win_amd64.whl", hash = "sha256:90b7074d4bc34a4390636aaf9e4232ae15d4536098f1f1f39f04329c08751148"},
+    {file = "highspy-1.14.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:f894430640bc1058f6f2f1f252c7403f9b7270a1982187f969c89e0229f7116b"},
+    {file = "highspy-1.14.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:0beca7a81076d22912b0023969b31ab82b14649615c006b32737df931dfbed7d"},
+    {file = "highspy-1.14.0-cp38-cp38-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:55ec063725238d9d1dccfe51e2f90c6985b48a05fec80c6d1444b3bb2337f541"},
+    {file = "highspy-1.14.0-cp38-cp38-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:94eb9ed5521e0321903603e807685c4701550dc23591db8e23e27aa82445a1a5"},
+    {file = "highspy-1.14.0-cp38-cp38-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:2ebebff3dc5528da38b5dab1f8e129be94d1f363d9aa3c4dd716ef9933f513ac"},
+    {file = "highspy-1.14.0-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:69c2c35ea30c9634230f870a2c2662a40409794958f2b691f65f73231e676161"},
+    {file = "highspy-1.14.0-cp38-cp38-musllinux_1_2_i686.whl", hash = "sha256:0db82d3b9affb0eb6aa66ea86351689a4f706c7bf0e03cce8d9b71fefcca640c"},
+    {file = "highspy-1.14.0-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:21d9ec66d97374118acd019cb994e35191dd130199a43af8d0b1842e4977292c"},
+    {file = "highspy-1.14.0-cp38-cp38-win32.whl", hash = "sha256:e5460498982ebc110014cb6456f5446b267f0646d8c2808f94afae5aceff6bda"},
+    {file = "highspy-1.14.0-cp38-cp38-win_amd64.whl", hash = "sha256:59ebf79215b4efb688473857c84aed8eac0ae2310401bcead9814b167bda586a"},
+    {file = "highspy-1.14.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:586570bca4dbf39243eda70f39f05d1363a473e997814d0101279a4f02122c69"},
+    {file = "highspy-1.14.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:d1281cb7e21f681ec3a45cc2685346a7a6dbc27afffd9036fafd815dbb7175a5"},
+    {file = "highspy-1.14.0-cp39-cp39-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:2dba0ccb892e643c464fdc6daf958df5c2ff8b2cd1c891851344201c31e95079"},
+    {file = "highspy-1.14.0-cp39-cp39-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1c8982d775d9779ef0e391d857ef86ba191dc54970f996e65c3ffff32abd86eb"},
+    {file = "highspy-1.14.0-cp39-cp39-manylinux_2_26_i686.manylinux_2_28_i686.whl", hash = "sha256:30eebc97a7e9187f053da2af6e64de76468e2d761030c22148d892c2d758ddcb"},
+    {file = "highspy-1.14.0-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:aa3629377374e7e5b1cc34c93f42d7d8b1bcf905ad99d67e84136f885c90e250"},
+    {file = "highspy-1.14.0-cp39-cp39-musllinux_1_2_i686.whl", hash = "sha256:6db47da05edd5e2536f447961eb0dd05d7f613fdac3c5ffc8e7865dc737dbe70"},
+    {file = "highspy-1.14.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:7049c0e2b184fe1b1a57474c23b7cef206cd38a762776fc7032aeaf4b0adc333"},
+    {file = "highspy-1.14.0-cp39-cp39-win32.whl", hash = "sha256:5d9d37faf91dff91f6d7e7f7bdbf94ff7fb2ecd930121148250e2df64256d42e"},
+    {file = "highspy-1.14.0-cp39-cp39-win_amd64.whl", hash = "sha256:c407c17df8fb30f3cb8a0498eb37a3291ebd214caaa880b518f1ac9fdb83a282"},
+    {file = "highspy-1.14.0.tar.gz", hash = "sha256:b09cb5e3179a25fc615b8b0941130b0f71e19372c119f3dd620d63b54cd3ca4c"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+test = ["numpy", "pytest"]
+
+[[package]]
 name = "htbuilder"
 version = "0.9.0"
 description = "A purely-functional HTML builder for Python. Think JSX rather than templates."
@@ -4041,4 +4128,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "096edc46d3f0fefe4c78f56a9b4ca3d2f2eab3846934fb72b3825a40a4ee5b6e"
+content-hash = "5e239b0a4055405feb012f64ed101284312182431a8310d1403ea9fb920dd567"

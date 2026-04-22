@@ -1,5 +1,4 @@
 import logging
-from email.contentmanager import raw_data_manager
 from math import floor, log
 
 from .voltage_tiers import VoltageTier

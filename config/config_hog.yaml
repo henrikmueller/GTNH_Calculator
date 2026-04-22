@@ -1,18 +1,17 @@
 inputs: 
-  - Oil Comb = -78
+  - i~gregtech~gt.comb~3 = -78  # Oil Comb
 outputs:
-  - EU
+  - i~gregtech~gt.eu  # EU
 infinite_materials:
-  - Wood Log
-  - Salt Comb
-  - Water
+  - i~minecraft~log~1  # Wood Log
+  - i~gregtech~gt.comb~74  # Salt Comb
+  - i~minecraft~flowing_water~0  # Water
 restrictions:
 weights:
-  EU: 1
+  i~gregtech~gt.eu: 1
 time: 60s
 display_interval: 60s
-default_coil: HSS-S Coil
-table_gid: 1514208585
+default_coil: i~gregtech~gt.blockcasings5~4
 unlocked_voltage_tier: IV
 default_voltage_tier: EV
 maximal_energy_increase: 1.5

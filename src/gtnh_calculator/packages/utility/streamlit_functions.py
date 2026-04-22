@@ -3,17 +3,65 @@ from string import Template
 import streamlit as st
 import logging
 import sys
+from io import BytesIO
 from streamlit_extras.stylable_container import stylable_container
-from collections import defaultdict
 
+from packages.crafting_chains.crafting_chain_database import CraftingChainDatabase
+from packages.database_extraction.database_extractor import GTNHDatabase, DatabaseExtractor
+from packages.configs.crafting_chain_config_db import CraftingChainConfig, load_config
+from packages.recipes_db.machines import Machine
 from packages.utility.general_utility import get_base64_image
+from packages.exceptions import DataLoadingException
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
-def display_recipe(recipe_row):
+def load_database() -> GTNHDatabase:
+    progress_text = 'Loading GTNH recipes...'
+    if 'database' not in st.session_state:
+        database_extractor = DatabaseExtractor(validity_check=False)
+        progress_bar = st.progress(0, text=progress_text)
+        gen = database_extractor.extract_database()
+
+        try:
+            while True:
+                progress = next(gen)
+                progress_bar.progress(progress, text=progress_text)
+
+        except StopIteration as e:
+            database: GTNHDatabase = e.value
+            database.add_eu()
+            # TODO: Add EU to inputs and outputs.
+            progress_bar.progress(1.0, text=f"Successfully extracted all recipes.")
+            st.session_state['database'] = database
+    else:
+        st.progress(1.0, text=f"Successfully extracted all recipes.")
+        database = st.session_state['database']
+    return database
+
+
+def load_crafting_chain_database(uploaded_file: BytesIO | str, database: GTNHDatabase) -> CraftingChainDatabase:
+    if 'crafting_chain_database' not in st.session_state:
+        try:
+            loaded_config = load_config(uploaded_file, database)
+            if 'config' not in st.session_state:
+                st.session_state['config'] = loaded_config
+            config: CraftingChainConfig = st.session_state['config']
+            crafting_chain_database = CraftingChainDatabase.create_crafting_chain_database(
+                database=database, config=config, validity_check=True)
+            st.session_state['crafting_chain_database'] = crafting_chain_database
+            crafting_chain_database.initialize_machine_options()
+        except DataLoadingException as e:
+            st.error(e, icon="❗")
+            raise Exception(f"Data loading failed: {e}")
+    else:
+        crafting_chain_database = st.session_state['crafting_chain_database']
+    return crafting_chain_database
+
+
+def display_recipe(recipe_row, valid_machines: list[Machine]):
     with stylable_container(
             key=f"recipe_container_{recipe_row.Index}",
             css_styles="""
@@ -126,18 +174,7 @@ def display_recipe(recipe_row):
         </div>
         """)
 
-        # <div style="display:flex; justify-content:center;">
-        #           <div class="recipe-row">
-        #             $inputs_html <div class="arrow"></div> $outputs_html
-        #           </div>
-        #         </div>
-
         machines_html = ''
-        groups = defaultdict(set)
-        for machine in recipe_row.MACHINES:
-            groups[(frozenset(machine.machine_types), machine.multiblock)].add(machine)
-        valid_machines = [min(group, key=lambda m: m.minimal_voltage_tier()) for group in groups.values()]
-        valid_machines.sort(key=lambda m: m.multiblock)
         for machine in valid_machines:
             try:
                 img_base64 = get_base64_image(f'db/images/{machine.item.image_file_path}')
@@ -191,6 +228,8 @@ def display_recipe(recipe_row):
             info_string += f'**Amperage**: {int(recipe_row.AMPERAGE):.6g}A  \n'
         if not (math.isnan(recipe_row.DURATION) or math.isnan(recipe_row.VOLTAGE) or math.isnan(recipe_row.AMPERAGE)):
             total_eu = recipe_row.VOLTAGE * recipe_row.AMPERAGE * recipe_row.DURATION * 20
-            info_string += f'**Total EU**: {total_eu:.6g} EU'
+            info_string += f'**Total EU**: {total_eu:.6g} EU  \n'
+        if recipe_row.ADDITIONAL_INFO:
+            info_string += f'{recipe_row.ADDITIONAL_INFO}  \n'
         if info_string:
             st.markdown(info_string)

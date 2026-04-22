@@ -4,6 +4,7 @@ import logging
 import re
 from enum import Enum
 
+
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
@@ -44,9 +45,6 @@ class Material:
 
     def __repr__(self):
         return self.name
-
-    def is_eu(self) -> bool:
-        return self.name == 'EU'
 
     def __eq__(self, other: Material):
         return self.id == other.id
@@ -107,6 +105,9 @@ class ExtractedFluid(Material):
 @dataclass
 class MaterialGroup:
     materials: list[Material]
+
+    def __len__(self):
+        return len(self.materials)
 
     def __hash__(self) -> int:
         return self.materials[0].__hash__() if self.materials else 0

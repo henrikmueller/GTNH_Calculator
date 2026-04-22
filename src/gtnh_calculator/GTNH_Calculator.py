@@ -1,8 +1,8 @@
 import streamlit as st
-import matplotlib.pyplot as plt
 import plotly.express as px
 
-from packages.database_extraction.database_extractor import GTNHDatabase, load_database
+from packages.database_extraction.database_extractor import GTNHDatabase
+from packages.utility.streamlit_functions import load_database
 from packages.recipes_db.voltage_tiers import VoltageTier
 
 

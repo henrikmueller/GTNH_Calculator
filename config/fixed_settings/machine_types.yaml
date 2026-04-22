@@ -261,7 +261,21 @@ machine_types:
     parallels_per_voltage_tier: 8
     multiblock: True
     unlock_tier: EV
+  vacuum_furnace:
+  - name: Vacuum Furnace
+    speedup: 2.2
+    energy_multiplier: 0.5
+    base_parallels: 0
+    parallels_per_voltage_tier: 4
+    multiblock: True
+    unlock_tier: LuV
   vacuum_freezer:
   - name: Vacuum Freezer
     multiblock: True
     unlock_tier: HV
+  - name: Cryogenic Freezer
+    speedup: 2.2
+    energy_multiplier: 0.9
+    base_parallels: 8
+    multiblock: True
+    unlock_tier: IV
