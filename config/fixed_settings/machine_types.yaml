@@ -20,6 +20,14 @@ machine_types:
     unlock_tier: LV
     valid_machine_options: 
     - coils
+  - name: Volcanus
+    multiblock: True
+    speedup: 2.2
+    energy_multiplier: 0.9
+    base_parallels: 8
+    unlock_tier: IV
+    valid_machine_options: 
+    - coils
   centrifuge:
   - name: Centrifuge
     unlock_tier: LV
@@ -74,6 +82,8 @@ machine_types:
     unlock_tier: EV
   crafting:
   - name: Crafting
+  cutting_machine:
+  - name: Cutting Machine
   dehydrator:
   - name: Dehydrator
     unlock_tier: EV
@@ -156,6 +166,12 @@ machine_types:
   fluid_solidifier:
   - name: Fluid Solidifier
     unlock_tier: LV
+  forming_press:
+  - name: Forming Press
+    unlock_tier: LV
+  fusion_reactor:
+  - name: Fusion Reactor Mark II
+    unlock_tier: ZPM
   forge_hammer:
   - name: Forge Hammer
     unlock_tier: LV

@@ -24,7 +24,11 @@ class MachineBehaviour:
 
     @abstractmethod
     def fit_recipe(
-        self, raw_recipe: RawRecipe, voltage_tier: int, machine_options: list[MachineOption] | None, log=False
+        self,
+        raw_recipe: RawRecipe,
+        voltage_tier: int,
+        machine_options: list[MachineOption] | None,
+        log=False
     ) -> RawRecipe:
         ...
 
@@ -86,7 +90,8 @@ class DefaultMachineBehaviour(MachineBehaviour):
         processing_time = (raw_recipe.processing_time / speedup /
                            (4 ** perfect_overclocks * 2 ** non_perfect_overclocks))
         eu_per_tick = total_eu / processing_time / 20 if processing_time > 0 else 0
-        voltage_tier = VoltageTier.voltage_tier_by_eu(abs(eu_per_tick))
+        voltage_tier = VoltageTier.voltage_tier_by_eu(abs(eu_per_tick) / raw_recipe.amperage) \
+            if eu_per_tick != 0 else VoltageTier.NO_REQUIREMENT
 
         if log:
             _LOGGER.warning(raw_recipe)

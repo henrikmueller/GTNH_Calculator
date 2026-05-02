@@ -6,16 +6,19 @@ from collections import defaultdict
 from rapidfuzz import fuzz
 from streamlit_searchbox import st_searchbox
 import plotly.express as px
+import plotly.graph_objects as go
 
 from packages.configs.crafting_chain_config_db import CraftingChainConfig, load_config
 from packages.crafting_chains.crafting_chain_database import CraftingChainDatabase
-from packages.exceptions import DataLoadingException
 from packages.database_extraction.database_extractor import GTNHDatabase
-from packages.recipes_db.machines import Machine
-from packages.utility.streamlit_functions import load_database, load_crafting_chain_database
+from packages.utility.streamlit_functions import (
+    load_database, load_crafting_chain_database, display_crafting_chain_recipe
+)
 from packages.recipes_db.material import Material
-from packages.crafting_chains.crafting_chain_finder_highs import CraftingChainFinder
-from packages.utility.general_utility import time_to_seconds
+from packages.crafting_chains.crafting_chain_finder_highs import (
+    CraftingChainFinder, OptimalSolution, CostConstraints, CostVectorCollection)
+from packages.crafting_chains.crafting_chain_db import CraftingChain
+from packages.utility.general_utility import time_to_seconds, is_contained_in, Timer
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
@@ -26,14 +29,6 @@ WEIGHT_EXP_MIN = -5.0
 WEIGHT_EXP_MAX = 10.0
 MAX_DISPLAYED_OPTIONS = 300
 NUMBER_OF_COLUMNS = 3
-MATERIAL_THRESHOLD = 1e-10
-
-
-# Run via: streamlit run ./src/gtnh_calculator/streamlit-app.py
-# Colors: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/named-color
-
-# Deploy: Install poetry plugin: poetry self add poetry-plugin-export
-# Then create requirements.txt: poetry export -f requirements.txt -o requirements.txt
 
 _LOGGER.warning('\n\nSTARTING NEW PAGE')
 
@@ -65,6 +60,92 @@ update = 'update' in st.session_state and st.session_state['update']
 if 'selected_material' not in st.session_state:
     st.session_state.selected_material = None
 
+
+def scatter_plot(
+    data: list[tuple[OptimalSolution, CostConstraints]],
+    cost_vectors: CostVectorCollection,
+    crafting_chain_finder: CraftingChainFinder,
+    title: str,
+    x: str,
+    y: str,
+    label_x: str,
+    label_y: str
+):
+    def get_value(cost_vector_name: str, solution: OptimalSolution) -> float:
+        match cost_vector_name:
+            case 'recipe_cost_vector':
+                return np.dot(solution.recipe_vector, cost_vectors.recipe_cost_vector.vector).item()
+            case 'eu_cost_vector':
+                return crafting_chain_finder.get_eu_per_tick(solution)
+            case 'machine_amount_cost_vector':
+                return crafting_chain_finder.get_machine_amount(solution)
+
+    data_x = [get_value(x, s) for s, _ in data]
+    data_y = [get_value(y, s) for s, _ in data]
+    labels = [f'Solution {i}' for i in range(len(data))]
+    description = [f'{c}' for _, c in data]
+    colors = ['cyan' for x in data]
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=data_x,
+        y=data_y,
+        mode='markers',
+        marker=dict(
+            size=12,
+            color=colors
+        ),
+        text=labels,
+        customdata=description,
+        hovertemplate=
+        "<b>%{text}</b><br>" "x: %{x}<br>" + "y: %{y}<br>" +
+        "%{customdata}<extra></extra>"
+    ))
+    fig.update_layout(
+        title=title,
+        xaxis_title=label_x,
+        yaxis_title=label_y
+    )
+    st.plotly_chart(fig)
+
+
+def display_pareto_front(crafting_chain_finder: CraftingChainFinder, cost_vectors: CostVectorCollection):
+    pareto_results = crafting_chain_finder.pareto_front(cost_vectors)
+    a, b, c = st.columns(3)
+    with a:
+        scatter_plot(
+            data=pareto_results,
+            cost_vectors=cost_vectors,
+            crafting_chain_finder=crafting_chain_finder,
+            title='Material Cost vs. EU/t',
+            x='recipe_cost_vector',
+            y='eu_cost_vector',
+            label_x='Material Cost',
+            label_y='EU/t'
+        )
+    with b:
+        scatter_plot(
+            data=pareto_results,
+            cost_vectors=cost_vectors,
+            crafting_chain_finder=crafting_chain_finder,
+            title='Material Cost vs. Machine Amount',
+            x='recipe_cost_vector',
+            y='machine_amount_cost_vector',
+            label_x='Material Cost',
+            label_y='Machine Cost'
+        )
+    with c:
+        scatter_plot(
+            data=pareto_results,
+            cost_vectors=cost_vectors,
+            crafting_chain_finder=crafting_chain_finder,
+            title='EU/t vs. Machine Amount',
+            x='eu_cost_vector',
+            y='machine_amount_cost_vector',
+            label_x='Recipe Cost',
+            label_y='Machine Cost'
+        )
+
+
 if crafting_chain_database is not None and config is not None:
     if 'weight_materials' not in st.session_state:
         st.session_state['weight_materials'] = [m for m, a in config.weights.items() if a > 0]
@@ -72,21 +153,6 @@ if crafting_chain_database is not None and config is not None:
     if 'ipw_materials' not in st.session_state:
         st.session_state['ipw_materials'] = [m for m, a in config.infinite_production_weights.items() if a > 0]
     st.session_state['ipw_materials'].sort(key=lambda m: m.id)
-
-    config.weights = {m: a for m, a in config.weights.items() if a != 0}
-    config.infinite_production_weights = {m: a for m, a in config.infinite_production_weights.items() if a != 0}
-
-    # recipe_weight_factor = st.slider(
-    #     label=f'{material.name}',
-    #     value=weight_exponent,
-    #     format=None,
-    #     min_value=WEIGHT_EXP_MIN,
-    #     max_value=WEIGHT_EXP_MAX,
-    #     step=0.01,
-    #     label_visibility='collapsed',
-    #     width=500
-    # )
-
 
     st.write(config)
     a, b = st.columns(2)
@@ -197,65 +263,83 @@ if crafting_chain_database is not None and config is not None:
     st.markdown('## Crafting Chain Optimization')
 
     crafting_chain_finder = CraftingChainFinder(
-        crafting_chain_database, machine_limit=config.machine_limit, use_individual_limits=False
+        crafting_chain_database, config=config, machine_limit=config.machine_limit, use_individual_limits=False
     )
+    cost_vectors = crafting_chain_finder.get_default_cost_vectors()
+
+    weighted_cost_vectors = [(cost_vectors[0], 1), (cost_vectors[1], 0), (cost_vectors[2], 0)]
     if 'crafting_chain' not in st.session_state or update:
         st.session_state['crafting_chain'] = crafting_chain_finder._optimal_crafting_chain(
-            config, recipe_weight_factor=0.1, use_individual_limits=False
+            weighted_cost_vectors=weighted_cost_vectors, use_individual_limits=False,
+            eu_per_tick_constraint=None, machine_amount_constraint=None
         )
-    crafting_chain = st.session_state['crafting_chain']
+    crafting_chain: CraftingChain = st.session_state['crafting_chain']
 
     if crafting_chain is None:
         st.error('Crafting Chain could not be determined!', icon="❗")
     else:
         st.success('Successfully determined the crafting chain!', icon="✅")
 
+    if st.button('Display Pareto Front'):
+        display_pareto_front(crafting_chain_finder, cost_vectors)
+
 if crafting_chain is not None:
     time, _ = time_to_seconds(config.time)
-    display_interval, display_interval_name = time_to_seconds(config.display_interval)
+    display_interval, display_interval_unit = time_to_seconds(config.display_interval)
     if display_interval != 1:
-        display_interval_name = display_interval_name + 's'
+        display_interval_unit = display_interval_unit + 's'
+    display_interval_string = f'{display_interval} {display_interval_unit}'
+
+    st.markdown('### Crafting Chain Statistics')
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(crafting_chain.markdown_inputs(display_interval_string))
+    with col2:
+        st.markdown(crafting_chain.markdown_outputs(display_interval_string))
+    st.markdown(crafting_chain.markdown_eu())
+    st.write(f'Total number of machines: {crafting_chain.number_of_machines}')
+    st.markdown('---')
+
     df = crafting_chain.to_dataframe(
         time_factor=display_interval / time,
-        time_interval=f'{display_interval} {display_interval_name}'
+        display_interval_string=display_interval_string
     )
     st.dataframe(df, hide_index=True)
-    st.write(f'Total number of machines: {df['Machine Amount'].astype(float).pipe(np.ceil).sum()}')
 
-    st.markdown(f'### Inputs:')
-    crafting_chain_inputs = [(m, a) for m, a in crafting_chain.inputs.items()]
-    crafting_chain_inputs.sort(key=lambda x: x[0].name)
-    for material, amount in crafting_chain_inputs:
-        if abs(amount) >= MATERIAL_THRESHOLD:
-            st.write(f'{material.name}: {"{:.3f}".format(abs(amount))}')
+    with st.expander('Material Grading'):
+        grading = [(m, g) for m, g in crafting_chain.material_grading.items()]
+        grading_level = defaultdict(list)
+        for material, g in grading:
+            grading_level[g].append(material)
+        grading_levels = list(set(grading_level.keys()))
+        grading_levels.sort()
+        for g in grading_levels:
+            if g < 0:
+                continue
+            st.markdown(f'#### Grading Level {g}')
+            st.write(grading_level[g])
 
-    st.markdown(f'### Outputs:')
-    crafting_chain_outputs = [(m, a, (0 if m in config.outputs else 1)) for m, a in crafting_chain.outputs.items()]
-    crafting_chain_outputs.sort(key=lambda x: (x[2], x[0].name))
-    for material, amount, _ in crafting_chain_outputs:
-        if abs(amount) >= MATERIAL_THRESHOLD:
-            st.write(f'{material.name}: {"{:.3f}".format(abs(amount))}')
+        looping_materials = (
+            set(m for m, a in crafting_chain.total_material_needs.items() if a == 0) &
+            set().union(*[set(r.get_outputs()) for r, a in crafting_chain.recipe_amounts.items() if a > 0])
+        )
 
-    st.markdown(f'### (Non-negative) Material grading:')
-    grading = [(m, g) for m, g in crafting_chain.material_grading.items()]
-    grading_level = defaultdict(list)
-    for material, g in grading:
-        grading_level[g].append(material)
-    grading_levels = list(set(grading_level.keys()))
-    grading_levels.sort()
-    for g in grading_levels:
-        if g < 0:
-            continue
-        st.markdown(f'#### Grading Level {g}')
-        st.write(grading_level[g])
+    with st.expander('Looping Materials'):
+        st.markdown(f'#### Reachable')
+        st.write(looping_materials & set(m for m, g in crafting_chain.material_grading.items() if g >= 0))
+        st.markdown(f'#### Unreachable')
+        st.write(looping_materials & set(m for m, g in crafting_chain.material_grading.items() if g < 0))
 
-    looping_materials = (
-        set(m for m, a in crafting_chain.total_material_needs.items() if a == 0) &
-        set().union(*[set(r.get_outputs()) for r, a in crafting_chain.recipe_amounts.items() if a > 0])
-    )
 
-    st.markdown(f'### Looping Materials')
-    st.markdown(f'#### Reachable')
-    st.write(looping_materials & set(m for m, g in crafting_chain.material_grading.items() if g >= 0))
-    st.markdown(f'#### Unreachable')
-    st.write(looping_materials & set(m for m, g in crafting_chain.material_grading.items() if g < 0))
+@st.fragment()
+def recipe_configuration(crafting_chain: CraftingChain):
+    _LOGGER.info('Displaying recipe configuration')
+
+    st.markdown('## Recipe Configuration')
+    crafting_chain_recipes = crafting_chain.recipe_list
+    for recipe in crafting_chain_recipes:
+        display_crafting_chain_recipe(recipe)
+
+
+if crafting_chain is not None:
+    recipe_configuration(crafting_chain)

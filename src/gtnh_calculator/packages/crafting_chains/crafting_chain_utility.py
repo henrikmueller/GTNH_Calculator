@@ -11,7 +11,8 @@ _LOGGER.setLevel(logging.INFO)
 
 
 def calculate_gradings(
-    recipes: list[Recipe], materials: list[Material], starting_materials: set[Material]
+    recipes: list[Recipe], materials: list[Material], starting_materials: set[Material],
+    ignore_unreachable: bool = False
 ) -> tuple[Dict[Recipe, int], Dict[Material, int]]:
     node_to_edges = defaultdict(list)
     remaining = []
@@ -21,25 +22,44 @@ def calculate_gradings(
             node_to_edges[material].append(recipe_id)
         remaining.append(len(inputs))
 
+    unreachable = set()
     material_grading = {m: -1 for m in materials}  # positive values = visited
     recipe_grading = [-1] * len(recipes)  # positive values = visited
     double_ended_queue = deque(starting_materials)
     for m in double_ended_queue:
         material_grading[m] = 0
 
-    while double_ended_queue:
-        material = double_ended_queue.popleft()
-        if material_grading[material] < 0:  # TODO: Remove later
-            raise AssertionError(f'Negative grading for material in queue: {material} | {double_ended_queue}')
-        for recipe_id in node_to_edges[material]:
-            remaining[recipe_id] -= 1
+    def fill_gradings():
+        while double_ended_queue:
+            material = double_ended_queue.popleft()
+            if material in unreachable:
+                continue
+            for recipe_id in node_to_edges[material]:
+                remaining[recipe_id] -= 1
 
-            if remaining[recipe_id] == 0 and recipe_grading[recipe_id] < 0:
-                recipe_grading[recipe_id] = material_grading[material]
-                for output in recipes[recipe_id].get_outputs():
-                    if material_grading[output] < 0:
-                        material_grading[output] = material_grading[material] + 1
-                        double_ended_queue.append(output)
+                if remaining[recipe_id] == 0 and recipe_grading[recipe_id] < 0:
+                    recipe_grading[recipe_id] = material_grading[material]
+                    for output in recipes[recipe_id].get_outputs():
+                        if material_grading[output] < 0:
+                            material_grading[output] = material_grading[material] + 1
+                            double_ended_queue.append(output)
+
+    fill_gradings()
+
+    if ignore_unreachable:
+        # TODO: This correct?
+        unreachable = set(m for m, g in material_grading.items() if g < 0)
+        remaining = []
+        for recipe_id, recipe in enumerate(recipes):
+            inputs = {m for m, a in recipe.input_dict.items() if a != 0}
+            remaining.append(len(inputs - unreachable))
+
+        material_grading = {m: -1 for m in materials}  # positive values = visited
+        recipe_grading = [-1] * len(recipes)  # positive values = visited
+        double_ended_queue = deque(starting_materials)
+        for m in double_ended_queue:
+            material_grading[m] = 0
+        fill_gradings()
 
     recipe_grading = {r: g for r, g in zip(recipes, recipe_grading)}
     return recipe_grading, material_grading

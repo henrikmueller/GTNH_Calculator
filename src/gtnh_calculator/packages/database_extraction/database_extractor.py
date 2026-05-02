@@ -167,19 +167,30 @@ class GTNHDatabase:
         return reachable_materials_graded, df_reachable_recipes
 
     @staticmethod
-    def get_base_machines(recipe_row) -> list[Machine]:
+    def _get_base_machines(recipe_row, default_voltage_tier: int | None = None) -> list[Machine]:
         groups = defaultdict(set)
         for machine in recipe_row.MACHINES:
-            groups[(frozenset(machine.machine_types), machine.multiblock)].add(machine)
-        base_machines = [
-            min(group, key=lambda m: (m.weight, m.minimal_voltage_tier()))
-            for group in groups.values()
-        ]
-        base_machines.sort(key=lambda m: m.multiblock)
+            for voltage_tier in machine.voltage_tiers:
+                if default_voltage_tier is None or voltage_tier <= default_voltage_tier:
+                    groups[(frozenset(machine.machine_types), machine.multiblock)].add(machine)
+                    break
+        if default_voltage_tier is None:
+            base_machines = [
+                min(group, key=lambda m: (m.weight, m.minimal_voltage_tier()))
+                for group in groups.values()
+            ]
+        else:
+            base_machines = [
+                min(group, key=lambda m: (m.weight, -m.minimal_voltage_tier()))
+                for group in groups.values()
+            ]
+        if not base_machines:
+            _LOGGER.debug(f'No base machines found. Machine groups: '
+                            f'{[(t, [(m.name, m.voltage_tiers) for m in g]) for t, g in groups.items()]}')
         return base_machines
 
-    def get_default_machine(self, recipe_row) -> Machine | None:
-        base_machines = self.get_base_machines(recipe_row)
+    def get_default_machine(self, recipe_row, default_voltage_tier: int) -> Machine | None:
+        base_machines = self._get_base_machines(recipe_row, default_voltage_tier)
         if not all(m.multiblock for m in base_machines):
             base_machines = [m for m in base_machines if not m.multiblock]
         base_machine_names = [m.name for m in base_machines]
@@ -196,10 +207,12 @@ class GTNHDatabase:
 
         if len(base_machines) == 1:
             return base_machines[0]
-        if 'Superdense Magnetohydrodynamically Constrained Star Matter Plate' in [m.name for m in recipe_row.AVG_OUTPUTS.keys()]:
+        if 'Superdense Magnetohydrodynamically Constrained Star Matter Plate' in [m.name for m in
+                                                                                  recipe_row.AVG_OUTPUTS.keys()]:
             return [m for m in base_machines if m.name == 'Pseudostable Black Hole Containment Field'][0]
 
-        _LOGGER.warning(f'No base machine: {base_machines} | {recipe_row}')
+        _LOGGER.debug(f'No default machine: {base_machines} | {recipe_row}. \n'
+                      f'Machines: {[(m.name, m.voltage_tiers) for m in recipe_row.MACHINES]}')
         return None
 
 

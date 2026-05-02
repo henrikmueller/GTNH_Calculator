@@ -45,12 +45,20 @@ class Recipe:
         return self.raw_recipe.total_eu
 
     @property
+    def eu_per_tick(self) -> float:
+        return self.raw_recipe.eu_per_tick
+
+    @property
     def processing_time(self) -> float:
         return self.raw_recipe.processing_time
 
     @property
     def minimum_voltage_tier(self) -> int:
         return self.base_recipe.voltage_tier
+
+    @property
+    def valid_voltage_tiers(self) -> list[int]:
+        return [v for v in self.machine.voltage_tiers if v >= self.minimum_voltage_tier]
 
     @property
     def voltage_tier(self) -> int:

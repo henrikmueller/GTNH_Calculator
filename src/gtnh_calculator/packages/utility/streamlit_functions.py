@@ -10,8 +10,10 @@ from packages.crafting_chains.crafting_chain_database import CraftingChainDataba
 from packages.database_extraction.database_extractor import GTNHDatabase, DatabaseExtractor
 from packages.configs.crafting_chain_config_db import CraftingChainConfig, load_config
 from packages.recipes_db.machines import Machine
+from packages.recipes_db.recipes import Recipe
 from packages.utility.general_utility import get_base64_image
 from packages.exceptions import DataLoadingException
+from packages.recipes_db.voltage_tiers import VoltageTier
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
@@ -180,7 +182,7 @@ def display_recipe(recipe_row, valid_machines: list[Machine]):
                 img_base64 = get_base64_image(f'db/images/{machine.item.image_file_path}')
                 machines_html += f"""<div class="tooltip">
                     <img src="data:image/png;base64,{img_base64}" width="36">
-                    <span class="tooltiptext">{machine.__repr__()}</span>
+                    <span class="tooltiptext">{machine.__str__()}</span>
                 </div>
                 """
             except Exception as e:
@@ -233,3 +235,191 @@ def display_recipe(recipe_row, valid_machines: list[Machine]):
             info_string += f'{recipe_row.ADDITIONAL_INFO}  \n'
         if info_string:
             st.markdown(info_string)
+
+
+def display_crafting_chain_recipe(recipe: Recipe):
+    valid_machines = sorted(recipe.valid_machines, key=lambda m: m.minimal_voltage_tier())
+    with st.container(border=True):
+        # with stylable_container(
+        #         key=f"recipe_container_{recipe.id}",
+        #         css_styles=""",
+        #     {
+        #         background-color: #2b2b2b;
+        #         padding: 15px;
+        #         border-radius: 10px;
+        #     }
+        #     """
+        # ):
+        a, b = st.columns(2)
+        with a:
+            selected_machine = st.selectbox(
+                'Machine',
+                options=[m.__str__() for m in valid_machines],
+                index=valid_machines.index(recipe.machine),
+                key=f"valid_machines_{recipe.id}",
+                width=500
+            )
+            valid_voltage_tiers = recipe.valid_voltage_tiers
+            index = valid_voltage_tiers.index(recipe.voltage_tier)
+            voltage_tier = st.selectbox(
+                'Voltage Tier',
+                options=[VoltageTier.voltage_tier_name(v) for v in valid_voltage_tiers],
+                index=index,
+                key=f"voltage_tier_select_{recipe.id}",
+                width=300
+            )
+        with b:
+            html = Template("""
+            <style>
+            .recipe-row {
+              display: grid;
+              grid-template-columns: 1fr auto 1fr;
+              align-items: center;
+              width: 100%;
+              gap: 8px;
+              margin-bottom: 1.8rem;
+            }
+
+            .inputs {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              justify-content: flex-end;
+            }
+
+            .outputs {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              justify-content: flex-start;
+            }
+
+            .arrow-container {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              padding: 0 10px;
+            }
+
+            .tooltip {
+              position: relative;
+              display: inline-block;
+            }
+
+            .tooltip-number {
+              position: absolute;
+              bottom: 0;
+              right: 0;
+              color: white;
+              font-size: 10px;
+            }
+
+            .tooltip .tooltiptext {
+              visibility: hidden;
+              display: block;
+              background-color: rgba(0,0,0,0.9);
+              color: white;
+              padding: 5px 8px;
+              border-radius: 5px;
+              position: absolute;
+              bottom: 110%;
+              left: 50%;
+              transform: translateX(-50%);
+              min-width: 40px;
+              max-width: min(2500px, 20vw);
+              width: max-content;
+              white-space: normal;
+              word-wrap: break-word;
+            }
+
+            .tooltip:hover .tooltiptext {
+              visibility: visible;
+            }
+
+            .arrow {
+              position: relative;
+              width: 40px;
+              height: 2px;
+              background: white;
+            }
+
+            .arrow::after {
+              content: "";
+              position: absolute;
+              right: -3px;
+              top: -4px;
+
+              border-top: 5px solid transparent;
+              border-bottom: 5px solid transparent;
+              border-left: 10px solid white;
+            }
+            </style>
+
+            $machines_html
+            <div class="recipe-row">
+              <div class="inputs">
+                $inputs_html
+              </div>
+
+              <div class="arrow-container">
+                <div class="arrow"></div>
+              </div>
+
+              <div class="outputs">
+                $outputs_html
+              </div>
+            </div>
+            """)
+
+            try:
+                img_base64 = get_base64_image(f'db/images/{recipe.machine.item.image_file_path}')
+                machines_html = f"""<div class="tooltip">
+                    <img src="data:image/png;base64,{img_base64}" width="36">
+                    <span class="tooltiptext">{recipe.machine.__str__()}</span>
+                </div>
+                """
+            except Exception as e:
+                machines_html = ''
+                _LOGGER.warning(e)
+
+            inputs_html = ''
+            for i, (input, amount) in enumerate(recipe.input_dict.items()):
+                try:
+                    img_base64 = get_base64_image(f'db/images/{input.image_file_path}')
+                    inputs_html += f"""<div class="tooltip">
+                        <img src="data:image/png;base64,{img_base64}" width="36">
+                        <div class="tooltip-number">{abs(int(amount))}</div>
+                        <span class="tooltiptext">{input.name}</span>
+                    </div>
+                    """
+                except Exception as e:
+                    _LOGGER.warning(e)
+
+            outputs_html = ''
+            for i, (output, amount, probability) in enumerate(recipe.raw_recipe.output_specifications.values()):
+                try:
+                    tooltip = f'{output.name}'
+                    if probability < 1:
+                        tooltip += f' ({100 * probability:.2g}%)'
+                    img_base64 = get_base64_image(f'db/images/{output.image_file_path}')
+                    outputs_html += f"""<div class="tooltip">
+                        <img src="data:image/png;base64,{img_base64}" width="36">
+                        <div class="tooltip-number">{abs(int(amount))}</div>
+                        <span class="tooltiptext">{tooltip}</span>
+                    </div>
+                    """
+                except Exception as e:
+                    _LOGGER.warning(e)
+
+            st.markdown(
+                html.substitute(inputs_html=inputs_html, outputs_html=outputs_html, machines_html=machines_html),
+                unsafe_allow_html=True
+            )
+            info_string = ''
+            info_string += f'**Processing Time**: {recipe.processing_time:.6g}s  \n'
+            info_string += f'**Voltage**: {abs(recipe.eu_per_tick):.6g} EU/t  \n'
+            info_string += f'**Total EU**: {abs(recipe.total_eu):.6g} EU  \n'
+            if recipe.raw_recipe.recipe_options:
+                info_string += f'{recipe.raw_recipe.recipe_options}  \n'
+            if info_string:
+                st.markdown(info_string)

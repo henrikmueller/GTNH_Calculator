@@ -10,11 +10,9 @@ from packages.crafting_chains.crafting_chain import CraftingChain
 from packages.recipes.recipe_book import RecipeBook
 from packages.crafting_chains.crafting_chain_finder import CraftingChainFinder
 from packages.data_loading.data_loader import load_data
-from packages.utility.general_utility import time_to_seconds
+from packages.utility.general_utility import time_to_seconds, is_contained_in
 from packages.recipes.machine_options.machine_option_books import load_possible_machine_options
 from packages.exceptions import DataLoadingException
-from packages.database_extraction.database_extractor import GTNHDatabase
-from packages.utility.streamlit_functions import load_database
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
@@ -341,18 +339,8 @@ if config is not None and recipe_book is not None:
     print_crafting_chain(crafting_chain_finder, crafting_chain, recipe_book, config)
 
 
-def is_contained_in(text: str, text_list: list[str], case_sensitive=True) -> bool:
-    if case_sensitive:
-        return any(text in s for s in text_list)
-    lowercase_text = text.lower()
-    return any(lowercase_text in s.lower() for s in text_list)
-
-
 @st.fragment()
 def recipe_configuration():
-    _LOGGER.debug(f'----------------------- STARTING FRAGMENT -------------------------')
-    recipe_options = [recipe.__str__() for recipe in crafting_chain.recipes.values()]
-
     def search_recipe(text: str) -> list:
         return [
             recipe.__str__() for recipe_id, recipe in crafting_chain.recipes.items()
@@ -364,7 +352,7 @@ def recipe_configuration():
         ]
 
     st.markdown('## Recipe Configuration')
-
+    recipe_options = [recipe.__str__() for recipe in crafting_chain.recipes.values()]
     selected_recipe = st_searchbox(
         search_recipe,
         placeholder="Select Recipe",

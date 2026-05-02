@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import logging
 import re
 from enum import Enum
+from abc import abstractmethod
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,6 +50,10 @@ class Material:
     def __eq__(self, other: Material):
         return self.id == other.id
 
+    @abstractmethod
+    def is_fluid(self) -> bool:
+        pass
+
 
 class ExtractedItem(Material):
     fluid_amount: int
@@ -81,6 +86,9 @@ class ExtractedItem(Material):
     def __repr__(self):
         return self.name
 
+    def is_fluid(self) -> bool:
+        return False
+
 
 class ExtractedFluid(Material):
     def __init__(
@@ -100,6 +108,9 @@ class ExtractedFluid(Material):
 
     def __repr__(self):
         return self.name
+
+    def is_fluid(self) -> bool:
+        return True
 
 
 @dataclass

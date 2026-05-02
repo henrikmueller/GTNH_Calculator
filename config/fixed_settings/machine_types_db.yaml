@@ -1,0 +1,7437 @@
+i~Avaritia~Dire_Crafting~0:
+  machine_types:
+  - Dire Crafting
+  multiblock: false
+  name: Dire Crafting Table
+  voltage_tier:
+  - -1
+i~IC2~blockGenerator~5:
+  machine_types:
+  - Nuclear Reactor
+  multiblock: false
+  unspecified: true
+  name: Nuclear Reactor
+  voltage_tier:
+  - -1
+i~Thaumcraft~blockMetalDevice~0:
+  machine_types:
+  - Crucible
+  multiblock: false
+  name: Crucible
+  voltage_tier:
+  - -1
+i~Thaumcraft~blockStoneDevice~2:
+  machine_types:
+  - Arcane Infusion
+  multiblock: true
+  name: Runic Matrix
+  voltage_tier:
+  - -1
+i~Thaumcraft~blockTable~15:
+  machine_types:
+  - Arcane Worktable
+  multiblock: false
+  name: Arcane Worktable
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~1000:
+  machine_types:
+  - Blast Furnace
+  multiblock: true
+  overclock_behaviour:
+    type: coil_temperature
+  name: Electric Blast Furnace
+  weight: -1
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1001:
+  machine_types:
+  - Implosion Compressor
+  multiblock: true
+  name: Implosion Compressor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1002:
+  machine_types:
+  - Vacuum Freezer
+  multiblock: true
+  name: Vacuum Freezer
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1004:
+  machine_types:
+  - Plasma Forge
+  multiblock: true
+  unspecified: true
+  name: Dimensionally Transcendent Plasma Forge
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1006:
+  machine_types:
+  - Transcendent Mixer
+  multiblock: true
+  unspecified: true
+  name: Transcendent Plasma Mixer
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1020:
+  machine_types:
+  - Boiler
+  multiblock: true
+  unspecified: true
+  name: Large Bronze Boiler
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~1021:
+  machine_types:
+  - Boiler
+  multiblock: true
+  unspecified: true
+  name: Large Steel Boiler
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~1022:
+  machine_types:
+  - Boiler
+  multiblock: true
+  unspecified: true
+  name: Large Titanium Boiler
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~1023:
+  machine_types:
+  - Boiler
+  multiblock: true
+  unspecified: true
+  name: Large Tungstensteel Boiler
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~10500:
+  machine_types:
+  - Digester
+  multiblock: true
+  overclock_behaviour:
+    type: infinite
+  name: Digester
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~10501:
+  machine_types:
+  - Dissolution Tank
+  multiblock: true
+  name: Dissolution Tank
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~10506:
+  machine_types:
+  - Particle Source
+  multiblock: true
+  unspecified: true
+  name: Source Chamber
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~10508:
+  machine_types:
+  - Collision Chamber
+  multiblock: true
+  unspecified: true
+  name: Target Chamber
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~10752:
+  machine_types:
+  - Plasma Generator
+  multiblock: false
+  efficiency: 0.8
+  name: Plasma Generator Mark IV
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10753:
+  machine_types:
+  - Plasma Generator
+  multiblock: false
+  efficiency: 0.9
+  name: Ultimate Pocket Sun
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10760:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Elite Alloy Smelter
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10761:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Elite Alloy Smelter II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10762:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Ultimate Alloy Integrator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10763:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Epic Alloy Integrator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10764:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Epic Alloy Integrator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10765:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Epic Alloy Integrator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10766:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Epic Alloy Integrator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10770:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Elite Amplifabricator
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10771:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Elite Amplifabricator II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10772:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Ultimate Amplicreator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10773:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Epic Amplicreator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10774:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Epic Amplicreator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10775:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Epic Amplicreator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10776:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Epic Amplicreator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10780:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Elite Assembling Machine
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10781:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Elite Assembling Machine II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10782:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Ultimate Assembly Constructor
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10783:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Epic Assembly Constructor
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10784:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Epic Assembly Constructor II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10785:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Epic Assembly Constructor III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10786:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Epic Assembly Constructor IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10790:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Elite Autoclave
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10791:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Elite Autoclave II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10792:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Ultimate Pressure Cooker
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10793:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Epic Pressure Cooker
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10794:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Epic Pressure Cooker II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10795:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Epic Pressure Cooker III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10796:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Epic Pressure Cooker IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10800:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Elite Bending Machine
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10801:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Elite Bending Machine II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10802:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Ultimate Bending Unit
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10803:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Epic Bending Unit
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10804:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Epic Bending Unit II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10805:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Epic Bending Unit III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10806:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Epic Bending Unit IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10810:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Elite Compressor
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10811:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Elite Compressor II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10812:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Ultimate Matter Constrictor
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10813:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Epic Matter Constrictor
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10814:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Epic Matter Constrictor II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10815:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Epic Matter Constrictor III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10816:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Epic Matter Constrictor IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10820:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Elite Cutting Machine
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10821:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Elite Cutting Machine II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10822:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Ultimate Object Divider
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10823:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Epic Object Divider
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10824:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Epic Object Divider II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10825:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Epic Object Divider III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10826:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Epic Object Divider IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10830:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Elite Distillery
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10831:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Elite Distillery II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10832:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Ultimate Fraction Splitter
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10833:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Epic Fraction Splitter
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10834:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Epic Fraction Splitter II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10835:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Epic Fraction Splitter III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10836:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Epic Fraction Splitter IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10850:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Elite Electrolyzer
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10851:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Elite Electrolyzer II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10852:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Ultimate Ionizer
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10853:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Epic Ionizer
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10854:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Epic Ionizer II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10855:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Epic Ionizer III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10856:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Epic Ionizer IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10860:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Elite Electromagnetic Separator
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10861:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Elite Electromagnetic Separator II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10862:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Ultimate Magnetar Separator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10863:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Epic Magnetar Separator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10864:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Epic Magnetar Separator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10865:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Epic Magnetar Separator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10866:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Epic Magnetar Separator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10870:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Elite Extractor
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10871:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Elite Extractor II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10872:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Ultimate Extractinator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10873:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Epic Extractinator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10874:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Epic Extractinator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10875:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Epic Extractinator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10876:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Epic Extractinator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10880:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Elite Extruder
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10881:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Elite Extruder II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10882:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Ultimate Shape Driver
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10883:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Epic Shape Driver
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10884:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Epic Shape Driver II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10885:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Epic Shape Driver III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10886:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Epic Shape Driver IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10890:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Elite Fluid Solidifier
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10891:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Elite Fluid Solidifier II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10892:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Ultimate Fluid Petrificator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10893:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Epic Fluid Petrificator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10894:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Epic Fluid Petrificator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10895:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Epic Fluid Petrificator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10896:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Epic Fluid Petrificator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10900:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Elite Forming Press
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10901:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Elite Forming Press II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10902:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Ultimate Surface Shifter
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10903:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Epic Surface Shifter
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10904:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Epic Surface Shifter II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10905:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Epic Surface Shifter III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10906:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Epic Surface Shifter IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10910:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Elite Forge Hammer
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10911:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Elite Forge Hammer II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10912:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Ultimate Impact Modulator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10913:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Epic Impact Modulator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10914:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Epic Impact Modulator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10915:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Epic Impact Modulator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10916:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Epic Impact Modulator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10920:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Elite Lathe
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10921:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Elite Lathe II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10922:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Ultimate Turn-O-Matic
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10923:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Epic Turn-O-Matic
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10924:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Epic Turn-O-Matic II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10925:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Epic Turn-O-Matic III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10926:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Epic Turn-O-Matic IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10930:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Elite Precision Laser Engraver
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10931:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Elite Precision Laser Engraver II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10932:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Ultimate Exact Photon Cannon
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10933:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Epic Exact Photon Cannon
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10934:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Epic Exact Photon Cannon II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10935:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Epic Exact Photon Cannon III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10936:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Epic Exact Photon Cannon IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10940:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Elite Pulverizer
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10941:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Elite Pulverizer II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10942:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Ultimate Shape Eliminator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10943:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Epic Shape Eliminator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10944:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Epic Shape Eliminator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10945:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Epic Shape Eliminator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10946:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Epic Shape Eliminator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10950:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Elite Mass Fabricator
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10951:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Elite Mass Fabricator II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10952:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Ultimate Existence Initiator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10953:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Epic Existence Initiator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10954:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Epic Existence Initiator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10955:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Epic Existence Initiator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10956:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Epic Existence Initiator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10970:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Elite Ore Washing Plant
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10971:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Elite Ore Washing Plant II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10972:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Ultimate Ore Washing Machine
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10973:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Epic Ore Washing Machine
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10974:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Epic Ore Washing Machine II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10975:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Epic Ore Washing Machine III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10976:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Epic Ore Washing Machine IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~10980:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Elite Polarizer
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~10981:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Elite Polarizer II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~10982:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Ultimate Magnetism Inducer
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~10983:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Epic Magnetism Inducer
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~10984:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Epic Magnetism Inducer II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~10985:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Epic Magnetism Inducer III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~10986:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Epic Magnetism Inducer IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11000:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Elite Replicator
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11001:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Elite Replicator II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11002:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Ultimate Elemental Composer
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11003:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Epic Elemental Composer
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11004:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Epic Elemental Composer II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11005:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Epic Elemental Composer III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11006:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Epic Elemental Composer IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11010:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Elite Scanner
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11011:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Elite Scanner II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11012:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Ultimate Electron Microscope
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11013:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Epic Electron Microscope
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11014:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Epic Electron Microscope II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11015:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Epic Electron Microscope III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11016:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Epic Electron Microscope IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11020:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Elite Sifting Machine
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11021:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Elite Sifting Machine II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11022:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Ultimate Pulsation Filter
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11023:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Epic Pulsation Filter
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11024:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Epic Pulsation Filter II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11025:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Epic Pulsation Filter III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11026:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Epic Pulsation Filter IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11028:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Elite Slicing Machine
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11029:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Elite Slicing Machine II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11030:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Ultimate Quantum Slicer
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11033:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Epic Quantum Slicer
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11034:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Epic Quantum Slicer II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11035:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Epic Quantum Slicer III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11036:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Epic Quantum Slicer IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11040:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Elite Thermal Centrifuge
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11041:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Elite Thermal Centrifuge II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11042:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Ultimate Fire Cyclone
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11043:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Epic Fire Cyclone
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11044:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Epic Fire Cyclone II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11045:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Epic Fire Cyclone III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11046:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Epic Fire Cyclone IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11050:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Elite Wiremill
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11051:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Elite Wiremill II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11052:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Ultimate Wire Transfigurator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11053:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Epic Wire Transfigurator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11054:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Epic Wire Transfigurator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11055:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Epic Wire Transfigurator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11056:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Epic Wire Transfigurator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11070:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Elite Arc Furnace
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11071:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Elite Arc Furnace II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11072:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Ultimate Short Circuit Heater
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11073:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Epic Short Circuit Heater
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11074:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Epic Short Circuit Heater II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11075:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Epic Short Circuit Heater III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11076:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Epic Short Circuit Heater IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11080:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Elite Centrifuge
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11081:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Elite Centrifuge II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11082:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Ultimate Molecular Tornado
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11083:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Epic Molecular Tornado
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11084:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Epic Molecular Tornado II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11085:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Epic Molecular Tornado III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11086:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Epic Molecular Tornado IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11090:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Elite Plasma Arc Furnace
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11091:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Elite Plasma Arc Furnace II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11092:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Ultimate Plasma Discharge Heater
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11093:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Epic Plasma Discharge Heater
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11094:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Epic Plasma Discharge Heater II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11095:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Epic Plasma Discharge Heater III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11096:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Epic Plasma Discharge Heater IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~1110:
+  machine_types:
+  - Combustion Generator
+  efficiency: 0.95
+  multiblock: false
+  name: Basic Combustion Generator
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~1111:
+  machine_types:
+  - Combustion Generator
+  multiblock: false
+  efficiency: 0.9
+  name: Advanced Combustion Generator
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~1112:
+  machine_types:
+  - Combustion Generator
+  multiblock: false
+  efficiency: 0.85
+  name: Turbo Combustion Generator
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~11120:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Elite Brewery
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11121:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Elite Brewery II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11122:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Ultimate Brew Rusher
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11123:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Epic Brew Rusher
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11124:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Epic Brew Rusher II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11125:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Epic Brew Rusher III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11126:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Epic Brew Rusher IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~1113:
+  machine_types:
+  - Combustion Generator
+  multiblock: false
+  efficiency: 0.6
+  name: Turbo Supercharging Combustion Generator
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~11130:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Elite Canning Machine
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11131:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Elite Canning Machine II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11132:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Ultimate Can Operator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11133:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Epic Can Operator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11134:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Epic Can Operator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11135:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Epic Can Operator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11136:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Epic Can Operator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~1114:
+  machine_types:
+  - Combustion Generator
+  multiblock: false
+  unspecified: true
+  name: Ultimate Chemical Energy Releaser
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~11140:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Elite Chemical Bath
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11141:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Elite Chemical Bath II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11142:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Ultimate Chemical Dunktron
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11143:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Epic Chemical Dunktron
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11144:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Epic Chemical Dunktron II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11145:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Epic Chemical Dunktron III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11146:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Epic Chemical Dunktron IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~1115:
+  machine_types:
+  - Gas Turbine
+  multiblock: false
+  efficiency: 0.95
+  name: Basic Gas Turbine
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~11150:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Elite Chemical Reactor
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11151:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Elite Chemical Reactor II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11152:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Ultimate Chemical Perforer
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11153:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Epic Chemical Performer
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11154:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Epic Chemical Performer II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11155:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Epic Chemical Performer III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11156:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Epic Chemical Performer IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~1116:
+  machine_types:
+  - Gas Turbine
+  multiblock: false
+  efficiency: 0.9
+  name: Advanced Gas Turbine
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~1117:
+  machine_types:
+  - Gas Turbine
+  multiblock: false
+  efficiency: 0.85
+  name: Turbo Gas Turbine
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~11170:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Elite Fermenter
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11171:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Elite Fermenter II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11172:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Ultimate Fermentation Hastener
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11173:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Epic Fermentation Hastener
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11174:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Epic Fermentation Hastener II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11175:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Epic Fermentation Hastener III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11176:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Epic Fermentation Hastener IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~1118:
+  machine_types:
+  - Gas Turbine
+  multiblock: false
+  efficiency: 0.6
+  name: Turbo Gas Turbine II
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~11180:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Elite Fluid Canner
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11181:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Elite Fluid Canner II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11182:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Ultimate Liquid Can Actuator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11183:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Epic Liquid Can Actuator
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11184:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Epic Liquid Can Actuator II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11185:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Epic Liquid Can Actuator III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11186:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Epic Liquid Can Actuator IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~1119:
+  machine_types:
+  - Gas Turbine
+  multiblock: false
+  efficiency: 0.5
+  name: Turbo Gas Turbine III
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~11190:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Elite Fluid Extractor
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11191:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Elite Fluid Extractor II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11192:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Ultimate Liquefying Sucker
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11193:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Epic Liquefying Sucker
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11194:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Epic Liquefying Sucker II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11195:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Epic Liquefying Sucker III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11196:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Epic Liquefying Sucker IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11200:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Elite Fluid Heater
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11201:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Elite Fluid Heater II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11202:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Ultimate Heat Infuser
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11203:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Epic Heat Infuser
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11204:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Epic Heat Infuser II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11205:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Epic Heat Infuser III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11206:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Epic Heat Infuser IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~11210:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Elite Mixer
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~11211:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Elite Mixer II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~11212:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Ultimate Matter Organizer
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~11213:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Epic Matter Organizer
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~11214:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Epic Matter Organizer II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~11215:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Epic Matter Organizer III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~11216:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Epic Matter Organizer IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~1123:
+  machine_types:
+  - Magic Energy Converter
+  multiblock: false
+  unspecified: true
+  name: Novice Magic Energy Converter
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~1124:
+  machine_types:
+  - Magic Energy Converter
+  multiblock: false
+  unspecified: true
+  name: Adept Magic Energy Converter
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~1125:
+  machine_types:
+  - Magic Energy Converter
+  multiblock: false
+  unspecified: true
+  name: Master Magic Energy Converter
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~1126:
+  machine_types:
+  - Distillation Tower
+  multiblock: true
+  name: Distillation Tower
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1127:
+  machine_types:
+  - Magic Energy Absorber
+  multiblock: false
+  unspecified: true
+  name: Novice Magic Energy Absorber
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~1128:
+  machine_types:
+  - Magic Energy Absorberr
+  multiblock: false
+  unspecified: true
+  name: Adept Magic Energy Absorber
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~1129:
+  machine_types:
+  - Magic Energy Absorber
+  multiblock: false
+  unspecified: true
+  name: Master Magic Energy Absorber
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~1130:
+  machine_types:
+  - Magic Energy Absorber
+  multiblock: false
+  unspecified: true
+  name: Grandmaster Magic Energy Absorber
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~1151:
+  machine_types:
+  - Gas Turbine
+  multiblock: true
+  unspecified: true
+  name: Large Gas Turbine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1153:
+  machine_types:
+  - Plasma Turbine
+  multiblock: true
+  unspecified: true
+  name: Large Plasma Turbine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1159:
+  machine_types:
+  - Coke Oven
+  multiblock: true
+  valid_options: coil
+  name: Pyrolyse Oven
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1160:
+  machine_types:
+  - Cracker
+  multiblock: true
+  valid_options: coil
+  name: Oil Cracking Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1169:
+  machine_types:
+  - Chemical Reactor
+  - LCR
+  multiblock: true
+  name: Large Chemical Reactor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1170:
+  machine_types:
+  - Assembly Line
+  multiblock: true
+  name: Assembly Line
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1171:
+  machine_types:
+  - Combustion Generator
+  multiblock: true
+  unspecified: true
+  name: Large Combustion Engine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1180:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Basic Circuit Assembler
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~1181:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Advanced Circuit Assembler
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~1182:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Advanced Circuit Assembler II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~1183:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Advanced Circuit Assembler III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~1184:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Advanced Circuit Assembler IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~1185:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Advanced Circuit Assembler V
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~1186:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Advanced Circuit Assembler VI
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~1187:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Advanced Circuit Assembler VII
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~1188:
+  machine_types:
+  - Naquadah Reactor
+  multiblock: false
+  name: Naquadah Reactor Mark IV
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~1189:
+  machine_types:
+  - Naquadah Reactor
+  multiblock: false
+  efficiency: 2
+  name: Naquadah Reactor Mark V
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~1190:
+  machine_types:
+  - Naquadah Reactor
+  multiblock: false
+  efficiency: 0.8
+  name: Naquadah Reactor Mark I
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~1191:
+  machine_types:
+  - Naquadah Reactor
+  multiblock: false
+  efficiency: 1
+  name: Naquadah Reactor Mark II
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~1192:
+  machine_types:
+  - Naquadah Reactor
+  multiblock: false
+  efficiency: 1.5
+  name: Naquadah Reactor Mark III
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~1193:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  name: Fusion Control Computer Mark I
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1194:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  name: Fusion Control Computer Mark II
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1195:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  name: Fusion Control Computer Mark III
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~1196:
+  machine_types:
+  - Plasma Generator
+  multiblock: false
+  efficiency: 0.5
+  name: Plasma Generator Mark I
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~1197:
+  machine_types:
+  - Plasma Generator
+  multiblock: false
+  efficiency: 0.6
+  name: Plasma Generator Mark II
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~1198:
+  machine_types:
+  - Plasma Generator
+  multiblock: false
+  efficiency: 0.7
+  name: Plasma Generator Mark III
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~12080:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Cryogenic Magma Solidifier R-9200
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~12081:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Cryogenic Magma Solidifier R-10200
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~12082:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Cryogenic Magma Solidifier R-11200
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~12083:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Cryogenic Magma Solidifier R-12200
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~12084:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Cryogenic Magma Solidifier R-13200
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~12085:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Cryogenic Magma Solidifier R-14200
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~12086:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Cryogenic Magma Solidifier R-15200
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~12090:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Ultimate Circuit Assembling Machine
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~12091:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Ultimate Circuit Assembling Machine II
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~12092:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Ultimate Circuit Assembling Machine III
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~12093:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Ultimate Circuit Assembling Machine IV
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~12094:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: Ultimate Circuit Assembling Machine V
+  voltage_tier:
+  - 13
+i~gregtech~gt.blockmachines~12096:
+  machine_types:
+  - Circuit Assembler
+  multiblock: false
+  name: MAX Circuit Assembling Machine
+  voltage_tier:
+  - 14
+i~gregtech~gt.blockmachines~12699:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~12700:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~12701:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~12702:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~12703:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~12704:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~12705:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 9
+i~gregtech~gt.blockmachines~12706:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 10
+i~gregtech~gt.blockmachines~12707:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 11
+i~gregtech~gt.blockmachines~12708:
+  machine_types:
+  - Bio Lab
+  multiblock: false
+  name: Bio Lab
+  voltage_tier:
+  - 12
+i~gregtech~gt.blockmachines~12712:
+  machine_types:
+  - Bacterial Vat
+  multiblock: true
+  unspecified: true
+  name: Bacterial Vat
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~12713:
+  machine_types:
+  - Radio Hatch
+  multiblock: false
+  unspecified: true
+  name: Radio Hatch
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~12714:
+  deprecated: true
+  machine_types:
+  - Radio Hatch
+  multiblock: false
+  name: EV Radio Hatch
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~12715:
+  deprecated: true
+  machine_types:
+  - Radio Hatch
+  multiblock: false
+  name: IV Radio Hatch
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~12716:
+  deprecated: true
+  machine_types:
+  - Radio Hatch
+  multiblock: false
+  name: LuV Radio Hatch
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~12717:
+  deprecated: true
+  machine_types:
+  - Radio Hatch
+  multiblock: false
+  name: ZPM Radio Hatch
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~12718:
+  deprecated: true
+  machine_types:
+  - Radio Hatch
+  multiblock: false
+  name: UV Radio Hatch
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~12726:
+  machine_types:
+  - Acid Generator
+  multiblock: false
+  unspecified: true
+  name: Acid Generator MV
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~12727:
+  machine_types:
+  - Acid Generator
+  multiblock: false
+  unspecified: true
+  name: Acid Generator HV
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~12728:
+  machine_types:
+  - Acid Generator
+  multiblock: false
+  unspecified: true
+  name: Acid Generator EV
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~12730:
+  machine_types:
+  - Blast Furnace
+  multiblock: true
+  weight: 1
+  valid_options: coil
+  name: Mega Electric Blast Furnace
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~12731:
+  machine_types:
+  - Vacuum Freezer
+  multiblock: true
+  name: Mega Vacuum Freezer
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~12732:
+  machine_types:
+  - Large Naquadah Reactor
+  multiblock: true
+  unspecified: true
+  name: Large Naquadah Reactor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~12734:
+  machine_types:
+  - Electric Implosion Compressor
+  multiblock: true
+  unspecified: true
+  name: Electric Implosion Compressor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~12735:
+  machine_types:
+  - Circuit Assembler
+  - Circuit Assembly Line
+  multiblock: true
+  overclock_behaviour:
+    type: infinite
+  name: Circuit Assembly Line
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~12738:
+  machine_types:
+  - Distillation Tower
+  multiblock: true
+  weight: 1
+  name: Mega Distillation Tower
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~12791:
+  machine_types:
+  - Breeder Reactor
+  multiblock: true
+  unspecified: true
+  name: High Temperature Gas-cooled Reactor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~12793:
+  machine_types:
+  - Acid Generator
+  multiblock: false
+  unspecified: true
+  name: Acid Generator LV
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~12800:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Creative Debug Scanner
+  unspecified: true
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~13101:
+  machine_types:
+  - Solid-Oxide Fuel Cell Mk I
+  multiblock: true
+  unspecified: true
+  name: Solid-Oxide Fuel Cell Mk I
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~13102:
+  machine_types:
+  - Solid-Oxide Fuel Cell Mk II
+  multiblock: true
+  unspecified: true
+  name: Solid-Oxide Fuel Cell Mk II
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~13366:
+  machine_types:
+  - Chemical Reactor
+  - MCR
+  multiblock: true
+  weight: 1
+  name: Mega Chemical Reactor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~13367:
+  machine_types:
+  - Cracker
+  multiblock: true
+  weight: 1
+  valid_options: coil
+  name: Mega Oil Cracker
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~13532:
+  machine_types:
+  - Assembly Line
+  multiblock: true
+  unspecified: true
+  name: Advanced Assembly Line
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~13534:
+  deprecated: true
+  machine_types:
+  - Tool Casting Machine
+  multiblock: false
+  name: Basic Tool Casting Machine
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~13535:
+  deprecated: true
+  machine_types:
+  - Tool Casting Machine
+  multiblock: false
+  name: Advanced Tool Casting Machine
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~13536:
+  deprecated: true
+  machine_types:
+  - Tool Casting Machine
+  multiblock: false
+  name: Master Tool Casting Machine
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~140:
+  machine_types:
+  - Bricked Blast Furnace
+  multiblock: true
+  unspecified: true
+  name: Bricked Blast Furnace
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~14004:
+  machine_types:
+  - Space Elevator Module
+  multiblock: true
+  unspecified: true
+  name: Space Assembler Module MK-I
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~14005:
+  machine_types:
+  - Space Elevator Module
+  multiblock: true
+  unspecified: true
+  name: Space Assembler Module MK-II
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~14006:
+  machine_types:
+  - Space Elevator Module
+  multiblock: true
+  unspecified: true
+  name: Space Assembler Module MK-III
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~14007:
+  machine_types:
+  - Space Elevator Module
+  multiblock: true
+  unspecified: true
+  disabled: true
+  name: Space Mining Module MK-I
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~14008:
+  machine_types:
+  - Space Elevator Module
+  multiblock: true
+  unspecified: true
+  disabled: true
+  name: Space Mining Module MK-II
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~14009:
+  machine_types:
+  - Space Elevator Module
+  multiblock: true
+  unspecified: true
+  disabled: true
+  name: Space Mining Module MK-III
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~14012:
+  machine_types:
+  - Space Elevator Module
+  multiblock: true
+  unspecified: true
+  name: Space Project Manager
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~15311:
+  machine_types:
+  - Quantum Computer
+  multiblock: true
+  unspecified: true
+  name: Quantum Computer
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~15331:
+  machine_types:
+  - Research Station
+  multiblock: true
+  unspecified: true
+  name: Research Station
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~15410:
+  machine_types:
+  - Eye of Harmony
+  multiblock: true
+  unspecified: true
+  name: Eye of Harmony
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~15411:
+  machine_types:
+  - Stellar Forge
+  multiblock: true
+  unspecified: true
+  name: Forge of the Gods
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~15412:
+  machine_types:
+  - Blast Furnace
+  multiblock: true
+  unspecified: true
+  weight: 3
+  name: Helioflare Power Forge
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~15413:
+  machine_types:
+  - Blast Smelter
+  multiblock: true
+  unspecified: true
+  name: Helioflux Melting Core
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~15414:
+  machine_types:
+  - Plasma Fabricator
+  multiblock: true
+  unspecified: true
+  name: Heliothermal Plasma Fabricator
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~15415:
+  machine_types:
+  - Exotic Matter Producer
+  multiblock: true
+  unspecified: true
+  name: Heliofusion Exoticizer
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~15751:
+  machine_types:
+  - Decay Warehouse
+  multiblock: true
+  unspecified: true
+  name: Decay Warehouse
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~16999:
+  machine_types:
+  - Naquadah Fuel Refinery
+  multiblock: true
+  unspecified: true
+  name: Naquadah Fuel Refinery
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~201:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Basic Alloy Smelter
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~202:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Advanced Alloy Smelter
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~203:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Advanced Alloy Smelter II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~204:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Advanced Alloy Smelter III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~205:
+  machine_types:
+  - Alloy Smelter
+  multiblock: false
+  name: Advanced Alloy Smelter IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~2105:
+  machine_types:
+  - Extreme Combustion Engine
+  multiblock: true
+  unspecified: true
+  name: Extreme Combustion Engine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~211:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Basic Assembling Machine
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~212:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Advanced Assembling Machine
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~213:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Advanced Assembling Machine II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~214:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Advanced Assembling Machine III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~215:
+  machine_types:
+  - Assembler
+  multiblock: false
+  name: Advanced Assembling Machine IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~221:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Basic Bending Machine
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~222:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Advanced Bending Machine
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~223:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Advanced Bending Machine II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~224:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Advanced Bending Machine III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~225:
+  machine_types:
+  - Bending Machine
+  multiblock: false
+  name: Advanced Bending Machine IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~231:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Basic Canning Machine
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~232:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Advanced Canning Machine
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~233:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Advanced Canning Machine II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~234:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Advanced Canning Machine III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~235:
+  machine_types:
+  - Canner
+  multiblock: false
+  name: Advanced Canning Machine IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~241:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Basic Compressor
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~242:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Advanced Compressor
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~243:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Advanced Compressor II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~244:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Advanced Compressor III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~245:
+  machine_types:
+  - Compressor
+  multiblock: false
+  name: Singularity Compressor
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~251:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Basic Cutting Machine
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~252:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Advanced Cutting Machine
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~253:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Advanced Cutting Machine II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~254:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Advanced Cutting Machine III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~255:
+  machine_types:
+  - Cutting Machine
+  multiblock: false
+  name: Advanced Cutting Machine IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~271:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Basic Extractor
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~272:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Advanced Extractor
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~273:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Advanced Extractor II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~2730:
+  machine_types:
+  - Fluid Extractor
+  multiblock: true
+  valid_options: coil, solenoid_coil
+  speedup: 1.5
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.8
+  unspecified: true
+  name: Large Fluid Extractor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~274:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Advanced Extractor III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~275:
+  machine_types:
+  - Extractor
+  multiblock: false
+  name: Vacuum Extractor
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~281:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Basic Extruder
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~282:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Advanced Extruder
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~283:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Advanced Extruder II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~284:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Advanced Extruder III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~285:
+  machine_types:
+  - Extruder
+  multiblock: false
+  name: Advanced Extruder IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~291:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Basic Lathe
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~292:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Advanced Lathe
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~293:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Advanced Lathe II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~294:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Advanced Lathe III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~295:
+  machine_types:
+  - Lathe
+  multiblock: false
+  name: Advanced Lathe IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~3004:
+  machine_types:
+  - Laser Engraver
+  multiblock: true
+  unspecified: true
+  name: Hyper-Intensity Laser Engraver
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~3005:
+  machine_types:
+  - Compressor
+  multiblock: true
+  speedup: 2
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.9
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 2
+    base_parallels: 0
+  name: Large Electric Compressor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~3006:
+  machine_types:
+  - Compressor
+  - Hot Isostatic Pressurization Unit
+  multiblock: true
+  unspecified: true
+  name: Hot Isostatic Pressurization Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~3007:
+  machine_types:
+  - Neutronium Compressor
+  multiblock: true
+  unspecified: true
+  name: Neutronium Compressor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~3008:
+  machine_types:
+  - Compressor
+  - Pseudostable Black Hole Containment Field
+  multiblock: true
+  unspecified: true
+  name: Pseudostable Black Hole Containment Field
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~301:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Basic Macerator
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~3010:
+  machine_types:
+  - Extractor
+  multiblock: true
+  speedup: 3
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.85
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 8
+    base_parallels: 0
+  name: Dissection Apparatus
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~3011:
+  machine_types:
+  - Brewery
+  multiblock: true
+  speedup: 1.5
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 4
+    base_parallels: 0
+  name: Big Barrel Brewery
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~302:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Advanced Macerator
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~303:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Universal Macerator
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~304:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Universal Pulverizer
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~305:
+  machine_types:
+  - Macerator
+  multiblock: false
+  name: Blend-O-Matic 9001
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~31017:
+  machine_types:
+  - Simple Washer
+  multiblock: false
+  name: Simple Washer II
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~31018:
+  machine_types:
+  - Simple Washer
+  multiblock: false
+  name: Simple Washer IV
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~31019:
+  machine_types:
+  - Simple Washer
+  multiblock: false
+  name: Simple Washer VI
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~31020:
+  machine_types:
+  - Simple Washer
+  multiblock: false
+  name: Simple Washer VIII
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~31021:
+  machine_types:
+  - Distillery
+  - Distillation Tower
+  multiblock: true
+  speedup: 3.5
+  parallel_behaviour:
+    type: default
+    base_parallels: 12
+    parallels_per_voltage_tier: 0
+  unspecified: true
+  name: Dangote Distillus
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31023:
+  machine_types:
+  - Alloy Smelter
+  multiblock: true
+  valid_options: coil
+  overclock_behaviour:
+    type: coil_temperature
+  name: Zyngen
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31026:
+  machine_types:
+  - Large Semifluid Burner
+  multiblock: true
+  unspecified: true
+  name: Large Semifluid Burner
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31027:
+  machine_types:
+  - Grinding Machine
+  multiblock: true
+  overclock_behaviour:
+    type: infinite
+  name: IsaMill Grinding Machine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31028:
+  machine_types:
+  - Flotation Cell
+  multiblock: true
+  overclock_behaviour:
+    type: infinite
+  name: Flotation Cell Regulator
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31031:
+  machine_types:
+  - Reactor Processing Unit
+  multiblock: false
+  name: Reactor Processing Unit I
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~31032:
+  machine_types:
+  - Reactor Processing Unit
+  multiblock: false
+  name: Reactor Processing Unit II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~31033:
+  machine_types:
+  - Cold Trap
+  multiblock: false
+  name: Cold Trap I
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~31034:
+  machine_types:
+  - Cold Trap
+  multiblock: false
+  name: Cold Trap II
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~31035:
+  machine_types:
+  - Gas Sparge Tower
+  multiblock: true
+  unspecified: true
+  name: Sparge Tower Controller
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31050:
+  machine_types:
+  - Replicator
+  multiblock: true
+  unspecified: true
+  name: Elemental Duplicator
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31065:
+  machine_types:
+  - Rock Breaker
+  multiblock: true
+  speedup: 3
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.75
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 8
+    base_parallels: 0
+  name: Boldarnator
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31072:
+  machine_types:
+  - Molecular Transformer
+  multiblock: true
+  unspecified: true
+  name: Molecular Transformer
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31073:
+  machine_types:
+  - Gas Turbine
+  multiblock: true
+  unspecified: true
+  name: XL Turbo Gas Turbine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31074:
+  machine_types:
+  - XL Turbo Plasma Turbine
+  multiblock: true
+  unspecified: true
+  name: XL Turbo Plasma Turbine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31075:
+  machine_types:
+  - Forge Hammer
+  multiblock: true
+  speedup: 2
+  valid_options: anvil
+  name: Industrial Sledgehammer
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31077:
+  machine_types:
+  - Fluid Heater
+  multiblock: true
+  speedup: 2.2
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.9
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 8
+    base_parallels: 0
+  name: Thermic Heating Device
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31150:
+  machine_types:
+  - Alloy Blast Smelter
+  multiblock: true
+  unspecified: true
+  name: Mega Alloy Blast Smelter
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31151:
+  machine_types:
+  - Quantum Force Transformer
+  multiblock: true
+  unspecified: true
+  name: Quantum Force Transformer
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~31790:
+  machine_types:
+  - Simple Washer
+  multiblock: false
+  name: Simple Washer I
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~31791:
+  machine_types:
+  - Simple Washer
+  multiblock: false
+  name: Simple Washer III
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~31792:
+  machine_types:
+  - Simple Washer
+  multiblock: false
+  name: Simple Washer V
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~31793:
+  machine_types:
+  - Simple Washer
+  multiblock: false
+  name: Simple Washer VII
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~32001:
+  machine_types:
+  - Chemical Fuel Engine
+  multiblock: true
+  unspecified: true
+  name: Universal Chemical Fuel Engine
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~32013:
+  machine_types:
+  - Neutron Activator
+  multiblock: true
+  unspecified: true
+  machine_behaviour:
+    type: neutron_activator
+  name: Neutron Activator
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~32017:
+  machine_types:
+  - Heat Exchanger
+  multiblock: true
+  unspecified: true
+  name: Extreme Heat Exchanger
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~32018:
+  machine_types:
+  - Precise Assembler
+  - Assembler
+  multiblock: true
+  unspecified: true
+  name: Precise Auto-Assembler MT-3662
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~32019:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  unspecified: true
+  name: Compact Fusion Computer MK-I Prototype
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~32020:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  unspecified: true
+  name: Compact Fusion Computer MK-II
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~32021:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  unspecified: true
+  name: Compact Fusion Computer MK-III
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~32022:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  unspecified: true
+  name: Compact Fusion Computer MK-IV Prototype
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~32023:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  unspecified: true
+  name: Compact Fusion Computer MK-V
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~32026:
+  machine_types:
+  - Component Assembly Line
+  multiblock: true
+  unspecified: true
+  name: Component Assembly Line
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~321:
+  machine_types:
+  - Printer
+  multiblock: false
+  name: Basic Printer
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~322:
+  machine_types:
+  - Printer
+  multiblock: false
+  name: Advanced Printer
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~323:
+  machine_types:
+  - Printer
+  multiblock: false
+  name: Advanced Printer II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~324:
+  machine_types:
+  - Printer
+  multiblock: false
+  name: Advanced Printer III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~325:
+  machine_types:
+  - Printer
+  multiblock: false
+  name: Advanced Printer IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~326:
+  machine_types:
+  - Printer
+  multiblock: false
+  name: Advanced Printer V
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~327:
+  machine_types:
+  - Printer
+  multiblock: false
+  name: Advanced Printer VI
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~328:
+  machine_types:
+  - Printer
+  multiblock: false
+  name: Advanced Printer VII
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~341:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Basic Scanner
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~342:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Advanced Scanner
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~343:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Advanced Scanner II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~344:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Advanced Scanner III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~345:
+  machine_types:
+  - Scanner
+  multiblock: false
+  name: Advanced Scanner IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~351:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Basic Wiremill
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~352:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Advanced Wiremill
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~353:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Advanced Wiremill II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~354:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Advanced Wiremill III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~355:
+  machine_types:
+  - Wiremill
+  multiblock: false
+  name: Advanced Wiremill IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~356:
+  machine_types:
+  - Circuit Board Fabricator
+  multiblock: true
+  unspecified: true
+  name: PCB Factory
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~357:
+  machine_types:
+  - Nano Forge
+  multiblock: true
+  unspecified: true
+  name: Nano Forge
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~358:
+  machine_types:
+  - Electromagnetic Separator
+  - Electromagnetic Polarizer
+  multiblock: true
+  valid_options: electromagnet
+  name: Magnetic Flux Exhibitor
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~360:
+  machine_types:
+  - Canner
+  - Fluid Canner
+  multiblock: true
+  speedup: 2
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 8
+    base_parallels: 0
+  name: TurboCan Pro
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~361:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Basic Centrifuge
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~362:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Advanced Centrifuge
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~363:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Turbo Centrifuge
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~364:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Molecular Separator
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~365:
+  machine_types:
+  - Centrifuge
+  multiblock: false
+  name: Molecular Cyclone
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~366:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: true
+  valid_options: width
+  unspecified: true
+  name: Fluid Shaper
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~367:
+  machine_types:
+  - Solar Factory
+  multiblock: true
+  unspecified: true
+  name: Solar Factory
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~371:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Basic Electrolyzer
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~372:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Advanced Electrolyzer
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~373:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Advanced Electrolyzer II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~374:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Advanced Electrolyzer III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~375:
+  machine_types:
+  - Electrolyzer
+  multiblock: false
+  name: Molecular Disintegrator E-4908
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~381:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Basic Thermal Centrifuge
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~382:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Advanced Thermal Centrifuge
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~383:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Advanced Thermal Centrifuge II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~384:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Advanced Thermal Centrifuge III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~385:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: false
+  name: Blaze Sweatshop T-6350
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~391:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Basic Ore Washing Plant
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~392:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Advanced Ore Washing Plant
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~393:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Advanced Ore Washing Plant II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~394:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Advanced Ore Washing Plant III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~395:
+  machine_types:
+  - Ore Washer
+  multiblock: false
+  name: Repurposed Laundry-Washer I-360
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~401:
+  machine_types:
+  - Packager
+  multiblock: false
+  name: Basic Packager
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~402:
+  machine_types:
+  - Packager
+  multiblock: false
+  name: Advanced Packager
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~403:
+  machine_types:
+  - Packager
+  multiblock: false
+  name: Advanced Packager II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~404:
+  machine_types:
+  - Packager
+  multiblock: false
+  name: Advanced Packager III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~405:
+  machine_types:
+  - Packager
+  multiblock: false
+  name: Boxinator
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~406:
+  machine_types:
+  - Packager
+  multiblock: false
+  name: Boxinator
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~407:
+  machine_types:
+  - Packager
+  multiblock: false
+  name: Boxinator
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~408:
+  machine_types:
+  - Packager
+  multiblock: false
+  name: Boxinator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~411:
+  machine_types:
+  - Unpackager
+  multiblock: false
+  name: Basic Unpackager
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~412:
+  machine_types:
+  - Unpackager
+  multiblock: false
+  name: Advanced Unpackager
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~413:
+  machine_types:
+  - Unpackager
+  multiblock: false
+  name: Advanced Unpackager II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~414:
+  machine_types:
+  - Unpackager
+  multiblock: false
+  name: Advanced Unpackager III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~415:
+  machine_types:
+  - Unpackager
+  multiblock: false
+  name: Unboxinator
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~416:
+  machine_types:
+  - Unpackager
+  multiblock: false
+  name: Unboxinator
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~417:
+  machine_types:
+  - Unpackager
+  multiblock: false
+  name: Unboxinator
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~418:
+  machine_types:
+  - Unpackager
+  multiblock: false
+  name: Unboxinator
+  voltage_tier:
+  - 8
+i~gregtech~gt.blockmachines~421:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Basic Chemical Reactor
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~422:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Advanced Chemical Reactor
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~423:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Advanced Chemical Reactor II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~424:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Advanced Chemical Reactor III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~425:
+  machine_types:
+  - Chemical Reactor
+  multiblock: false
+  name: Advanced Chemical Reactor IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~431:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Basic Fluid Canner
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~432:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Advanced Fluid Canner
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~433:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Quick Fluid Canner
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~434:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Turbo Fluid Canner
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~435:
+  machine_types:
+  - Fluid Canner
+  multiblock: false
+  name: Instant Fluid Canner
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~441:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Basic Rock Breaker
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~442:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Advanced Rock Breaker
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~443:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Advanced Rock Breaker II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~444:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Advanced Rock Breaker III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~445:
+  machine_types:
+  - Rock Breaker
+  multiblock: false
+  name: Cryogenic Magma Solidifier R-8200
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~461:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Basic Mass Fabricator
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~462:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Advanced Mass Fabricator
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~463:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Advanced Mass Fabricator II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~464:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Advanced Mass Fabricator III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~465:
+  machine_types:
+  - Mass Fabrication
+  multiblock: false
+  name: Advanced Mass Fabricator IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~471:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Basic Amplifabricator
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~472:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Advanced Amplifabricator
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~473:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Advanced Amplifabricator II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~474:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Advanced Amplifabricator III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~475:
+  machine_types:
+  - Matter Amplifier
+  multiblock: false
+  name: Advanced Amplifabricator IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~481:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Basic Replicator
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~482:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Advanced Replicator
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~483:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Advanced Replicator II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~484:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Advanced Replicator III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~485:
+  machine_types:
+  - Replicator
+  multiblock: false
+  name: Advanced Replicator IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~491:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Basic Brewery
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~492:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Advanced Brewery
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~493:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Advanced Brewery II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~494:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Advanced Brewery III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~495:
+  machine_types:
+  - Brewery
+  multiblock: false
+  name: Advanced Brewery IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~5001:
+  machine_types:
+  - Fusion Crafter
+  multiblock: true
+  unspecified: true
+  name: Draconic Evolution Fusion Crafter
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~501:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Basic Fermenter
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~502:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Advanced Fermenter
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~503:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Advanced Fermenter II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~504:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Advanced Fermenter III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~505:
+  machine_types:
+  - Fermenter
+  multiblock: false
+  name: Advanced Fermenter IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~511:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Basic Fluid Extractor
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~512:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Advanced Fluid Extractor
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~513:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Advanced Fluid Extractor II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~514:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Advanced Fluid Extractor III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~515:
+  machine_types:
+  - Fluid Extractor
+  multiblock: false
+  name: Advanced Fluid Extractor IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~521:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Basic Fluid Solidifier
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~522:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Advanced Fluid Solidifier
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~523:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Advanced Fluid Solidifier II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~524:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Advanced Fluid Solidifier III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~525:
+  machine_types:
+  - Fluid Solidifier
+  multiblock: false
+  name: Advanced Fluid Solidifier IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~531:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Basic Distillery
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~532:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Advanced Distillery
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~533:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Advanced Distillery II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~534:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Advanced Distillery III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~535:
+  machine_types:
+  - Distillery
+  multiblock: false
+  name: Advanced Distillery IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~541:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Basic Chemical Bath
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~542:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Advanced Chemical Bath
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~543:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Advanced Chemical Bath II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~544:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Advanced Chemical Bath III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~545:
+  machine_types:
+  - Chemical Bath
+  multiblock: false
+  name: Advanced Chemical Bath IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~551:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Basic Polarizer
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~552:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Advanced Polarizer
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~553:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Advanced Polarizer II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~554:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Advanced Polarizer III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~555:
+  machine_types:
+  - Electromagnetic Polarizer
+  multiblock: false
+  name: Advanced Polarizer IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~561:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Basic Electromagnetic Separator
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~562:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Advanced Electromagnetic Separator
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~563:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Advanced Electromagnetic Separator II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~564:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Advanced Electromagnetic Separator III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~565:
+  machine_types:
+  - Electromagnetic Separator
+  multiblock: false
+  name: Advanced Electromagnetic Separator IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~571:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Basic Autoclave
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~572:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Advanced Autoclave
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~573:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Advanced Autoclave II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~574:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Advanced Autoclave III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~575:
+  machine_types:
+  - Autoclave
+  multiblock: false
+  name: Advanced Autoclave IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~581:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Basic Mixer
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~582:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Advanced Mixer
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~583:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Advanced Mixer II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~584:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Advanced Mixer III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~585:
+  machine_types:
+  - Mixer
+  multiblock: false
+  name: Advanced Mixer IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~591:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Basic Precision Laser Engraver
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~592:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Advanced Precision Laser Engraver
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~593:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Advanced Precision Laser Engraver II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~594:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Advanced Precision Laser Engraver III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~595:
+  machine_types:
+  - Laser Engraver
+  multiblock: false
+  name: Advanced Precision Laser Engraver IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~601:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Basic Forming Press
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~602:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Advanced Forming Press
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~603:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Advanced Forming Press II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~604:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Advanced Forming Press III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~605:
+  machine_types:
+  - Forming Press
+  multiblock: false
+  name: Advanced Forming Press IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~611:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Basic Forge Hammer
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~612:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Advanced Forge Hammer
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~613:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Advanced Forge Hammer II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~614:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Advanced Forge Hammer III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~615:
+  machine_types:
+  - Forge Hammer
+  multiblock: false
+  name: Advanced Forge Hammer IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~621:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Basic Fluid Heater
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~622:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Advanced Fluid Heater
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~623:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Advanced Fluid Heater II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~624:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Advanced Fluid Heater III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~625:
+  machine_types:
+  - Fluid Heater
+  multiblock: false
+  name: Advanced Fluid Heater IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~631:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Basic Slicing Machine
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~632:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Advanced Slicing Machine
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~633:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Advanced Slicing Machine II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~634:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Advanced Slicing Machine III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~635:
+  machine_types:
+  - Slicer
+  multiblock: false
+  name: Advanced Slicing Machine IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~641:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Basic Sifting Machine
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~642:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Advanced Sifting Machine
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~643:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Advanced Sifting Machine II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~644:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Advanced Sifting Machine III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~645:
+  machine_types:
+  - Sifter
+  multiblock: false
+  name: Advanced Sifting Machine IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~651:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Basic Arc Furnace
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~652:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Advanced Arc Furnace
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~653:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Advanced Arc Furnace II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~654:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Advanced Arc Furnace III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~655:
+  machine_types:
+  - Arc Furnace
+  multiblock: false
+  name: Advanced Arc Furnace IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~661:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Basic Plasma Arc Furnace
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~662:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Advanced Plasma Arc Furnace
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~663:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Advanced Plasma Arc Furnace II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~664:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Advanced Plasma Arc Furnace III
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~665:
+  machine_types:
+  - Plasma Arc Furnace
+  multiblock: false
+  name: Advanced Plasma Arc Furnace IV
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~686:
+  machine_types:
+  - Lathe
+  multiblock: true
+  speedup: 4
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.8
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 8
+    base_parallels: 0
+  name: Industrial Precision Lathe
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~687:
+  machine_types:
+  - Autoclave
+  multiblock: true
+  valid_options: item_pipe_casing, coil, pipe_casing
+  unspecified: true
+  name: Industrial Autoclave
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~749:
+  machine_types:
+  - Reactor Processing Unit
+  - Cold Trap
+  multiblock: true
+  unspecified: true
+  name: Nuclear Salt Processing Plant
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~751:
+  machine_types:
+  - Thorium Reactor
+  multiblock: true
+  unspecified: true
+  name: Thorium Reactor [LFTR]
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~790:
+  machine_types:
+  - Centrifuge
+  multiblock: true
+  speedup: 2.25
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.9
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 6
+    base_parallels: 0
+  name: Industrial Centrifuge
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~791:
+  machine_types:
+  - Industrial Coke Oven
+  multiblock: true
+  valid_options: coke_oven_casing
+  unspecified: true
+  name: Industrial Coke Oven
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~792:
+  machine_types:
+  - Bending Machine
+  - Forming Press
+  multiblock: true
+  speedup: 6
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 4
+    base_parallels: 0
+  name: Industrial Material Press
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~793:
+  machine_types:
+  - Rocket Engine
+  multiblock: false
+  efficiency: 0.8
+  name: Basic Rocket Engine
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~794:
+  machine_types:
+  - Rocket Engine
+  multiblock: false
+  efficiency: 0.7
+  name: Advanced Rocket Engine
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~795:
+  machine_types:
+  - Rocket Engine
+  multiblock: false
+  efficiency: 0.6
+  name: Turbo Rocket Engine
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~796:
+  machine_types:
+  - Electrolyzer
+  multiblock: true
+  speedup: 2.8
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.9
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 2
+    base_parallels: 0
+  name: Industrial Electrolyzer
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~797:
+  machine_types:
+  - Macerator
+  multiblock: true
+  valid_options: maceration_upgrade
+  speedup: 1.6
+  unspecified: true
+  name: Industrial Maceration Stack
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~798:
+  machine_types:
+  - Wiremill
+  multiblock: true
+  speedup: 3
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.75
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 4
+    base_parallels: 0
+  name: Industrial Wire Factory
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~799:
+  machine_types:
+  - Mass Fabricator
+  - Recycler
+  multiblock: true
+  unspecified: true
+  name: Matter Fabrication CPU
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~810:
+  machine_types:
+  - Alloy Blast Smelter
+  multiblock: true
+  name: Alloy Blast Smelter
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~811:
+  machine_types:
+  - Mixer
+  multiblock: true
+  speedup: 3.5
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 8
+    base_parallels: 0
+  name: Industrial Mixing Machine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~813:
+  machine_types:
+  - Dehydrator
+  multiblock: false
+  name: Chemical Dehydrator I
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~814:
+  machine_types:
+  - Dehydrator
+  multiblock: false
+  name: Chemical Dehydrator II
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~815:
+  machine_types:
+  - Dehydrator
+  multiblock: false
+  name: Chemical Dehydrator III
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~816:
+  machine_types:
+  - Dehydrator
+  multiblock: false
+  name: Chemical Dehydrator IV
+  voltage_tier:
+  - 7
+i~gregtech~gt.blockmachines~828:
+  machine_types:
+  - Particle Accelerator
+  multiblock: true
+  unspecified: true
+  name: COMET - Compact Cyclotron
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~829:
+  machine_types:
+  - Fish Trap
+  multiblock: true
+  unspecified: true
+  name: Zhuhai - Fishing Port
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~830:
+  machine_types:
+  - Geothermal Engine
+  multiblock: false
+  unspecified: true
+  name: Basic Geothermal Engine
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~831:
+  machine_types:
+  - Geothermal Engine
+  multiblock: false
+  unspecified: true
+  name: Turbo Geothermal Engine
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~832:
+  machine_types:
+  - Geothermal Engine
+  multiblock: false
+  unspecified: true
+  name: Vulcan Geothermal Engine
+  voltage_tier:
+  - 6
+i~gregtech~gt.blockmachines~835:
+  machine_types:
+  - Reactor Fuel Processing Plant
+  multiblock: true
+  unspecified: true
+  name: Reactor Fuel Processing Plant
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~836:
+  machine_types:
+  - Tree Growth Simulator
+  multiblock: true
+  unspecified: true
+  name: Tree Growth Simulator
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~837:
+  machine_types:
+  - Semifluid Generator
+  multiblock: false
+  efficiency: 0.95
+  name: Basic Semifluid Generator
+  voltage_tier:
+  - 1
+i~gregtech~gt.blockmachines~838:
+  machine_types:
+  - Semifluid Generator
+  multiblock: false
+  efficiency: 0.9
+  name: Advanced Semifluid Generator
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~839:
+  machine_types:
+  - Semifluid Generator
+  multiblock: false
+  efficiency: 0.85
+  name: Turbo Semifluid Generator
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~840:
+  machine_types:
+  - Sifter
+  multiblock: true
+  speedup: 5
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.75
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 4
+    base_parallels: 0
+  name: Large Sifter Control Block
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~849:
+  machine_types:
+  - Thermal Centrifuge
+  multiblock: true
+  speedup: 2.5
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.8
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 8
+    base_parallels: 0
+  name: Large Thermal Refinery
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~850:
+  machine_types:
+  - Ore Washer
+  - Simple Washer
+  - Chemical Bath
+  multiblock: true
+  speedup: 5
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 4
+    base_parallels: 0
+  name: Ore Washing Plant
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~859:
+  machine_types:
+  - Extruder
+  multiblock: true
+  speedup: 3.5
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 4
+    base_parallels: 0
+  name: Industrial Extrusion Machine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~862:
+  machine_types:
+  - Arc Furnace
+  - Plasma Arc Furnace
+  multiblock: true
+  valid_options: width
+  speedup: 3.5
+  unspecified: true
+  name: High Current Industrial Arc Furnace
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~863:
+  machine_types:
+  - Solar Tower
+  multiblock: true
+  name: Solar Tower
+  unspecified: true
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~869:
+  machine_types:
+  - Radioisotope Thermoelectric Generator
+  multiblock: false
+  unspecified: true
+  name: Radioisotope Thermoelectric Generator
+  unspecified: true
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~875:
+  machine_types:
+  - Thermal Boiler
+  multiblock: true
+  unspecified: true
+  name: Thermal Boiler
+  voltage_tier:
+  - -1
+i~gregtech~gt.blockmachines~876:
+  machine_types:
+  - Assembler
+  multiblock: true
+  unspecified: true
+  name: Large Scale Auto-Assembler v1.01
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~910:
+  machine_types:
+  - Vacuum Freezer
+  multiblock: true
+  unspecified: true
+  name: Cryogenic Freezer
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~911:
+  machine_types:
+  - Dehydrator
+  multiblock: false
+  name: Basic Dehydrator I
+  voltage_tier:
+  - 2
+i~gregtech~gt.blockmachines~912:
+  machine_types:
+  - Dehydrator
+  multiblock: false
+  name: Basic Dehydrator II
+  voltage_tier:
+  - 3
+i~gregtech~gt.blockmachines~9403:
+  machine_types:
+  - Clarifier Purification Unit
+  multiblock: true
+  unspecified: true
+  name: Clarifier Purification Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~9404:
+  machine_types:
+  - Ozonation Purification Unit
+  multiblock: true
+  unspecified: true
+  name: Ozonation Purification Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~9405:
+  machine_types:
+  - Flocculation Purification Unit
+  multiblock: true
+  unspecified: true
+  name: Flocculation Purification Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~9406:
+  machine_types:
+  - pH Neutralization Purification Unit
+  multiblock: true
+  unspecified: true
+  name: pH Neutralization Purification Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~9408:
+  machine_types:
+  - Extreme Temperature Fluctuation Purification Unit
+  multiblock: true
+  unspecified: true
+  name: Extreme Temperature Fluctuation Purification Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~9409:
+  machine_types:
+  - High Energy Laser Purification Unit
+  multiblock: true
+  unspecified: true
+  name: High Energy Laser Purification Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~9412:
+  machine_types:
+  - Residual Decontaminant Degasser Purification Unit
+  multiblock: true
+  unspecified: true
+  name: Residual Decontaminant Degasser Purification Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~9414:
+  machine_types:
+  - Absolute Baryonic Perfection Purification Unit
+  multiblock: true
+  unspecified: true
+  name: Absolute Baryonic Perfection Purification Unit
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~942:
+  machine_types:
+  - Packager
+  - Unpackager
+  multiblock: true
+  speedup: 6
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.75
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 16
+    base_parallels: 0
+  name: Amazon Warehousing Depot
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~963:
+  machine_types:
+  - Blast Furnace
+  multiblock: true
+  unspecified: true
+  valid_options: coil
+  name: Volcanus
+  weight: 2
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~964:
+  machine_types:
+  - Implosion Compressor
+  multiblock: true
+  unspecified: true
+  name: Density^2
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~965:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  unspecified: true
+  name: FusionTech MK IV
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~975:
+  machine_types:
+  - Fusion Reactor
+  multiblock: true
+  unspecified: true
+  name: FusionTech MK V
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~992:
+  machine_types:
+  - Cutting Machine
+  - Slicing Machine
+  multiblock: true
+  speedup: 3
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.75
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 4
+    base_parallels: 0
+  name: Industrial Cutting Factory
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~993:
+  machine_types:
+  - Semifluid Generator
+  multiblock: false
+  efficiency: 0.8
+  name: Turbo Semifluid Generator II
+  voltage_tier:
+  - 4
+i~gregtech~gt.blockmachines~994:
+  machine_types:
+  - Semifluid Generator
+  multiblock: false
+  efficiency: 0.75
+  name: Turbo Semifluid Generator III
+  voltage_tier:
+  - 5
+i~gregtech~gt.blockmachines~995:
+  machine_types:
+  - Vacuum Furnace
+  - Dehydrator
+  multiblock: true
+  unspecified: true
+  name: Utupu-Tanuri
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~996:
+  machine_types:
+  - Rocket Engine
+  multiblock: true
+  unspecified: true
+  name: Rocketdyne F-1A Engine
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~gregtech~gt.blockmachines~998:
+  machine_types:
+  - Chemical Plant
+  multiblock: true
+  unspecified: true
+  valid_options: coil, pipe_casing
+  name: ExxonMobil Chemical Plant
+  voltage_tier:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+i~minecraft~crafting_table~0:
+  machine_types:
+  - Crafting Table
+  multiblock: false
+  name: Crafting Table
+  voltage_tier:
+  - -1
+i~minecraft~furnace~0:
+  machine_types:
+  - Furnace
+  multiblock: false
+  name: Furnace
+  voltage_tier:
+  - -1

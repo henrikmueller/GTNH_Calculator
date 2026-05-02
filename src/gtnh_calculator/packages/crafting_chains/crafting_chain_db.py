@@ -3,10 +3,12 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 from typing import Dict
+from math import ceil
 
 from ..recipes_db.material import Material
 from ..recipes_db.recipes import Recipe
 from .crafting_chain_utility import calculate_gradings
+from ..utility.general_utility import format_float
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -49,6 +51,7 @@ class CraftingChain:
     eu_per_tick: Dict[Recipe, float]
     total_eu_per_tick: float
     infinite_recipes: Dict[Recipe, bool]
+    time: float
 
     def __init__(
             self,
@@ -68,16 +71,18 @@ class CraftingChain:
             for recipe, amount in recipe_amounts.items()
         }
         self.eu_per_tick = {
-            r: (-r.total_eu * a / (20 * r.processing_time) if r.positive_processing_time() else 0)
-            for r, a in recipe_amounts.items()
+            r: (-r.eu_per_tick * a if r.positive_processing_time() else 0)
+            for r, a in self.machine_amounts.items()
         }
         self.total_eu_per_tick = sum(self.eu_per_tick.values())
         self.recipe_grading, self.material_grading = calculate_gradings(
             recipes=[recipe for recipe, amount in recipe_amounts.items() if amount > 0],
             materials=list(total_material_needs.keys()),
-            starting_materials=input_materials | infinite_materials
+            starting_materials=input_materials | infinite_materials,
+            ignore_unreachable=True
         )
 
+        # TODO
         # def calculate_infinites() -> None:
         #     recipe_vector = np.array([amount for _, amount in self.recipe_amounts.items()])
         #     total_material_needs = np.matmul(self.recipe_matrix, recipe_vector)
@@ -109,6 +114,10 @@ class CraftingChain:
         self.infinite_recipes = {r: False for r in recipe_amounts.keys()}
 
     @property
+    def recipe_list(self) -> list[Recipe]:
+        return [r for r, a in self.recipe_amounts.items() if a > 0]
+
+    @property
     def inputs(self) -> Dict[Material, float]:
         return {m: a for m, a in self.total_material_needs.items() if a < 0}
 
@@ -116,43 +125,13 @@ class CraftingChain:
     def outputs(self) -> Dict[Material, float]:
         return {m: a for m, a in self.total_material_needs.items() if a > 0}
 
-    def statistics(self, time_factor, time_interval: str, do_print=False) -> CraftingChainStatistics:
-        """
-        ----------------------------------------------------------------------------------------------------------------
-            Prepare recipe chain data for printing and drawing
-        ----------------------------------------------------------------------------------------------------------------
-        """
-        df = self.to_dataframe(time_factor, time_interval)
-        recipe_vector = np.array([amount for _, amount in self.recipe_amounts.items()])
-        total_material_needs = time_factor * np.matmul(self.recipe_matrix, recipe_vector)
-        total_materials = list(zip(total_material_needs, self.materials.values()))
+    @property
+    def number_of_machines(self) -> int:
+        return sum(ceil(a) for a in self.machine_amounts.values())
 
-        """
-        ----------------------------------------------------------------------------------------------------------------
-            Print crafting chain to console
-        ----------------------------------------------------------------------------------------------------------------
-        """
-        if do_print:
-            print(f'\nTotal Inputs per {time_interval}:')
-            print(', '.join([f'{"{:.3f}".format(-amount)} {material}' for amount, material in total_materials if
-                             amount < 0]) + '\n')
-            print(f'Total Outputs per {time_interval}:')
-            print(', '.join(
-                [f'{"{:.3f}".format(amount)} {material}' for amount, material in total_materials if amount > 0]) + '\n')
-            print(f'Total EU per tick {"{:.3f}".format(self.total_eu_per_tick)}:')
-            print(f'Complete Recipe List{' (ordered)' if self.ordered_recipes else ''}:')
-            print(df.to_string() + '\n')
-
-        return CraftingChainStatistics(
-            time_interval=time_interval,
-            total_inputs_per_time_interval={material: -amount for amount, material in total_materials if amount < 0},
-            total_outputs_per_time_interval={material: amount for amount, material in total_materials if amount > 0},
-            total_eu_per_tick=self.total_eu_per_tick
-        )
-
-    def to_dataframe(self, time_factor, time_interval: str):
-        columns = ['Recipe Grading', 'Machine Amount', 'Machine', 'Voltage', f'Inputs per {time_interval}',
-                   f'Outputs per {time_interval}',
+    def to_dataframe(self, time_factor, display_interval_string: str):
+        columns = ['Recipe Grading', 'Machine Amount', 'Machine', 'Voltage', f'Inputs per {display_interval_string}',
+                   f'Outputs per {display_interval_string}',
                    'EU/t', 'Infinite', 'Recipe ID']
         recipes = [r for r, a in self.recipe_amounts.items() if a > 0]
         n, q = len(columns), len(recipes)
@@ -163,9 +142,28 @@ class CraftingChain:
         data[:, 3] = [r.voltage_tier_name for r in recipes]
         data[:, 4] = [r.input_string(time_factor * self.recipe_amounts[r]) for r in recipes]
         data[:, 5] = [r.output_string(time_factor * self.recipe_amounts[r]) for r in recipes]
-        data[:, 6] = ["{:.3f}".format(self.eu_per_tick[r]) for r in recipes]
+        data[:, 6] = [round(self.eu_per_tick[r], 3) for r in recipes]
         data[:, 7] = [self.infinite_recipes[r] for r in recipes]
         data[:, 8] = [r.id for r in recipes]
         df = pd.DataFrame(data=data, columns=columns)
         df = df.sort_values(by='Recipe Grading', ascending=True)
         return df
+
+    def markdown_inputs(self, display_interval_string: str, threshold=1e-10) -> str:
+        return f"""
+#### **Total inputs per {display_interval_string}**:
+
+{', \n'.join(f'- {format_float(abs(a))} {m}' for m, a in self.inputs.items() if -a >= threshold)}
+"""
+
+    def markdown_outputs(self, display_interval_string: str, threshold=1e-10) -> str:
+        return f"""
+#### **Total outputs per {display_interval_string}**:
+    
+{', \n'.join(f'- {format_float(a)} {m}' for m, a in self.outputs.items() if a >= threshold)}
+"""
+
+    def markdown_eu(self) -> str:
+        return f"""
+#### **Total EU/t**: {"{:.2f}".format(sum(self.eu_per_tick.values()))}
+"""

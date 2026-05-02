@@ -99,6 +99,8 @@ class MachineOptionsBook:
                     return MachineOptions(coil=self.coils[0])
                 case 'Pyrolyse Oven':
                     return MachineOptions(coil=self.coils[0])
+                case 'Volcanus':
+                    return MachineOptions(coil=self.coils[0])
                 case _:
                     return MachineOptions()
 

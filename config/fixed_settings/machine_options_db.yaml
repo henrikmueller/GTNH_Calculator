@@ -1,0 +1,226 @@
+machine_options:
+  - name: i~gregtech~gt.blockcasings5~0
+    option_type: coil
+    options:
+      tier: 1
+      temperature: 1801
+  - name: i~gregtech~gt.blockcasings5~1
+    option_type: coil
+    options:
+      tier: 2
+      temperature: 2701
+  - name: i~gregtech~gt.blockcasings5~2
+    option_type: coil
+    options:
+      tier: 3
+      temperature: 3601
+  - name: i~gregtech~gt.blockcasings5~3
+    option_type: coil
+    options:
+      tier: 4
+      temperature: 4501
+  - name: i~gregtech~gt.blockcasings5~4
+    option_type: coil
+    options:
+      tier: 5
+      temperature: 5401
+  - name: i~gregtech~gt.blockcasings5~9
+    option_type: coil
+    options:
+      tier: 6
+      temperature: 6301
+  - name: i~gregtech~gt.blockcasings5~5
+    option_type: coil
+    options:
+      tier: 7
+      temperature: 7201
+  - name: i~gregtech~gt.blockcasings5~6
+    option_type: coil
+    options:
+      tier: 8
+      temperature: 8101
+  - name: i~gregtech~gt.blockcasings5~10
+    option_type: coil
+    options:
+      tier: 9
+      temperature: 9001
+  - name: i~gregtech~gt.blockcasings5~7
+    option_type: coil
+    options:
+      tier: 10
+      temperature: 9901
+  - name: i~gregtech~gt.blockcasings5~8
+    option_type: coil
+    options:
+      tier: 11
+      temperature: 10801
+  - name: i~gregtech~gt.blockcasings5~11
+    option_type: coil
+    options:
+      tier: 12
+      temperature: 11701
+  - name: i~gregtech~gt.blockcasings5~12
+    option_type: coil
+    options:
+      tier: 13
+      temperature: 12601
+  - name: i~gregtech~gt.blockcasings5~13
+    option_type: coil
+    options:
+      tier: 14
+      temperature: 13501
+  - name: i~gregtech~gt.blockcasings2~12
+    option_type: pipe_casing
+    options:
+      tier: 1
+  - name: i~gregtech~gt.blockcasings2~13
+    option_type: pipe_casing
+    options:
+      tier: 2
+  - name: i~gregtech~gt.blockcasings2~14
+    option_type: pipe_casing
+    options:
+      tier: 3
+  - name: i~gregtech~gt.blockcasings2~15
+    option_type: pipe_casing
+    options:
+      tier: 4
+  - name: i~gregtech~gt.blockcasings11~0
+    option_type: item_pipe_casing
+    options:
+      tier: 1
+  - name: i~gregtech~gt.blockcasings11~1
+    option_type: item_pipe_casing
+    options:
+      tier: 2
+  - name: i~gregtech~gt.blockcasings11~2
+    option_type: item_pipe_casing
+    options:
+      tier: 3
+  - name: i~gregtech~gt.blockcasings11~3
+    option_type: item_pipe_casing
+    options:
+      tier: 4
+  - name: i~gregtech~gt.blockcasings11~4
+    option_type: item_pipe_casing
+    options:
+      tier: 5
+  - name: i~gregtech~gt.blockcasings11~5
+    option_type: item_pipe_casing
+    options:
+      tier: 6
+  - name: i~gregtech~gt.blockcasings11~6
+    option_type: item_pipe_casing
+    options:
+      tier: 7
+  - name: i~gregtech~gt.blockcasings11~7
+    option_type: item_pipe_casing
+    options:
+      tier: 8
+  - name: i~gregtech~gt.metaitem.01~32345
+    option_type: electromagnet
+    options:
+      tier: 1
+      speed: 1.1
+      eu_usage: 0.8
+      parallels: 8
+  - name: i~gregtech~gt.metaitem.01~32346
+    option_type: electromagnet
+    options:
+      tier: 2
+      speed: 1.25
+      eu_usage: 0.75
+      parallels: 24
+  - name: i~gregtech~gt.metaitem.01~32347
+    option_type: electromagnet
+    options:
+      tier: 3
+      speed: 1.5
+      eu_usage: 0.7
+      parallels: 48
+  - name: i~gregtech~gt.metaitem.01~32348
+    option_type: electromagnet
+    options:
+      tier: 4
+      speed: 2.0
+      eu_usage: 0.6
+      parallels: 96
+  - name: i~gregtech~gt.metaitem.01~32349
+    option_type: electromagnet
+    options:
+      tier: 5
+      speed: 2.5
+      eu_usage: 0.5
+      parallels: 256
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~0
+    option_type: solenoid_coil
+    options:
+      tier: 1
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~1
+    option_type: solenoid_coil
+    options:
+      tier: 2
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~2
+    option_type: solenoid_coil
+    options:
+      tier: 3
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~3
+    option_type: solenoid_coil
+    options:
+      tier: 4
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~4
+    option_type: solenoid_coil
+    options:
+      tier: 5
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~5
+    option_type: solenoid_coil
+    options:
+      tier: 6
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~6
+    option_type: solenoid_coil
+    options:
+      tier: 7
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~7
+    option_type: solenoid_coil
+    options:
+      tier: 8
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~8
+    option_type: solenoid_coil
+    options:
+      tier: 9
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~9
+    option_type: solenoid_coil
+    options:
+      tier: 10
+  - name: i~gregtech~gt.blockcasings.cyclotron_coils~10
+    option_type: solenoid_coil
+    options:
+      tier: 11
+  - name: i~minecraft~anvil~0
+    option_type: anvil
+    options:
+      tier: 1
+  - name: i~Railcraft~anvil~0
+    option_type: anvil
+    options:
+      tier: 2
+  - name: i~EnderIO~blockDarkSteelAnvil~0
+    option_type: anvil
+    options:
+      tier: 3
+  - name: i~thaumicbases~thaumicAnvil~0
+    option_type: anvil
+    options:
+      tier: 3
+  - name: i~thaumicbases~voidAnvil~0
+    option_type: anvil
+    options:
+      tier: 4
+  - name: i~miscutils~miscutils.blockcasings~2
+    option_type: coke_oven_casing
+    options:
+      tier: 1
+  - name: i~miscutils~miscutils.blockcasings~3
+    option_type: coke_oven_casing
+    options:
+      tier: 2

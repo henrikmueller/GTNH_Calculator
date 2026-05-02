@@ -147,3 +147,22 @@ def print_df(df: pd.DataFrame, limit_rows: bool = True, max_rows: int | None = N
             "display.max_colwidth", None
         ):
             print(df if max_rows is None else df.head(max_rows))
+
+
+def is_contained_in(text: str, text_list: list[str], case_sensitive=True) -> bool:
+    if case_sensitive:
+        return any(text in s for s in text_list)
+    lowercase_text = text.lower()
+    return any(lowercase_text in s.lower() for s in text_list)
+
+
+def format_float(x):
+    s = f"{x:.20f}".rstrip("0")
+    if "." not in s:
+        return s + ".0"
+
+    whole, frac = s.split(".")
+    for i, ch in enumerate(frac):
+        if ch != "0":
+            return whole + "." + frac[:i+2]
+    return whole + ".0"

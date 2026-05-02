@@ -26,3 +26,11 @@ class RecipeOptions:
         if self.temperature is not None:
             result.append(f'**Temperature**: {self.temperature} K')
         return ', '.join(result)
+
+    def __repr__(self):
+        if not self.options:
+            return 'RecipeOptions: None'
+        return f'RecipeOptions: {', '.join(f"{k}: {v}" for k, v in self.options.items())}'
+
+    def __bool__(self):
+        return len(self.options) > 0
