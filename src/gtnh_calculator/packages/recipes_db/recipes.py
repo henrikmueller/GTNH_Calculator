@@ -18,13 +18,13 @@ class Recipe:
     base_recipe: RawRecipe
     raw_recipe: RawRecipe
     valid_machines: set[Machine]
-    machine: Machine
+    _machine: Machine
     cap: float | None
     cap_specified: bool
 
     def __init__(
         self,
-        id: int,
+        id: str,
         base_recipe: RawRecipe,
         raw_recipe: RawRecipe,
         valid_machines: set[Machine],
@@ -36,17 +36,35 @@ class Recipe:
         self.base_recipe = base_recipe
         self.raw_recipe = raw_recipe
         self.valid_machines = valid_machines
-        self.machine = machine
+        self._machine = machine
         self.cap = cap
         self.cap_specified = cap_specified
 
     @property
+    def machine(self) -> Machine:
+        return self._machine
+
+    @machine.setter
+    def machine(self, machine: Machine) -> None:
+        self._set_machine(machine)
+
+    def _set_machine(self, machine: Machine, log: bool = False) -> None:
+        """
+        Set the machine for the recipe. Only called for logging purposes.
+        """
+        if machine not in self.valid_machines:
+            raise ValueError(f'Machine {machine} is not valid for recipe {self}')
+        new_raw_recipe = machine.fit_recipe(self.base_recipe, log=log)
+        self.raw_recipe = new_raw_recipe
+        self._machine = machine
+
+    @property
     def total_eu(self) -> float:
-        return self.raw_recipe.total_eu
+        return self.raw_recipe.total_eu  # with parallels
 
     @property
     def eu_per_tick(self) -> float:
-        return self.raw_recipe.eu_per_tick
+        return self.raw_recipe.eu_per_tick  # with parallels
 
     @property
     def processing_time(self) -> float:
@@ -63,6 +81,10 @@ class Recipe:
     @property
     def voltage_tier(self) -> int:
         return self.raw_recipe.voltage_tier
+
+    @property
+    def used_parallels(self) -> int:
+        return self.raw_recipe.used_parallels
 
     @property
     def voltage_tier_name(self) -> str:

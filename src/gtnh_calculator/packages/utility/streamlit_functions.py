@@ -252,22 +252,42 @@ def display_crafting_chain_recipe(recipe: Recipe):
         # ):
         a, b = st.columns(2)
         with a:
-            selected_machine = st.selectbox(
+            options = {
+                index: m.__str__() for index, m in enumerate(valid_machines)
+            }
+            selected_machine_index = st.selectbox(
                 'Machine',
-                options=[m.__str__() for m in valid_machines],
+                options=options.keys(),
                 index=valid_machines.index(recipe.machine),
                 key=f"valid_machines_{recipe.id}",
-                width=500
+                width=500,
+                format_func=lambda index: options[index]
             )
-            valid_voltage_tiers = recipe.valid_voltage_tiers
-            index = valid_voltage_tiers.index(recipe.voltage_tier)
-            voltage_tier = st.selectbox(
+            selected_machine = valid_machines[selected_machine_index]
+            if not selected_machine.set_voltage_tier(recipe.voltage_tier):
+              selected_machine.set_voltage_tier(recipe.minimum_voltage_tier)
+
+            valid_voltage_tiers = [v for v in selected_machine.voltage_tiers if v >= recipe.minimum_voltage_tier]
+            options = {
+                index: VoltageTier.voltage_tier_name(v) for index, v in enumerate(valid_voltage_tiers)
+            }
+            voltage_tier_index = st.selectbox(
                 'Voltage Tier',
-                options=[VoltageTier.voltage_tier_name(v) for v in valid_voltage_tiers],
-                index=index,
+                options=options.keys(),
+                index=valid_voltage_tiers.index(selected_machine.voltage_tier),
                 key=f"voltage_tier_select_{recipe.id}",
-                width=300
+                width=300,
+                format_func=lambda index: options[index]
             )
+            voltage_tier = valid_voltage_tiers[voltage_tier_index]
+            if not selected_machine.set_voltage_tier(voltage_tier):
+              raise ValueError(f'Invalid voltage tier for machine: {selected_machine}. '
+                               f'VTs: {selected_machine.voltage_tiers}. Selected: {voltage_tier} '
+                               f'Valid: {valid_voltage_tiers} '
+                               f'Recipe min: {recipe.minimum_voltage_tier} ')
+            
+            st.write(f'Selected machine: {selected_machine.__str__()}')
+            recipe._set_machine(selected_machine, log=False)
         with b:
             html = Template("""
             <style>
@@ -421,5 +441,7 @@ def display_crafting_chain_recipe(recipe: Recipe):
             info_string += f'**Total EU**: {abs(recipe.total_eu):.6g} EU  \n'
             if recipe.raw_recipe.recipe_options:
                 info_string += f'{recipe.raw_recipe.recipe_options}  \n'
+            if recipe.used_parallels > 1:
+                info_string += f'Used parallels: {recipe.used_parallels}  \n'
             if info_string:
                 st.markdown(info_string)

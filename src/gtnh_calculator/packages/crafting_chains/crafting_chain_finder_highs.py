@@ -61,13 +61,13 @@ class CostVectorCollection:
     def cost_vector_list(self) -> list[CostVector]:
         return [self.recipe_cost_vector, self.eu_cost_vector, self.machine_amount_cost_vector] + self.other_cost_vectors
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.cost_vector_list)
 
     def __iter__(self):
         return iter(self.cost_vector_list)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> CostVector:
         return self.cost_vector_list[index]
 
     @property

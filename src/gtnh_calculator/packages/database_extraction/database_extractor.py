@@ -12,6 +12,7 @@ from collections import deque
 
 from ..recipes_db.material import ExtractedItem, ExtractedFluid, Material, MaterialGroup
 from ..recipes_db.voltage_tiers import VoltageTier
+from ..recipes_db.machine_stats import MachineStats
 from ..recipes_db.machines import Machine, MachineType
 from ..recipes_db.behaviours.machine_behaviours import MachineBehaviour
 from ..recipes_db.machine_options.machine_option_books import load_possible_machine_options, MachineOptionsBook
@@ -726,14 +727,16 @@ class DatabaseExtractor:
                     deprecated=deprecated,
                     disabled='disabled' in specification and specification['disabled'],
                     unspecified='unspecified' in specification and specification['unspecified'],
-                    voltage_tiers=[int(v) for v in specification['voltage_tier']],
-                    _voltage_tier=voltage_tier,
                     item=extracted_items[item_id],
                     weight=specification['weight'] if 'weight' in specification else 0,
                     valid_options=valid_options,
-                    speedup=specification['speedup'] if 'speedup' in specification else 1,
-                    efficiency=specification['efficiency'] if 'efficiency' in specification else 1,
                     machine_types=set(),
+                    machine_stats=MachineStats(
+                        voltage_tiers=[int(v) for v in specification['voltage_tier']],
+                        _voltage_tier=voltage_tier,
+                        speedup=specification['speedup'] if 'speedup' in specification else 1,
+                        efficiency=specification['efficiency'] if 'efficiency' in specification else 1
+                    ),
                     machine_behaviour=MachineBehaviour.create_machine_behaviour(specification)
                 )
                 for machine_type_name in specification['machine_types']:

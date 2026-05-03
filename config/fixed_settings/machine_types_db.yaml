@@ -2441,6 +2441,8 @@ i~gregtech~gt.blockmachines~1169:
   - Chemical Reactor
   - LCR
   multiblock: true
+  overclock_behaviour:
+    type: infinite
   name: Large Chemical Reactor
   voltage_tier:
   - 0
@@ -3161,6 +3163,8 @@ i~gregtech~gt.blockmachines~13366:
   multiblock: true
   weight: 1
   name: Mega Chemical Reactor
+  overclock_behaviour:
+    type: infinite
   voltage_tier:
   - 0
   - 1
@@ -4682,7 +4686,6 @@ i~gregtech~gt.blockmachines~32013:
   machine_types:
   - Neutron Activator
   multiblock: true
-  unspecified: true
   machine_behaviour:
     type: neutron_activator
   name: Neutron Activator

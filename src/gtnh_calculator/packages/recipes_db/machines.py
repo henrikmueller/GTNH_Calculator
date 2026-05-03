@@ -8,6 +8,8 @@ from .machine_options.machine_options import MachineOption
 from .machine_options.machine_option_types import MachineOptionType
 from .behaviours.machine_behaviours import MachineBehaviour
 from .raw_recipes import RawRecipe
+from .machine_stats import MachineStats
+from packages.recipes_db import machine_stats
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
@@ -20,19 +22,24 @@ class Machine:
     deprecated: bool
     disabled: bool
     unspecified: bool
-    voltage_tiers: list[int]
-    _voltage_tier: int
     item: Material
     weight: int
     machine_behaviour: MachineBehaviour
     machine_types: set[MachineType]
     valid_options: list[MachineOptionType]
-    speedup: float = 1
-    efficiency: float = 1
+    machine_stats: MachineStats
     machine_options: list[MachineOption] | None = None
+
+    @property
+    def id(self) -> str:
+        return self.item.id
 
     def __hash__(self) -> int:
         return self.item.__hash__()
+
+    @property
+    def voltage_tiers(self) -> list[int]:
+        return self.machine_stats.voltage_tiers
 
     def __str__(self):
         if all(v < 0 for v in self.voltage_tiers):
@@ -48,18 +55,16 @@ class Machine:
 
     @property
     def voltage_tier(self) -> int:
-        return self._voltage_tier
+        return self.machine_stats.voltage_tier
 
-    def set_voltage_tier(self, voltage_tier: int) -> None:
-        if voltage_tier in self.voltage_tiers:
-            self._voltage_tier = voltage_tier
-        else:
-            _LOGGER.info(f'Cannot set voltage tier {voltage_tier} for machine {self}')
+    def set_voltage_tier(self, voltage_tier: int) -> bool:
+        return self.machine_stats.set_voltage_tier(voltage_tier)
 
     def fit_recipe(self, raw_recipe: RawRecipe, log=False) -> RawRecipe:
         return self.machine_behaviour.fit_recipe(
             raw_recipe=raw_recipe,
             voltage_tier=self.voltage_tier,
+            machine_stats=self.machine_stats,
             machine_options=self.machine_options,
             log=log
         )

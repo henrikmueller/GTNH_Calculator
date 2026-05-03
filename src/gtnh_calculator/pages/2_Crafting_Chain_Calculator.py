@@ -39,9 +39,9 @@ st.set_page_config(
 )
 st.markdown('# GTNH Calculator')
 st.markdown('## CraftingChainConfig File')
-crafting_chain = None
 machine_type_book = None
-crafting_chain_database: CraftingChainDatabase | None = None
+crafting_chain_database: CraftingChainDatabase | None
+crafting_chain: CraftingChain | None
 config: CraftingChainConfig | None = None
 database: GTNHDatabase = load_database()
 
@@ -55,6 +55,8 @@ if uploaded_file is not None:
     st.session_state['file_hash'] = hash(uploaded_file)
     crafting_chain_database = load_crafting_chain_database(uploaded_file, database)
     config = crafting_chain_database.config
+else:
+    crafting_chain_database = None
 
 update = 'update' in st.session_state and st.session_state['update']
 if 'selected_material' not in st.session_state:
@@ -71,7 +73,7 @@ def scatter_plot(
     label_x: str,
     label_y: str
 ):
-    def get_value(cost_vector_name: str, solution: OptimalSolution) -> float:
+    def get_value(cost_vector_name: str, solution: OptimalSolution) -> float | None:
         match cost_vector_name:
             case 'recipe_cost_vector':
                 return np.dot(solution.recipe_vector, cost_vectors.recipe_cost_vector.vector).item()
@@ -190,7 +192,7 @@ if crafting_chain_database is not None and config is not None:
         st.metric("Materials not reachable from inputs + infinite materials", non_reachable_materials_amount,
                   border=True)
 
-    def material_card(material: Material):
+    def material_card(crafting_chain_database: CraftingChainDatabase, material: Material):
         with st.container(border=True, width=600):
             col1, col2 = st.columns([4, 1])
 
@@ -225,10 +227,10 @@ if crafting_chain_database is not None and config is not None:
         cols = st.columns(NUMBER_OF_COLUMNS)
         for i, material in enumerate(matching_materials[:MAX_DISPLAYED_OPTIONS]):
             with cols[i % NUMBER_OF_COLUMNS]:
-                material_card(material)
+                material_card(crafting_chain_database, material)
     else:
         material = st.session_state.selected_material
-        material_card(material)
+        material_card(crafting_chain_database, material)
 
         if st.button('Discard material'):
             st.session_state.selected_material = None
@@ -267,13 +269,13 @@ if crafting_chain_database is not None and config is not None:
     )
     cost_vectors = crafting_chain_finder.get_default_cost_vectors()
 
-    weighted_cost_vectors = [(cost_vectors[0], 1), (cost_vectors[1], 0), (cost_vectors[2], 0)]
+    weighted_cost_vectors = [(cost_vectors[0], 1.0), (cost_vectors[1], 0.0), (cost_vectors[2], 0.0)]
     if 'crafting_chain' not in st.session_state or update:
         st.session_state['crafting_chain'] = crafting_chain_finder._optimal_crafting_chain(
             weighted_cost_vectors=weighted_cost_vectors, use_individual_limits=False,
             eu_per_tick_constraint=None, machine_amount_constraint=None
         )
-    crafting_chain: CraftingChain = st.session_state['crafting_chain']
+    crafting_chain = st.session_state['crafting_chain']
 
     if crafting_chain is None:
         st.error('Crafting Chain could not be determined!', icon="❗")
@@ -282,8 +284,10 @@ if crafting_chain_database is not None and config is not None:
 
     if st.button('Display Pareto Front'):
         display_pareto_front(crafting_chain_finder, cost_vectors)
+else:
+    crafting_chain = None
 
-if crafting_chain is not None:
+if config is not None and crafting_chain is not None:
     time, _ = time_to_seconds(config.time)
     display_interval, display_interval_unit = time_to_seconds(config.display_interval)
     if display_interval != 1:
@@ -305,6 +309,11 @@ if crafting_chain is not None:
         display_interval_string=display_interval_string
     )
     st.dataframe(df, hide_index=True)
+    unspecified_machines = set().union(*[r.valid_machines for r in crafting_chain.recipe_amounts.keys() if r.machine.unspecified])
+    st.warning(f"""The behaviours of the following machines are not specified. Their behaviours need to be implemented 
+    via the config files and the machine behaviour classes.
+{'\n'.join([f'- {m.__str__()}\n' for m in unspecified_machines])}
+    """, icon="❗")
 
     with st.expander('Material Grading'):
         grading = [(m, g) for m, g in crafting_chain.material_grading.items()]

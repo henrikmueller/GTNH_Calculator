@@ -6,7 +6,7 @@ from packages.utility.streamlit_functions import load_database
 from packages.recipes_db.voltage_tiers import VoltageTier
 
 
-# Run via: streamlit run ./src/gtnh_calculator/GTNH_Calculator.py
+# Run via: poetry run streamlit run ./src/gtnh_calculator/GTNH_Calculator.py
 # Colors: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/named-color
 
 # Deploy: Install poetry plugin: poetry self add poetry-plugin-export

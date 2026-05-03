@@ -18,6 +18,7 @@ class RawRecipe:
     inputs: Dict[Material, float]
     output_specifications: Dict[int, tuple[Material, float, float]]
     recipe_options: RecipeOptions
+    used_parallels: int
 
     def __init__(
         self,
@@ -27,7 +28,8 @@ class RawRecipe:
         voltage_tier: int,
         inputs: Dict[Material, float],
         output_specifications: Dict[int, tuple[Material, float, float]],
-        recipe_options: RecipeOptions
+        recipe_options: RecipeOptions,
+        used_parallels: int = 1
     ):
         self.eu_per_tick = eu_per_tick
         self.processing_time = processing_time
@@ -36,12 +38,13 @@ class RawRecipe:
         self.inputs = inputs
         self.output_specifications = output_specifications
         self.recipe_options = recipe_options
+        self.used_parallels = used_parallels
 
     def __repr__(self) -> str:
         return (f'RawRecipe(inputs={self.inputs}, outputs={self.output_specifications}, '
                 f'eu_per_tick={self.eu_per_tick}, processing_time={self.processing_time}, '
                 f'amperage={self.amperage}, voltage_tier={self.voltage_tier}, '
-                f'recipe_options={self.recipe_options})')
+                f'recipe_options={self.recipe_options}, used_parallels={self.used_parallels})')
 
     @property
     def total_eu(self) -> float:
