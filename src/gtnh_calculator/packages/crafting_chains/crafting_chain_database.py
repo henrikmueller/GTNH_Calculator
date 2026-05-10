@@ -9,6 +9,8 @@ from collections import defaultdict, Counter
 from ..database_extraction.database_extractor import GTNHDatabase
 from ..configs.crafting_chain_config_db import CraftingChainConfig
 from ..recipes_db.machines import Machine
+from ..recipes_db.machine_options.machine_options import MachineOptions
+from ..recipes_db.machine_options.machine_option_types import MachineOptionType
 from ..recipes_db.material import Material
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.raw_recipes import RawRecipe
@@ -171,28 +173,37 @@ class CraftingChainDatabase:
 
     def initialize_machine_options(self) -> None:
         for machine in self.database.extracted_machines.values():
-            self.get_default_machine_option(machine)
+            self.set_default_machine_option(machine)
 
-    def fit_recipe_to_machine(self, raw_recipe: RawRecipe, machine: Machine) -> None:
-        pass
-
-    def get_default_machine_option(self, machine: Machine) -> None:
+    def set_default_machine_option(self, machine: Machine) -> None:
         match machine.name:
             case 'Electric Blast Furnace' | 'Mega Electric Blast Furnace':
-                machine.machine_options = [min(self.database.machine_options_book.coils, key=lambda o: o.tier)]
+                machine.machine_options.set_option(
+                    MachineOptionType.COIL, min(self.database.machine_options_book.coils, key=lambda o: o.tier)
+                )
             case 'ExxonMobil Chemical Plant':
-                machine.machine_options = [
-                    min(self.database.machine_options_book.coils, key=lambda o: o.tier),
-                    min(self.database.machine_options_book.pipe_casings, key=lambda o: o.tier)
-                ]
+                machine.machine_options.set_option(
+                    MachineOptionType.COIL, min(self.database.machine_options_book.coils, key=lambda o: o.tier)
+                )
+                machine.machine_options.set_option(
+                    MachineOptionType.PIPE_CASING, min(self.database.machine_options_book.pipe_casings, 
+                    key=lambda o: o.tier)
+                )
             case 'Magnetic Flux Exhibitor':
-                machine.machine_options = [min(self.database.machine_options_book.electromagnets, key=lambda o: o.tier)]
+                machine.machine_options.set_option(
+                    MachineOptionType.ELECTROMAGNET, min(self.database.machine_options_book.electromagnets, 
+                    key=lambda o: o.tier)
+                )
             case 'Oil Cracking Unit' | 'Mega Oil Cracker':
-                machine.machine_options = [min(self.database.machine_options_book.coils, key=lambda o: o.tier)]
+                machine.machine_options.set_option(
+                    MachineOptionType.COIL, min(self.database.machine_options_book.coils, key=lambda o: o.tier)
+                )
             case 'Pyrolyse Oven':
-                machine.machine_options = [min(self.database.machine_options_book.coils, key=lambda o: o.tier)]
+                machine.machine_options.set_option(
+                    MachineOptionType.COIL, min(self.database.machine_options_book.coils, key=lambda o: o.tier)
+                )
             case _:
-                machine.machine_options = []
+                pass
 
     def _validate_recipe_grading(self):
         erroneous_gradings = set()

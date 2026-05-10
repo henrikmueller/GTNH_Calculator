@@ -3,13 +3,19 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Any
 
-from ..machine_options.machine_options import MachineOption
+from ..recipe_options import RecipeOptions
+
+
+@dataclass(frozen=True, slots=True)
+class EnergyContext:
+    recipe_options: RecipeOptions
+    machine_heat_capacity: float
 
 
 @dataclass
 class EnergyBehaviour:
     @abstractmethod
-    def get_energy_multiplier(self, voltage_tier: int, machine_options: list[MachineOption] | None) -> float:
+    def get_energy_multiplier(self, context: EnergyContext) -> float:
         ...
 
     @classmethod
@@ -21,6 +27,10 @@ class EnergyBehaviour:
                 return DefaultEnergyBehaviour(
                     energy_multiplier=specification['energy_multiplier'],
                 )
+            case 'coil_temperature':
+                return CoilTemperatureEnergyBehaviour(
+                    energy_multiplier=specification['energy_multiplier'],
+                )
             case _:
                 return NotImplementedEnergyBehaviour()
 
@@ -29,10 +39,18 @@ class EnergyBehaviour:
 class DefaultEnergyBehaviour(EnergyBehaviour):
     energy_multiplier: float = 1
 
-    def get_energy_multiplier(self, voltage_tier: int, machine_options: list[MachineOption] | None) -> float:
+    def get_energy_multiplier(self, context: EnergyContext) -> float:
         return self.energy_multiplier
+
+@dataclass
+class CoilTemperatureEnergyBehaviour(EnergyBehaviour):
+    energy_multiplier: float = 1
+
+    def get_energy_multiplier(self, context: EnergyContext) -> float:
+        return self.energy_multiplier * 0.95 ** max(
+            (context.machine_heat_capacity - context.recipe_options.temperature) // 900, 0)
 
 
 class NotImplementedEnergyBehaviour(EnergyBehaviour):
-    def get_energy_multiplier(self, voltage_tier: int, machine_options: list[MachineOption] | None) -> float:
+    def get_energy_multiplier(self, context: EnergyContext) -> float:
         raise NotImplementedError('Energy Behaviour not implemented')

@@ -4,7 +4,7 @@ import re
 import yaml
 import pandas as pd
 import logging
-from typing import Dict
+from typing import Dict, Generator
 from collections import defaultdict
 import json
 from itertools import chain
@@ -14,6 +14,7 @@ from ..recipes_db.material import ExtractedItem, ExtractedFluid, Material, Mater
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.machine_stats import MachineStats
 from ..recipes_db.machines import Machine, MachineType
+from ..recipes_db.machine_options.machine_options import MachineOptions
 from ..recipes_db.behaviours.machine_behaviours import MachineBehaviour
 from ..recipes_db.machine_options.machine_option_books import load_possible_machine_options, MachineOptionsBook
 from ..recipes_db.machine_options.machine_option_types import MachineOptionType
@@ -223,7 +224,7 @@ class DatabaseExtractor:
     timer = True
     validity_check: bool
 
-    def extract_database(self) -> GTNHDatabase:
+    def extract_database(self) -> Generator[float, None, GTNHDatabase]:
         extracted_fluids = self.extract_fluids()
         yield 0.05
         extracted_items = self.extract_items(extracted_fluids)
@@ -714,13 +715,16 @@ class DatabaseExtractor:
                     _LOGGER.info(f'Skipping deprecated machine {specification["name"]} ({item_id})')
                     continue
                 try:
-                    valid_options = (
-                        [MachineOptionType(o.strip()) for o in specification['valid_options'].strip().split(',')]
+                    valid_options = tuple(
+                        (MachineOptionType(o.strip()) for o in specification['valid_options'].strip().split(','))
                         if 'valid_options' in specification else []
                     )
                 except ValueError as e:
                     raise ValueError(f'MachineOptionType could not be determined for {specification}')
-                voltage_tier = min(specification['voltage_tier'])
+                machine_options = MachineOptions(
+                    valid_options=valid_options,
+                    _options={}
+                )
                 extracted_machines[item_id] = Machine(
                     name=specification['name'],
                     multiblock=specification['multiblock'],
@@ -733,11 +737,10 @@ class DatabaseExtractor:
                     machine_types=set(),
                     machine_stats=MachineStats(
                         voltage_tiers=[int(v) for v in specification['voltage_tier']],
-                        _voltage_tier=voltage_tier,
-                        speedup=specification['speedup'] if 'speedup' in specification else 1,
                         efficiency=specification['efficiency'] if 'efficiency' in specification else 1
                     ),
-                    machine_behaviour=MachineBehaviour.create_machine_behaviour(specification)
+                    machine_behaviour=MachineBehaviour.create_machine_behaviour(specification),
+                    machine_options=machine_options
                 )
                 for machine_type_name in specification['machine_types']:
                     if machine_type_name not in machine_types.keys():

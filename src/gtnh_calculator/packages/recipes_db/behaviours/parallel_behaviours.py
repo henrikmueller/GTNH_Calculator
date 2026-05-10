@@ -3,13 +3,14 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Any
 
-from ..machine_options.machine_options import MachineOption
+from ..machine_options.machine_options import MachineOptions
+from ..machine_options.machine_option_types import MachineOptionType
 
 
 @dataclass
 class ParallelBehaviour:
     @abstractmethod
-    def get_parallels(self, voltage_tier: int, machine_options: list[MachineOption] | None) -> int:
+    def get_parallels(self, voltage_tier: int, machine_options: MachineOptions) -> int:
         ...
 
     @classmethod
@@ -31,10 +32,10 @@ class DefaultParallelBehaviour(ParallelBehaviour):
     base_parallels: int = 1
     parallels_per_voltage_tier: int = 0
 
-    def get_parallels(self, voltage_tier: int, machine_options: list[MachineOption] | None) -> int:
+    def get_parallels(self, voltage_tier: int, machine_options: MachineOptions) -> int:
         return self.base_parallels + voltage_tier * self.parallels_per_voltage_tier
 
 
 class NotImplementedParallelBehaviour(ParallelBehaviour):
-    def get_parallels(self, voltage_tier: int, machine_options: list[MachineOption] | None) -> int:
+    def get_parallels(self, voltage_tier: int, machine_options: MachineOptions) -> int:
         raise NotImplementedError('Parallel Behaviour not implemented')

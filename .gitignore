@@ -2,4 +2,5 @@
 .venv/
 .idea/
 *.xlsx
+*.pyc
 /src/gtnh_calculator/testing.py

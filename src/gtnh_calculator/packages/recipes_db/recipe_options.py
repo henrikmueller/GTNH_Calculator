@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 from typing import Dict
+from math import nan
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -16,10 +17,10 @@ class RecipeOptions:
         return RecipeOptions(options=metadata)
 
     @property
-    def temperature(self) -> float | None:
+    def temperature(self) -> float:
         if 'temperature' in self.options:
             return self.options['temperature']
-        return None
+        return nan
 
     def markdown_string(self) -> str:
         result = []

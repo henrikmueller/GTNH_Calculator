@@ -2,14 +2,38 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Dict
 from math import floor, log
+from dataclasses import dataclass
+
+from ..recipe_options import RecipeOptions
+from packages.recipes_db import recipe_options
+
+
+@dataclass(frozen=True, slots=True)
+class OverclockContext:
+    current_eu_per_tick: float
+    max_eu_per_tick: float
+    max_overclocks: int
+    recipe_options: RecipeOptions
+    machine_heat_capacity: float
 
 
 class OverclockBehaviour:
     @abstractmethod
-    def get_overclocks(self, current_eu_per_tick: float, max_eu_per_tick: float) -> tuple[int, int]:
+    def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
         """
         :param current_eu_per_tick: EU/t of the recipe multiplied with parallels
         :param max_eu_per_tick: Max EU/t of the machine
+        :param max_overclocks: Maximal amount of overclocks of the machine
+        :return: Tuple of non-perfect and perfect overclocks
+        """
+        ...
+
+    @abstractmethod
+    def get_max_overclocks(
+        self, voltage_tier: int
+    ) -> int:
+        """
+        :param voltage_tier: Voltage tier of the machine
         :return: Tuple of non-perfect and perfect overclocks
         """
         ...
@@ -27,24 +51,59 @@ class OverclockBehaviour:
 
 
 class DefaultOverclockBehaviour(OverclockBehaviour):
-    def get_overclocks(self, current_eu_per_tick: float, max_eu_per_tick: float) -> tuple[int, int]:
-        overclocks = floor(log(max_eu_per_tick // current_eu_per_tick, 4)) if current_eu_per_tick > 0 else 0
+    def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
+        overclocks = min(
+            floor(log(context.max_eu_per_tick // context.current_eu_per_tick, 4)) 
+            if context.current_eu_per_tick > 0 else 0, context.max_overclocks
+        )
         return overclocks, 0
+
+    def get_max_overclocks(
+        self, voltage_tier: int
+    ) -> int:
+        return voltage_tier - 1
 
 
 class InfiniteOverclockBehaviour(OverclockBehaviour):
-    def get_overclocks(self, current_eu_per_tick: float, max_eu_per_tick: float) -> tuple[int, int]:
-        overclocks = floor(log(max_eu_per_tick // current_eu_per_tick, 4)) if current_eu_per_tick > 0 else 0
+    def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
+        overclocks = min(
+            floor(log(context.max_eu_per_tick // context.current_eu_per_tick, 4)) 
+            if context.current_eu_per_tick > 0 else 0, context.max_overclocks
+        )
         return 0, overclocks
+
+    def get_max_overclocks(
+        self, voltage_tier: int
+    ) -> int:
+        return voltage_tier - 1
 
 
 class CoilTemperatureOverclockBehaviour(OverclockBehaviour):
-    def get_overclocks(self, current_eu_per_tick: float, max_eu_per_tick: float) -> tuple[int, int]:
-        overclocks = floor(log(max_eu_per_tick // current_eu_per_tick, 4)) if current_eu_per_tick > 0 else 0
-        return overclocks, 0
-        # TODO: raise NotImplementedError('Overclock Behaviour not implemented')
+    def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
+        recipe_temperature = context.recipe_options.temperature
+        if recipe_temperature is None:
+            raise ValueError(f'Invalid recipe temperature {recipe_temperature} for CoilTemperatureOverclockBehaviour')
+        
+        overclocks = min(
+            floor(log(context.max_eu_per_tick // context.current_eu_per_tick, 4)) 
+            if context.current_eu_per_tick > 0 else 0, context.max_overclocks
+        )
+        max_perfect_overclocks = int(
+            max((context.machine_heat_capacity - context.recipe_options.temperature) // 1800, 0))
+        perfect_overclocks = min(overclocks, max_perfect_overclocks)
+        return overclocks - perfect_overclocks, perfect_overclocks
+
+    def get_max_overclocks(
+        self, voltage_tier: int
+    ) -> int:
+        return voltage_tier - 1
 
 
 class NotImplementedOverclockBehaviour(OverclockBehaviour):
-    def get_overclocks(self, current_eu_per_tick: float, max_eu_per_tick: float) -> tuple[int, int]:
+    def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
+        raise NotImplementedError('Overclock Behaviour not implemented')
+
+    def get_max_overclocks(
+        self, voltage_tier: int
+    ) -> int:
         raise NotImplementedError('Overclock Behaviour not implemented')

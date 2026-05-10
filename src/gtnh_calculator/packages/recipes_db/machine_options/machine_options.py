@@ -2,7 +2,9 @@ from __future__ import annotations
 from abc import abstractmethod
 import logging
 from typing import Dict, Any
+from math import nan
 
+from attr import dataclass
 from marshmallow import Schema, fields, post_load, validates, ValidationError
 from ...recipes_db.material import Material
 from .machine_option_types import MachineOptionType
@@ -18,6 +20,23 @@ _LOGGER.setLevel(logging.INFO)
 """
 
 
+@dataclass
+class MachineOptions:
+    valid_options: tuple[MachineOptionType, ...]
+    _options: Dict[MachineOptionType, MachineOption]
+
+    def has_option(self, type: MachineOptionType) -> bool:
+        return type in self._options.keys()
+
+    def get_option(self, type: MachineOptionType) -> MachineOption:
+        return self._options[type]
+
+    def set_option(self, type: MachineOptionType, option: MachineOption) -> None:
+        if type in self.valid_options:
+            self._options[type] = option
+        raise ValueError(f'MachineOptionType {type} not valid for {self}')
+
+
 class MachineOption:
     name: str
     option_type: MachineOptionType
@@ -31,32 +50,20 @@ class MachineOption:
         self.material = extracted_materials[name]
         self.name = self.material.name
         self.option_type = option_type
-        self.options = options
+        self.options = {} if options is None else options
 
     def __str__(self) -> str:
         return f'{self.name} ({self.options})'
 
     @property
     def tier(self) -> int:
-        return self.options['tier'] if 'tier' in self.options else 0
+        return int(self.options['tier']) if 'tier' in self.options else 0
 
-    def fits(self, raw_option: str) -> bool:
-        return raw_option == self.name
-
-    @abstractmethod
-    def __lt__(self, other: MachineOption) -> bool:
-        ...
-
-    def __le__(self, other: MachineOption) -> bool:
-        return self == other or self < other
-
-    @classmethod
-    def maximum(cls, option1: MachineOption | None, option2: MachineOption | None) -> MachineOption | None:
-        if option2 is None:
-            return option1
-        if option1 is None or option2 > option1:
-            return option2
-        return option1
+    @property
+    def temperature(self) -> float:
+        if 'temperature' in self.options:
+            return self.options['temperature']
+        return nan
 
 
 class MachineOptionSchema(Schema):

@@ -46,17 +46,25 @@ class Recipe:
 
     @machine.setter
     def machine(self, machine: Machine) -> None:
-        self._set_machine(machine)
+        self.update(machine=machine)
 
-    def _set_machine(self, machine: Machine, log: bool = False) -> None:
+    def update(self, machine: Machine | None = None, voltage_tier: int | None = None, log: bool = False) -> bool:
         """
-        Set the machine for the recipe. Only called for logging purposes.
+        Update the recipe.
         """
-        if machine not in self.valid_machines:
-            raise ValueError(f'Machine {machine} is not valid for recipe {self}')
-        new_raw_recipe = machine.fit_recipe(self.base_recipe, log=log)
+        voltage_tier = self.voltage_tier if voltage_tier is None else voltage_tier
+        if machine is None:
+            machine = self.machine
+        else:
+            if machine not in self.valid_machines:
+                raise ValueError(f'Machine {machine} is not valid for recipe {self}')
+        if voltage_tier not in machine.voltage_tiers:
+            return False
+
+        new_raw_recipe = machine.fit_recipe(self.base_recipe, voltage_tier=voltage_tier, log=log)
         self.raw_recipe = new_raw_recipe
         self._machine = machine
+        return True
 
     @property
     def total_eu(self) -> float:
@@ -81,6 +89,14 @@ class Recipe:
     @property
     def voltage_tier(self) -> int:
         return self.raw_recipe.voltage_tier
+
+    def set_voltage_tier(self, voltage_tier: int) -> bool:
+        if voltage_tier in self.valid_voltage_tiers:
+            self.raw_recipe.voltage_tier = voltage_tier
+            return True
+        else:
+            _LOGGER.warning(f'Cannot set voltage tier {voltage_tier} for machine {self}')
+            return False
 
     @property
     def used_parallels(self) -> int:
@@ -168,7 +184,7 @@ class Recipe:
 #### Recipe inputs:
 
 {', \n'.join(f'- {int(abs(a)) if a.is_integer() else abs(a)} {m.name}' 
-             for m, a in self.material_dict.items() if a < 0 and not m.is_eu())}
+             for m, a in self.material_dict.items() if a < 0)}
 '''
 
     def markdown_outputs(self) -> str:

@@ -1,10 +1,12 @@
 from __future__ import annotations
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from math import nan
+from typing import Dict
 
 from .material import Material
 from .voltage_tiers import VoltageTier
-from .machine_options.machine_options import MachineOption
+from .machine_options.machine_options import MachineOption, MachineOptions
 from .machine_options.machine_option_types import MachineOptionType
 from .behaviours.machine_behaviours import MachineBehaviour
 from .raw_recipes import RawRecipe
@@ -26,9 +28,9 @@ class Machine:
     weight: int
     machine_behaviour: MachineBehaviour
     machine_types: set[MachineType]
-    valid_options: list[MachineOptionType]
+    valid_options: tuple[MachineOptionType, ...]
     machine_stats: MachineStats
-    machine_options: list[MachineOption] | None = None
+    machine_options: MachineOptions
 
     @property
     def id(self) -> str:
@@ -53,17 +55,10 @@ class Machine:
     def minimal_voltage_tier(self) -> int:
         return min(self.voltage_tiers) if self.voltage_tiers else VoltageTier.NO_REQUIREMENT
 
-    @property
-    def voltage_tier(self) -> int:
-        return self.machine_stats.voltage_tier
-
-    def set_voltage_tier(self, voltage_tier: int) -> bool:
-        return self.machine_stats.set_voltage_tier(voltage_tier)
-
-    def fit_recipe(self, raw_recipe: RawRecipe, log=False) -> RawRecipe:
+    def fit_recipe(self, raw_recipe: RawRecipe, voltage_tier: int, log=False) -> RawRecipe:
         return self.machine_behaviour.fit_recipe(
             raw_recipe=raw_recipe,
-            voltage_tier=self.voltage_tier,
+            voltage_tier=voltage_tier,
             machine_stats=self.machine_stats,
             machine_options=self.machine_options,
             log=log

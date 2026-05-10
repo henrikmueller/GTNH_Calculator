@@ -264,30 +264,31 @@ def display_crafting_chain_recipe(recipe: Recipe):
                 format_func=lambda index: options[index]
             )
             selected_machine = valid_machines[selected_machine_index]
-            if not selected_machine.set_voltage_tier(recipe.voltage_tier):
-              selected_machine.set_voltage_tier(recipe.minimum_voltage_tier)
-
+            st.write(f'Selected machine: {selected_machine.__str__()}')
             valid_voltage_tiers = [v for v in selected_machine.voltage_tiers if v >= recipe.minimum_voltage_tier]
+
+            if recipe.voltage_tier in valid_voltage_tiers:
+              initial_voltage_tier = recipe.voltage_tier
+            else:
+              initial_voltage_tier = min(valid_voltage_tiers)
+
             options = {
                 index: VoltageTier.voltage_tier_name(v) for index, v in enumerate(valid_voltage_tiers)
             }
             voltage_tier_index = st.selectbox(
                 'Voltage Tier',
                 options=options.keys(),
-                index=valid_voltage_tiers.index(selected_machine.voltage_tier),
+                index=valid_voltage_tiers.index(initial_voltage_tier),
                 key=f"voltage_tier_select_{recipe.id}",
                 width=300,
                 format_func=lambda index: options[index]
             )
             voltage_tier = valid_voltage_tiers[voltage_tier_index]
-            if not selected_machine.set_voltage_tier(voltage_tier):
-              raise ValueError(f'Invalid voltage tier for machine: {selected_machine}. '
+            if not recipe.update(machine=selected_machine, voltage_tier=voltage_tier, log=False):
+              raise ValueError(f'Invalid recipe update: {selected_machine}. '
                                f'VTs: {selected_machine.voltage_tiers}. Selected: {voltage_tier} '
                                f'Valid: {valid_voltage_tiers} '
                                f'Recipe min: {recipe.minimum_voltage_tier} ')
-            
-            st.write(f'Selected machine: {selected_machine.__str__()}')
-            recipe._set_machine(selected_machine, log=False)
         with b:
             html = Template("""
             <style>
