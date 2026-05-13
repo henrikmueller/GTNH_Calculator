@@ -4,7 +4,7 @@ from typing import Dict
 import logging
 from dataclasses import dataclass
 from itertools import product
-from collections import defaultdict, Counter
+from collections import Counter
 
 from ..database_extraction.database_extractor import GTNHDatabase
 from ..configs.crafting_chain_config_db import CraftingChainConfig
@@ -17,7 +17,7 @@ from ..recipes_db.raw_recipes import RawRecipe
 from ..recipes_db.recipes import Recipe
 from ..recipes_db.recipe_options import RecipeOptions
 from .crafting_chain_utility import calculate_gradings
-from ..utility.general_utility import print_df, Timer
+from ..utility.general_utility import Timer
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -31,7 +31,7 @@ def create_recipe_from_row(recipe_row, default_voltage_tier: int) -> Recipe:
         voltage_tier=recipe_row.VOLTAGE_TIER,
         inputs=recipe_row.TOTAL_INPUTS,
         output_specifications=recipe_row.OUTPUTS,
-        recipe_options=RecipeOptions.get_recipe_options(recipe_row.METADATA)
+        recipe_options=RecipeOptions.get_recipe_options(recipe_row.METADATA, recipe_row.ADDITIONAL_INFO)
     )
     machine = recipe_row.SELECTED_MACHINE
     valid_voltage_tiers = [v for v in machine.voltage_tiers if base_recipe.voltage_tier <= v <= default_voltage_tier]
@@ -42,8 +42,7 @@ def create_recipe_from_row(recipe_row, default_voltage_tier: int) -> Recipe:
                       f'Recipe voltage tier: {base_recipe.voltage_tier}, '
                       f'default voltage tier: {default_voltage_tier}')
         voltage_tier = base_recipe.voltage_tier
-    machine.set_voltage_tier(voltage_tier)  # ineffective if machine does not work on this voltage tier
-    raw_recipe = machine.fit_recipe(base_recipe)
+    raw_recipe = machine.fit_recipe(raw_recipe=base_recipe, voltage_tier=voltage_tier)
     return Recipe(
         id=recipe_row.ID,
         base_recipe=base_recipe,
@@ -53,6 +52,18 @@ def create_recipe_from_row(recipe_row, default_voltage_tier: int) -> Recipe:
         cap=None,
         cap_specified=False
     )
+
+
+def initialize_machine_options(database: GTNHDatabase) -> None:
+    for machine in database.extracted_machines.values():
+        for option_type in machine.machine_options.valid_options:
+            options = database.machine_options_book.get_machine_option_list(
+                option_type=option_type
+            )
+            if options:
+                machine.machine_options.set_option(
+                    option_type, min(options, key=lambda o: o.tier)
+                )
 
 
 @dataclass
@@ -128,6 +139,7 @@ class CraftingChainDatabase:
                 extracted_machines={k: m for k, m in database.extracted_machines.items()},
                 machine_options_book=database.machine_options_book
             )
+            initialize_machine_options(cc_database)
 
             recipes = {}
             for row in cc_database.df_recipes.itertuples(index=False):
@@ -171,40 +183,6 @@ class CraftingChainDatabase:
     def get_material_grading_counts(self) -> Counter:
         return Counter(self.material_grading.values())
 
-    def initialize_machine_options(self) -> None:
-        for machine in self.database.extracted_machines.values():
-            self.set_default_machine_option(machine)
-
-    def set_default_machine_option(self, machine: Machine) -> None:
-        match machine.name:
-            case 'Electric Blast Furnace' | 'Mega Electric Blast Furnace':
-                machine.machine_options.set_option(
-                    MachineOptionType.COIL, min(self.database.machine_options_book.coils, key=lambda o: o.tier)
-                )
-            case 'ExxonMobil Chemical Plant':
-                machine.machine_options.set_option(
-                    MachineOptionType.COIL, min(self.database.machine_options_book.coils, key=lambda o: o.tier)
-                )
-                machine.machine_options.set_option(
-                    MachineOptionType.PIPE_CASING, min(self.database.machine_options_book.pipe_casings, 
-                    key=lambda o: o.tier)
-                )
-            case 'Magnetic Flux Exhibitor':
-                machine.machine_options.set_option(
-                    MachineOptionType.ELECTROMAGNET, min(self.database.machine_options_book.electromagnets, 
-                    key=lambda o: o.tier)
-                )
-            case 'Oil Cracking Unit' | 'Mega Oil Cracker':
-                machine.machine_options.set_option(
-                    MachineOptionType.COIL, min(self.database.machine_options_book.coils, key=lambda o: o.tier)
-                )
-            case 'Pyrolyse Oven':
-                machine.machine_options.set_option(
-                    MachineOptionType.COIL, min(self.database.machine_options_book.coils, key=lambda o: o.tier)
-                )
-            case _:
-                pass
-
     def _validate_recipe_grading(self):
         erroneous_gradings = set()
         for recipe in self.recipes.values():
@@ -226,4 +204,3 @@ class CraftingChainDatabase:
             output_gradings = {m: self.material_grading[m] for m in recipe.get_outputs()}
             _LOGGER.warning(f'Erroneous grading for recipe {recipe.id} with grading {self.recipe_grading[recipe]}. '
                             f'Material gradings: {input_gradings} (inputs) {output_gradings} (outputs)')
-

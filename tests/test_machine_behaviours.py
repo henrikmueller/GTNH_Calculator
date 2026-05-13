@@ -6,16 +6,17 @@ from packages.recipes_db.behaviours.machine_behaviours import (
     DefaultMachineBehaviour
 )
 from packages.recipes_db.behaviours.overclock_behaviours import (
-    DefaultOverclockBehaviour, InfiniteOverclockBehaviour, CoilTemperatureOverclockBehaviour)
-from packages.recipes_db.behaviours.parallel_behaviours import DefaultParallelBehaviour
-from packages.recipes_db.behaviours.energy_behaviour import CoilTemperatureEnergyBehaviour, DefaultEnergyBehaviour
+    DefaultOverclockBehaviour, InfiniteOverclockBehaviour, CoilTemperatureOverclockBehaviour, FusionOverclockBehaviour
+)
+from packages.recipes_db.behaviours.parallel_behaviours import DefaultParallelBehaviour, EICParallelBehaviour
+from packages.recipes_db.behaviours.energy_behaviour import CoilTemperatureEnergyBehaviour, DefaultEnergyBehaviour, CoilTierEnergyBehaviour
 from packages.recipes_db.behaviours.heat_capacity_behaviour import (
     DefaultHeatCapacityBehaviour, EBFHeatCapacityBehaviour)
 from packages.recipes_db.behaviours.speedup_behaviour import DefaultSpeedupBehaviour, CoilTemperatureSpeedupBehaviour
 from packages.recipes_db.raw_recipes import RawRecipe
-from packages.recipes_db.machine_stats import MachineStats
+from packages.recipes_db.machine_stats import MachineStats, MachineStatType
 from packages.recipes_db.material import ExtractedFluid, Material
-from packages.recipes_db.recipe_options import RecipeOptions
+from packages.recipes_db.recipe_options import RecipeOptions, RecipeOptionType
 from packages.recipes_db.voltage_tiers import VoltageTier
 from packages.recipes_db.machine_options.machine_options import MachineOptions, MachineOption
 from packages.recipes_db.machine_options.machine_option_types import MachineOptionType
@@ -94,7 +95,7 @@ def coil_only_machine_options(temperature: float = 3600.0, tier: int = 1) -> Mac
     )
 
 
-def _default_behaviour() -> DefaultMachineBehaviour:
+def _default_behaviour() -> MachineBehaviour:
     return DefaultMachineBehaviour(
         DefaultOverclockBehaviour(),
         DefaultParallelBehaviour(base_parallels=1, parallels_per_voltage_tier=0),
@@ -104,7 +105,7 @@ def _default_behaviour() -> DefaultMachineBehaviour:
     )
 
 
-def _large_chemical_reactor_behaviour() -> DefaultMachineBehaviour:
+def _large_chemical_reactor_behaviour() -> MachineBehaviour:
     return DefaultMachineBehaviour(
         InfiniteOverclockBehaviour(),
         DefaultParallelBehaviour(base_parallels=1, parallels_per_voltage_tier=0),
@@ -114,7 +115,7 @@ def _large_chemical_reactor_behaviour() -> DefaultMachineBehaviour:
     )
 
 
-def _industrial_electrolyzer_behaviour() -> DefaultMachineBehaviour:
+def _industrial_electrolyzer_behaviour() -> MachineBehaviour:
     return DefaultMachineBehaviour(
         DefaultOverclockBehaviour(),
         DefaultParallelBehaviour(base_parallels=0, parallels_per_voltage_tier=2),
@@ -124,7 +125,7 @@ def _industrial_electrolyzer_behaviour() -> DefaultMachineBehaviour:
     )
 
 
-def _mega_ebf_behaviour() -> DefaultMachineBehaviour:
+def _mega_ebf_behaviour() -> MachineBehaviour:
     return DefaultMachineBehaviour(
         CoilTemperatureOverclockBehaviour(),
         DefaultParallelBehaviour(base_parallels=256),
@@ -134,7 +135,7 @@ def _mega_ebf_behaviour() -> DefaultMachineBehaviour:
     )
 
 
-def _pyrolyse_oven_behaviour() -> DefaultMachineBehaviour:
+def _pyrolyse_oven_behaviour() -> MachineBehaviour:
     return DefaultMachineBehaviour(
         DefaultOverclockBehaviour(),
         DefaultParallelBehaviour(base_parallels=1, parallels_per_voltage_tier=0),
@@ -144,9 +145,42 @@ def _pyrolyse_oven_behaviour() -> DefaultMachineBehaviour:
     )
 
 
-def _machine_stats(voltage_tiers: list[int]) -> MachineStats:
+def _oil_cracker_behaviour() -> MachineBehaviour:
+    return DefaultMachineBehaviour(
+        DefaultOverclockBehaviour(),
+        DefaultParallelBehaviour(base_parallels=1, parallels_per_voltage_tier=0),
+        CoilTierEnergyBehaviour(minimal_multiplier=0.5, multiplier_per_coil_tier=0.1),
+        DefaultHeatCapacityBehaviour(),
+        DefaultSpeedupBehaviour()
+    )
+
+
+def _fusion_reactor_behaviour(fusion_mk: int) -> MachineBehaviour:
+    return DefaultMachineBehaviour(
+        FusionOverclockBehaviour(perfect_overclocks=fusion_mk >= 4),
+        DefaultParallelBehaviour(base_parallels=1, parallels_per_voltage_tier=0),
+        DefaultEnergyBehaviour(),
+        DefaultHeatCapacityBehaviour(),
+        DefaultSpeedupBehaviour()
+    )
+
+
+def _eic_behaviour() -> MachineBehaviour:
+    return DefaultMachineBehaviour(
+        DefaultOverclockBehaviour(),
+        EICParallelBehaviour(),
+        DefaultEnergyBehaviour(),
+        DefaultHeatCapacityBehaviour(),
+        DefaultSpeedupBehaviour()
+    )
+
+
+def _machine_stats(
+    voltage_tiers: list[int], additional_stats: Dict[MachineStatType, float] | None = None
+) -> MachineStats:
     return MachineStats(
-        voltage_tiers=voltage_tiers
+        voltage_tiers=voltage_tiers,
+        additional_stats={} if additional_stats is None else additional_stats
     )
 
 
@@ -339,6 +373,149 @@ def test_fit_recipe_scales_by_voltage_tier_pyrolyse_oven(
     _, amount, prob = out.output_specifications[0]
     assert amount == 1500.0
     assert prob == 1.0
+
+
+@pytest.mark.parametrize(
+    "voltage_tier, coil_temperature, coil_tier, expected_eu_per_tick, expected_processing_time", 
+    [
+    (3, 1801, 1, -240 * 0.9, 1),
+    (3, 3601, 3, -240 * 0.7, 1),
+    (3, 7201, 7, -240 * 0.5 * 4, 1 / 2),
+    (5, 3601, 3, -240 * 0.7 * 16, 1 / 4),
+])
+def test_fit_recipe_scales_by_voltage_tier_oil_cracker(
+    voltage_tier: int, coil_temperature: float, coil_tier: int, 
+    expected_eu_per_tick: float, expected_processing_time: float
+):
+    """
+    Tested on Lightly Hydro-Cracked Refinery Gas in the Oil Cracker
+    """
+    behaviour = _oil_cracker_behaviour()
+    m1 = _test_material("Material 1")
+    m2 = _test_material("Material 2")
+    raw = _raw_recipe(
+        eu_per_tick=-240,
+        processing_time=1,
+        voltage_tier=VoltageTier.HV,
+        inputs={m1: -1000.0},
+        output_specifications={0: (m2, 1000.0, 1.0)}
+    )
+
+    out = behaviour.fit_recipe(
+        raw,
+        voltage_tier=voltage_tier,
+        machine_stats=_machine_stats(voltage_tiers=VoltageTier.voltage_tiers_int()),
+        machine_options=coil_only_machine_options(temperature=coil_temperature, tier=coil_tier),
+    )
+    assert out.eu_per_tick == pytest.approx(expected_eu_per_tick)
+    assert out.processing_time == pytest.approx(expected_processing_time)
+    assert out.used_parallels == 1
+    assert out.inputs[m1] == -1000.0
+    _, amount, prob = out.output_specifications[0]
+    assert amount == 1000.0
+    assert prob == 1.0
+
+
+@pytest.mark.parametrize(
+    "voltage_tier, fusion_mk, expected_eu_per_tick, expected_processing_time", 
+    [
+    (5, 1, -8192, 0.4),
+    (6, 1, -8192, 0.4),
+    (5, 2, -8192, 0.4),
+    (8, 2, -8192 * 4, 0.4 / 2),
+    (8, 3, -8192 * 16, 0.4 / 4),
+    (8, 4, -8192 * 64, 0.4 / 64),
+    (8, 5, -8192 * 64, 0.4 / 64),
+    (9, 5, -8192 * 256, 0.4 / 256),
+])
+def test_fit_recipe_scales_by_voltage_tier_fusion(
+    voltage_tier: int, fusion_mk: int, expected_eu_per_tick: float, expected_processing_time: float
+):
+    """
+    Tested on Helium Plasma in the Fusion Reactor
+    """
+    behaviour = _fusion_reactor_behaviour(fusion_mk)
+    m1 = _test_material("Material 1")
+    m2 = _test_material("Material 2")
+    raw = _raw_recipe(
+        eu_per_tick=-8192,
+        processing_time=0.4,
+        voltage_tier=VoltageTier.IV,
+        inputs={m1: -125.0},
+        output_specifications={0: (m2, 125.0, 1.0)},
+        recipe_options=RecipeOptions({RecipeOptionType.FUSION_TIER: 1})
+    )
+
+    out = behaviour.fit_recipe(
+        raw,
+        voltage_tier=voltage_tier,
+        machine_stats=_machine_stats(
+            voltage_tiers=VoltageTier.voltage_tiers_int(), 
+            additional_stats={MachineStatType.FUSION_TIER: fusion_mk}
+            ),
+        machine_options=empty_machine_options()
+    )
+    assert out.eu_per_tick == pytest.approx(expected_eu_per_tick)
+    assert out.processing_time == pytest.approx(expected_processing_time)
+    assert out.used_parallels == 1
+    assert out.inputs[m1] == -125.0
+    _, amount, prob = out.output_specifications[0]
+    assert amount == 125.0
+    assert prob == 1.0
+
+
+@pytest.mark.parametrize(
+    "voltage_tier, containment_block_tier, expected_eu_per_tick, expected_processing_time, expected_parallels", 
+    [
+    (10, 1, -7864320, 0.05, 1),
+    (10, 3, -7864320, 0.05, 1),
+    (11, 2, -7864320 * 4, 0.05, 4),
+    (11, 4, -7864320 * 4, 0.05, 4),
+    (12, 2, -7864320 * 16, 0.05 / 2, 4),
+    (12, 3, -7864320 * 16, 0.05, 16),
+    (12, 4, -7864320 * 17, 0.05, 17),
+])
+def test_fit_recipe_scales_by_voltage_tier_eic(
+    voltage_tier: int, containment_block_tier: int, expected_eu_per_tick: float, expected_processing_time: float, 
+    expected_parallels: int
+):
+    """
+    Tested on Compressed Dual Aluminium in the Electric Implosion Compressor
+    """
+    behaviour = _eic_behaviour()
+    m1 = _test_material("Material 1")
+    m2 = _test_material("Material 2")
+    raw = _raw_recipe(
+        eu_per_tick=-7864320,
+        processing_time=0.05,
+        voltage_tier=VoltageTier.UEV,
+        inputs={m1: -2.0},
+        output_specifications={0: (m2, 1.0, 1.0)}
+    )
+
+    out = behaviour.fit_recipe(
+        raw,
+        voltage_tier=voltage_tier,
+        machine_stats=_machine_stats(
+            voltage_tiers=VoltageTier.voltage_tiers_int(),
+            ),
+        machine_options=_machine_options_for_test(
+        (
+            MachineOptionType.CONTAINMENT_BLOCK,
+            _machine_option(MachineOptionType.CONTAINMENT_BLOCK, tier=containment_block_tier),
+        ),
+    )
+    )
+    assert out.eu_per_tick == pytest.approx(expected_eu_per_tick)
+    assert out.processing_time == pytest.approx(expected_processing_time)
+    assert out.used_parallels == expected_parallels
+    assert out.inputs[m1] == -2.0 * expected_parallels
+    _, amount, prob = out.output_specifications[0]
+    assert amount == 1.0 * expected_parallels
+    assert prob == 1.0
+
+
+# CURRENT: Large Fluid Extractor
 
 
 def test_fit_recipe_scales_by_used_parallels():

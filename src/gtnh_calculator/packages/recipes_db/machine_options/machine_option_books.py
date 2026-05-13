@@ -1,5 +1,6 @@
 from __future__ import annotations
 import yaml
+from typing import Callable
 
 from .machine_options import *
 from ..material import Material
@@ -10,59 +11,60 @@ _LOGGER.setLevel(logging.INFO)
 
 
 class MachineOptionsBook:
-    coils: list[MachineOption]
-    pipe_casings: list[MachineOption]
-    item_pipe_casings: list[MachineOption]
-    electromagnets: list[MachineOption]
-    solenoid_coils: list[MachineOption]
-    anvils: list[MachineOption]
+    coil: list[MachineOption]
+    pipe_casing: list[MachineOption]
+    item_pipe_casing: list[MachineOption]
+    electromagnet: list[MachineOption]
+    solenoid_coil: list[MachineOption]
+    anvil: list[MachineOption]
+    coke_oven_casing: list[MachineOption]
+    width: list[MachineOption]
+    maceration_upgrade: list[MachineOption]
+    containment_block: list[MachineOption]
 
     def __init__(self, machine_options: list[MachineOption]):
-        self.coils = [o for o in machine_options if o.option_type == MachineOptionType.COIL]
-        self.coils.sort(key=lambda o: o.tier)
-        self.pipe_casings = [o for o in machine_options if o.option_type == MachineOptionType.PIPE_CASING]
-        self.pipe_casings.sort(key=lambda o: o.tier)
-        self.item_pipe_casings = [o for o in machine_options if o.option_type == MachineOptionType.ITEM_PIPE_CASING]
-        self.item_pipe_casings.sort(key=lambda o: o.tier)
-        self.electromagnets = [o for o in machine_options if o.option_type == MachineOptionType.ELECTROMAGNET]
-        self.electromagnets.sort(key=lambda o: o.tier)
-        self.solenoid_coils = [o for o in machine_options if o.option_type == MachineOptionType.SOLENOID_COIL]
-        self.solenoid_coils.sort(key=lambda o: o.tier)
-        self.anvils = [o for o in machine_options if o.option_type == MachineOptionType.ANVIL]
-        self.anvils.sort(key=lambda o: o.tier)
+        self.coil = [o for o in machine_options if o.option_type == MachineOptionType.COIL]
+        self.coil.sort(key=lambda o: o.tier)
+        self.pipe_casing = [o for o in machine_options if o.option_type == MachineOptionType.PIPE_CASING]
+        self.pipe_casing.sort(key=lambda o: o.tier)
+        self.item_pipe_casing = [o for o in machine_options if o.option_type == MachineOptionType.ITEM_PIPE_CASING]
+        self.item_pipe_casing.sort(key=lambda o: o.tier)
+        self.electromagnet = [o for o in machine_options if o.option_type == MachineOptionType.ELECTROMAGNET]
+        self.electromagnet.sort(key=lambda o: o.tier)
+        self.solenoid_coil = [o for o in machine_options if o.option_type == MachineOptionType.SOLENOID_COIL]
+        self.solenoid_coil.sort(key=lambda o: o.tier)
+        self.anvil = [o for o in machine_options if o.option_type == MachineOptionType.ANVIL]
+        self.anvil.sort(key=lambda o: o.tier)
+        self.containment_block = [o for o in machine_options if o.option_type == MachineOptionType.CONTAINMENT_BLOCK]
+        self.containment_block.sort(key=lambda o: o.tier)
+
+        self.coke_oven_casing = []
+        self.width = []
+        self.maceration_upgrade = []
 
     @property
     def all_options(self) -> list[MachineOption]:
-        return (self.coils + self.pipe_casings + self.item_pipe_casings + self.electromagnets +
-                self.solenoid_coils + self.anvils)
-
-    def __str__(self):
-        return f"""
-Coils: {[o.__str__() for o in self.coils]}
-Pipe Casings: {[o.__str__() for o in self.pipe_casings]}
-Item Pipe Casings: {[o.__str__() for o in self.item_pipe_casings]}
-Electromagnets: {[o.__str__() for o in self.electromagnets]}
-Solenoid Coils: {[o.__str__() for o in self.solenoid_coils]}
-Anvils: {[o.__str__() for o in self.anvils]}
-"""
+        return (self.coil + self.pipe_casing + self.item_pipe_casing + self.electromagnet +
+                self.solenoid_coil + self.anvil + self.containment_block)
 
     def get_machine_option_list(
         self,
         option_type: MachineOptionType,
-        minimum: MachineOption | None,
-        maximum: MachineOption | None
+        rank: Callable[[MachineOption], int | float] | None = None,
+        minimum: MachineOption | None = None,
+        maximum: MachineOption | None = None
     ) -> list[MachineOption]:
-        options = getattr(self, option_type)
-        if minimum is None:
-            minimum = options[0]
-        if maximum is None:
-            maximum = options[-1]
-        return [o for o in options if minimum <= o <= maximum]
+        options: list[MachineOption] = getattr(self, option_type)
+        if rank is None:
+            return options
+        minimum = options[0] if minimum is None else minimum
+        maximum = options[-1] if maximum is None else maximum
+        return [o for o in options if rank(minimum) <= rank(o) <= rank(maximum)]
 
     @staticmethod
     def get_machine_option(input_id: str, options: list[MachineOption]) -> MachineOption | None:
         for option in options:
-            if option.material.id == input_id:
+            if option.material is not None and option.material.id == input_id:
                 return option
         _LOGGER.warning(f'No Machine Option to the ID "{input_id}" found.')
         return None

@@ -224,3 +224,23 @@ machine_options:
     option_type: coke_oven_casing
     options:
       tier: 2
+  - name: i~gregtech~gt.blockmetal5~2
+    option_type: containment_block
+    options:
+      tier: 1
+  - name: i~Avaritia~Resource_Block~1
+    option_type: containment_block
+    options:
+      tier: 2
+  - name: i~gregtech~gt.blockmetal9~4
+    option_type: containment_block
+    options:
+      tier: 3
+  - name: i~gregtech~gt.blockmetal9~3
+    option_type: containment_block
+    options:
+      tier: 4
+  - name: i~gregtech~gt.blockmetal9~8
+    option_type: containment_block
+    options:
+      tier: 5

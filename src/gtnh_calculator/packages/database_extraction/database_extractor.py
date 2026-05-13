@@ -12,7 +12,7 @@ from collections import deque
 
 from ..recipes_db.material import ExtractedItem, ExtractedFluid, Material, MaterialGroup
 from ..recipes_db.voltage_tiers import VoltageTier
-from ..recipes_db.machine_stats import MachineStats
+from ..recipes_db.machine_stats import MachineStats, MachineStatType
 from ..recipes_db.machines import Machine, MachineType
 from ..recipes_db.machine_options.machine_options import MachineOptions
 from ..recipes_db.behaviours.machine_behaviours import MachineBehaviour
@@ -321,6 +321,7 @@ class DatabaseExtractor:
             static_df['DURATION'] /= 20
             static_df['VOLTAGE_TIER'] = static_df['VOLTAGE_TIER'].map(VoltageTier.to_voltage_tier)
             static_df["AMPERAGE"] = static_df["AMPERAGE"].fillna(0)
+            static_df["ADDITIONAL_INFO"] = static_df["ADDITIONAL_INFO"].fillna("")
             recipe_ids = static_df["ID"].to_numpy()
             yield 0.3
 
@@ -721,10 +722,11 @@ class DatabaseExtractor:
                     )
                 except ValueError as e:
                     raise ValueError(f'MachineOptionType could not be determined for {specification}')
-                machine_options = MachineOptions(
-                    valid_options=valid_options,
-                    _options={}
-                )
+                machine_options = MachineOptions(valid_options, {})
+                additional_stats = {}
+                if 'additional_stats' in specification:
+                    additional_stats = {k: v for k, v in specification['additional_stats'].items()}
+
                 extracted_machines[item_id] = Machine(
                     name=specification['name'],
                     multiblock=specification['multiblock'],
@@ -737,6 +739,7 @@ class DatabaseExtractor:
                     machine_types=set(),
                     machine_stats=MachineStats(
                         voltage_tiers=[int(v) for v in specification['voltage_tier']],
+                        additional_stats=additional_stats,
                         efficiency=specification['efficiency'] if 'efficiency' in specification else 1
                     ),
                     machine_behaviour=MachineBehaviour.create_machine_behaviour(specification),

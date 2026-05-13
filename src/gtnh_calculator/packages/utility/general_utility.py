@@ -68,6 +68,13 @@ def get_n_colors(n: int, saturation=0.8) -> list[RGBColor]:
     return colors
 
 
+def str_to_int(text: str) -> int | None:
+    try:
+        return int(text)
+    except ValueError:
+        return None
+
+
 def str_to_float(text: str) -> float | None:
     if text == '':
         return None

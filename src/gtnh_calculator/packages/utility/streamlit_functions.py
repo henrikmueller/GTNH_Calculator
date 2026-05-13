@@ -54,7 +54,6 @@ def load_crafting_chain_database(uploaded_file: BytesIO | str, database: GTNHDat
             crafting_chain_database = CraftingChainDatabase.create_crafting_chain_database(
                 database=database, config=config, validity_check=True)
             st.session_state['crafting_chain_database'] = crafting_chain_database
-            crafting_chain_database.initialize_machine_options()
         except DataLoadingException as e:
             st.error(e, icon="❗")
             raise Exception(f"Data loading failed: {e}")

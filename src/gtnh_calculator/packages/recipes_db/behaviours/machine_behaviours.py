@@ -102,6 +102,7 @@ class DefaultMachineBehaviour(MachineBehaviour):
                 f'Heat Capacity {heat_capacity} not sufficient for the recipe temperature {recipe_min_temperature}')
 
         energy_multiplier = self.energy_behaviour.get_energy_multiplier(EnergyContext(
+            machine_options=machine_options,
             recipe_options=raw_recipe.recipe_options,
             machine_heat_capacity=heat_capacity,
         ))
@@ -120,6 +121,7 @@ class DefaultMachineBehaviour(MachineBehaviour):
             current_eu_per_tick=used_parallels * reduced_eu_per_tick,
             max_eu_per_tick=max_eu_per_tick,
             max_overclocks=max_overclocks,
+            machine_stats=machine_stats,
             recipe_options=raw_recipe.recipe_options,
             machine_heat_capacity=heat_capacity
         ))

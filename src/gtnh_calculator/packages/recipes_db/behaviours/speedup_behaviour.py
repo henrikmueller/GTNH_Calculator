@@ -25,7 +25,8 @@ class SpeedupBehaviour:
                 )
             case 'coil_temperature':
                 return CoilTemperatureSpeedupBehaviour(
-                    speedup_multiplier=specification['speedup_multiplier'],
+                    speedup_multiplier=specification['speedup_multiplier'] \
+                         if 'speedup_multiplier' in specification.keys() else 1.0,
                     base_speed=specification['base_speed'],
                     speed_per_coil_tier=specification['speed_per_coil_tier'],
                 )

@@ -38,8 +38,13 @@ i~gregtech~gt.blockmachines~1000:
   machine_types:
   - Blast Furnace
   multiblock: true
+  valid_options: coil
   overclock_behaviour:
     type: coil_temperature
+  energy_behaviour:
+    type: coil_temperature
+  heat_capacity_behaviour:
+    type: ebf
   name: Electric Blast Furnace
   weight: -1
   voltage_tier:
@@ -269,6 +274,7 @@ i~gregtech~gt.blockmachines~10752:
   - Plasma Generator
   multiblock: false
   efficiency: 0.8
+  disabled: true
   name: Plasma Generator Mark IV
   voltage_tier:
   - 7
@@ -277,6 +283,7 @@ i~gregtech~gt.blockmachines~10753:
   - Plasma Generator
   multiblock: false
   efficiency: 0.9
+  disabled: true
   name: Ultimate Pocket Sun
   voltage_tier:
   - 8
@@ -1754,6 +1761,7 @@ i~gregtech~gt.blockmachines~1110:
   machine_types:
   - Combustion Generator
   efficiency: 0.95
+  disabled: true
   multiblock: false
   name: Basic Combustion Generator
   voltage_tier:
@@ -1763,6 +1771,7 @@ i~gregtech~gt.blockmachines~1111:
   - Combustion Generator
   multiblock: false
   efficiency: 0.9
+  disabled: true
   name: Advanced Combustion Generator
   voltage_tier:
   - 2
@@ -1771,6 +1780,7 @@ i~gregtech~gt.blockmachines~1112:
   - Combustion Generator
   multiblock: false
   efficiency: 0.85
+  disabled: true
   name: Turbo Combustion Generator
   voltage_tier:
   - 3
@@ -1828,6 +1838,7 @@ i~gregtech~gt.blockmachines~1113:
   - Combustion Generator
   multiblock: false
   efficiency: 0.6
+  disabled: true
   name: Turbo Supercharging Combustion Generator
   voltage_tier:
   - 4
@@ -1942,6 +1953,7 @@ i~gregtech~gt.blockmachines~1115:
   - Gas Turbine
   multiblock: false
   efficiency: 0.95
+  disabled: true
   name: Basic Gas Turbine
   voltage_tier:
   - 1
@@ -1999,6 +2011,7 @@ i~gregtech~gt.blockmachines~1116:
   - Gas Turbine
   multiblock: false
   efficiency: 0.9
+  disabled: true
   name: Advanced Gas Turbine
   voltage_tier:
   - 2
@@ -2007,6 +2020,7 @@ i~gregtech~gt.blockmachines~1117:
   - Gas Turbine
   multiblock: false
   efficiency: 0.85
+  disabled: true
   name: Turbo Gas Turbine
   voltage_tier:
   - 3
@@ -2064,6 +2078,7 @@ i~gregtech~gt.blockmachines~1118:
   - Gas Turbine
   multiblock: false
   efficiency: 0.6
+  disabled: true
   name: Turbo Gas Turbine II
   voltage_tier:
   - 4
@@ -2121,6 +2136,7 @@ i~gregtech~gt.blockmachines~1119:
   - Gas Turbine
   multiblock: false
   efficiency: 0.5
+  disabled: true
   name: Turbo Gas Turbine III
   voltage_tier:
   - 5
@@ -2320,7 +2336,7 @@ i~gregtech~gt.blockmachines~1127:
   machine_types:
   - Magic Energy Absorber
   multiblock: false
-  unspecified: true
+  disabled: true
   name: Novice Magic Energy Absorber
   voltage_tier:
   - 1
@@ -2328,7 +2344,7 @@ i~gregtech~gt.blockmachines~1128:
   machine_types:
   - Magic Energy Absorberr
   multiblock: false
-  unspecified: true
+  disabled: true
   name: Adept Magic Energy Absorber
   voltage_tier:
   - 2
@@ -2336,7 +2352,7 @@ i~gregtech~gt.blockmachines~1129:
   machine_types:
   - Magic Energy Absorber
   multiblock: false
-  unspecified: true
+  disabled: true
   name: Master Magic Energy Absorber
   voltage_tier:
   - 3
@@ -2344,7 +2360,7 @@ i~gregtech~gt.blockmachines~1130:
   machine_types:
   - Magic Energy Absorber
   multiblock: false
-  unspecified: true
+  disabled: true
   name: Grandmaster Magic Energy Absorber
   voltage_tier:
   - 4
@@ -2352,7 +2368,7 @@ i~gregtech~gt.blockmachines~1151:
   machine_types:
   - Gas Turbine
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Large Gas Turbine
   voltage_tier:
   - 0
@@ -2374,7 +2390,7 @@ i~gregtech~gt.blockmachines~1153:
   machine_types:
   - Plasma Turbine
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Large Plasma Turbine
   voltage_tier:
   - 0
@@ -2396,6 +2412,10 @@ i~gregtech~gt.blockmachines~1159:
   machine_types:
   - Coke Oven
   multiblock: true
+  speedup_behaviour:
+    type: coil_temperature
+    base_speed: 0
+    speed_per_coil_tier: 0.5
   valid_options: coil
   name: Pyrolyse Oven
   voltage_tier:
@@ -2419,6 +2439,10 @@ i~gregtech~gt.blockmachines~1160:
   - Cracker
   multiblock: true
   valid_options: coil
+  energy_behaviour:
+    type: coil_tier
+    multiplier_per_coil_tier: 0.1
+    minimal_multiplier: 0.5
   name: Oil Cracking Unit
   voltage_tier:
   - 0
@@ -2485,7 +2509,7 @@ i~gregtech~gt.blockmachines~1171:
   machine_types:
   - Combustion Generator
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Large Combustion Engine
   voltage_tier:
   - 0
@@ -2571,6 +2595,7 @@ i~gregtech~gt.blockmachines~1189:
   - Naquadah Reactor
   multiblock: false
   efficiency: 2
+  disabled: true
   name: Naquadah Reactor Mark V
   voltage_tier:
   - 8
@@ -2579,6 +2604,7 @@ i~gregtech~gt.blockmachines~1190:
   - Naquadah Reactor
   multiblock: false
   efficiency: 0.8
+  disabled: true
   name: Naquadah Reactor Mark I
   voltage_tier:
   - 4
@@ -2587,6 +2613,7 @@ i~gregtech~gt.blockmachines~1191:
   - Naquadah Reactor
   multiblock: false
   efficiency: 1
+  disabled: true
   name: Naquadah Reactor Mark II
   voltage_tier:
   - 5
@@ -2595,6 +2622,7 @@ i~gregtech~gt.blockmachines~1192:
   - Naquadah Reactor
   multiblock: false
   efficiency: 1.5
+  disabled: true
   name: Naquadah Reactor Mark III
   voltage_tier:
   - 6
@@ -2602,6 +2630,10 @@ i~gregtech~gt.blockmachines~1193:
   machine_types:
   - Fusion Reactor
   multiblock: true
+  overclock_behaviour:
+    type: fusion
+  additional_stats:
+    fusion_tier: 1
   name: Fusion Control Computer Mark I
   voltage_tier:
   - 0
@@ -2623,6 +2655,10 @@ i~gregtech~gt.blockmachines~1194:
   machine_types:
   - Fusion Reactor
   multiblock: true
+  overclock_behaviour:
+    type: fusion
+  additional_stats:
+    fusion_tier: 2
   name: Fusion Control Computer Mark II
   voltage_tier:
   - 0
@@ -2644,6 +2680,10 @@ i~gregtech~gt.blockmachines~1195:
   machine_types:
   - Fusion Reactor
   multiblock: true
+  overclock_behaviour:
+    type: fusion
+  additional_stats:
+    fusion_tier: 3
   name: Fusion Control Computer Mark III
   voltage_tier:
   - 0
@@ -2666,6 +2706,7 @@ i~gregtech~gt.blockmachines~1196:
   - Plasma Generator
   multiblock: false
   efficiency: 0.5
+  disabled: true
   name: Plasma Generator Mark I
   voltage_tier:
   - 4
@@ -2674,6 +2715,7 @@ i~gregtech~gt.blockmachines~1197:
   - Plasma Generator
   multiblock: false
   efficiency: 0.6
+  disabled: true
   name: Plasma Generator Mark II
   voltage_tier:
   - 5
@@ -2682,6 +2724,7 @@ i~gregtech~gt.blockmachines~1198:
   - Plasma Generator
   multiblock: false
   efficiency: 0.7
+  disabled: true
   name: Plasma Generator Mark III
   voltage_tier:
   - 6
@@ -2946,6 +2989,13 @@ i~gregtech~gt.blockmachines~12730:
   multiblock: true
   weight: 1
   valid_options: coil
+  parallel_behaviour:
+    type: default
+    base_parallels: 256
+  energy_behaviour:
+    type: coil_temperature
+  heat_capacity_behaviour:
+    type: ebf
   name: Mega Electric Blast Furnace
   voltage_tier:
   - 0
@@ -2988,7 +3038,7 @@ i~gregtech~gt.blockmachines~12732:
   machine_types:
   - Large Naquadah Reactor
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Large Naquadah Reactor
   voltage_tier:
   - 0
@@ -3010,7 +3060,9 @@ i~gregtech~gt.blockmachines~12734:
   machine_types:
   - Electric Implosion Compressor
   multiblock: true
-  unspecified: true
+  valid_options: containment_block
+  parallel_behaviour:
+    type: eic
   name: Electric Implosion Compressor
   voltage_tier:
   - 0
@@ -3057,6 +3109,9 @@ i~gregtech~gt.blockmachines~12738:
   - Distillation Tower
   multiblock: true
   weight: 1
+  parallel_behaviour:
+    type: default
+    base_parallels: 256
   name: Mega Distillation Tower
   voltage_tier:
   - 0
@@ -3100,7 +3155,7 @@ i~gregtech~gt.blockmachines~12793:
   machine_types:
   - Acid Generator
   multiblock: false
-  unspecified: true
+  disabled: true
   name: Acid Generator LV
   voltage_tier:
   - 1
@@ -3109,14 +3164,14 @@ i~gregtech~gt.blockmachines~12800:
   - Scanner
   multiblock: false
   name: Creative Debug Scanner
-  unspecified: true
+  disabled: true
   voltage_tier:
   - -1
 i~gregtech~gt.blockmachines~13101:
   machine_types:
   - Solid-Oxide Fuel Cell Mk I
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Solid-Oxide Fuel Cell Mk I
   voltage_tier:
   - 0
@@ -3138,7 +3193,7 @@ i~gregtech~gt.blockmachines~13102:
   machine_types:
   - Solid-Oxide Fuel Cell Mk II
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Solid-Oxide Fuel Cell Mk II
   voltage_tier:
   - 0
@@ -3162,9 +3217,12 @@ i~gregtech~gt.blockmachines~13366:
   - MCR
   multiblock: true
   weight: 1
-  name: Mega Chemical Reactor
+  parallel_behaviour:
+    type: default
+    base_parallels: 256
   overclock_behaviour:
     type: infinite
+  name: Mega Chemical Reactor
   voltage_tier:
   - 0
   - 1
@@ -3187,6 +3245,13 @@ i~gregtech~gt.blockmachines~13367:
   multiblock: true
   weight: 1
   valid_options: coil
+  parallel_behaviour:
+    type: default
+    base_parallels: 256
+  energy_behaviour:
+    type: coil_tier
+    multiplier_per_coil_tier: 0.1
+    minimal_multiplier: 0.5
   name: Mega Oil Cracker
   voltage_tier:
   - 0
@@ -3254,7 +3319,7 @@ i~gregtech~gt.blockmachines~140:
   machine_types:
   - Bricked Blast Furnace
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Bricked Blast Furnace
   voltage_tier:
   - -1
@@ -3423,7 +3488,7 @@ i~gregtech~gt.blockmachines~15311:
   machine_types:
   - Quantum Computer
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Quantum Computer
   voltage_tier:
   - 0
@@ -3445,7 +3510,7 @@ i~gregtech~gt.blockmachines~15331:
   machine_types:
   - Research Station
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Research Station
   voltage_tier:
   - 0
@@ -3469,7 +3534,6 @@ i~gregtech~gt.blockmachines~15410:
   multiblock: true
   unspecified: true
   name: Eye of Harmony
-  unspecified: true
   voltage_tier:
   - 0
   - 1
@@ -3492,7 +3556,6 @@ i~gregtech~gt.blockmachines~15411:
   multiblock: true
   unspecified: true
   name: Forge of the Gods
-  unspecified: true
   voltage_tier:
   - 0
   - 1
@@ -3516,7 +3579,6 @@ i~gregtech~gt.blockmachines~15412:
   unspecified: true
   weight: 3
   name: Helioflare Power Forge
-  unspecified: true
   voltage_tier:
   - 0
   - 1
@@ -3539,7 +3601,6 @@ i~gregtech~gt.blockmachines~15413:
   multiblock: true
   unspecified: true
   name: Helioflux Melting Core
-  unspecified: true
   voltage_tier:
   - 0
   - 1
@@ -3562,7 +3623,6 @@ i~gregtech~gt.blockmachines~15414:
   multiblock: true
   unspecified: true
   name: Heliothermal Plasma Fabricator
-  unspecified: true
   voltage_tier:
   - 0
   - 1
@@ -3585,7 +3645,6 @@ i~gregtech~gt.blockmachines~15415:
   multiblock: true
   unspecified: true
   name: Heliofusion Exoticizer
-  unspecified: true
   voltage_tier:
   - 0
   - 1
@@ -3685,7 +3744,7 @@ i~gregtech~gt.blockmachines~2105:
   machine_types:
   - Extreme Combustion Engine
   multiblock: true
-  unspecified: true
+  disabled: true
   name: Extreme Combustion Engine
   voltage_tier:
   - 0
@@ -3904,7 +3963,9 @@ i~gregtech~gt.blockmachines~2730:
   - Fluid Extractor
   multiblock: true
   valid_options: coil, solenoid_coil
-  speedup: 1.5
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 1.5
   energy_behaviour:
     type: default
     energy_multiplier: 0.8
@@ -4036,7 +4097,9 @@ i~gregtech~gt.blockmachines~3005:
   machine_types:
   - Compressor
   multiblock: true
-  speedup: 2
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2
   energy_behaviour:
     type: default
     energy_multiplier: 0.9
@@ -4140,7 +4203,9 @@ i~gregtech~gt.blockmachines~3010:
   machine_types:
   - Extractor
   multiblock: true
-  speedup: 3
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3
   energy_behaviour:
     type: default
     energy_multiplier: 0.85
@@ -4169,7 +4234,9 @@ i~gregtech~gt.blockmachines~3011:
   machine_types:
   - Brewery
   multiblock: true
-  speedup: 1.5
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 1.5
   parallel_behaviour:
     type: default
     parallels_per_voltage_tier: 4
@@ -4252,7 +4319,9 @@ i~gregtech~gt.blockmachines~31021:
   - Distillery
   - Distillation Tower
   multiblock: true
-  speedup: 3.5
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3.5
   parallel_behaviour:
     type: default
     base_parallels: 12
@@ -4443,7 +4512,9 @@ i~gregtech~gt.blockmachines~31065:
   machine_types:
   - Rock Breaker
   multiblock: true
-  speedup: 3
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3
   energy_behaviour:
     type: default
     energy_multiplier: 0.75
@@ -4538,7 +4609,9 @@ i~gregtech~gt.blockmachines~31075:
   machine_types:
   - Forge Hammer
   multiblock: true
-  speedup: 2
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2
   valid_options: anvil
   name: Industrial Sledgehammer
   voltage_tier:
@@ -4561,7 +4634,9 @@ i~gregtech~gt.blockmachines~31077:
   machine_types:
   - Fluid Heater
   multiblock: true
-  speedup: 2.2
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2.2
   energy_behaviour:
     type: default
     energy_multiplier: 0.9
@@ -4755,6 +4830,10 @@ i~gregtech~gt.blockmachines~32019:
   - Fusion Reactor
   multiblock: true
   unspecified: true
+  overclock_behaviour:
+    type: fusion
+  additional_stats:
+    fusion_tier: 1
   name: Compact Fusion Computer MK-I Prototype
   voltage_tier:
   - 0
@@ -4777,6 +4856,10 @@ i~gregtech~gt.blockmachines~32020:
   - Fusion Reactor
   multiblock: true
   unspecified: true
+  overclock_behaviour:
+    type: fusion
+  additional_stats:
+    fusion_tier: 2
   name: Compact Fusion Computer MK-II
   voltage_tier:
   - 0
@@ -4799,6 +4882,10 @@ i~gregtech~gt.blockmachines~32021:
   - Fusion Reactor
   multiblock: true
   unspecified: true
+  overclock_behaviour:
+    type: fusion
+  additional_stats:
+    fusion_tier: 3
   name: Compact Fusion Computer MK-III
   voltage_tier:
   - 0
@@ -4821,6 +4908,10 @@ i~gregtech~gt.blockmachines~32022:
   - Fusion Reactor
   multiblock: true
   unspecified: true
+  overclock_behaviour:
+    type: fusion
+  additional_stats:
+    fusion_tier: 4
   name: Compact Fusion Computer MK-IV Prototype
   voltage_tier:
   - 0
@@ -4843,6 +4934,10 @@ i~gregtech~gt.blockmachines~32023:
   - Fusion Reactor
   multiblock: true
   unspecified: true
+  overclock_behaviour:
+    type: fusion
+  additional_stats:
+    fusion_tier: 5
   name: Compact Fusion Computer MK-V
   voltage_tier:
   - 0
@@ -5082,7 +5177,9 @@ i~gregtech~gt.blockmachines~360:
   - Canner
   - Fluid Canner
   multiblock: true
-  speedup: 2
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2
   parallel_behaviour:
     type: default
     parallels_per_voltage_tier: 8
@@ -6267,7 +6364,9 @@ i~gregtech~gt.blockmachines~686:
   machine_types:
   - Lathe
   multiblock: true
-  speedup: 4
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 4
   energy_behaviour:
     type: default
     energy_multiplier: 0.8
@@ -6298,6 +6397,10 @@ i~gregtech~gt.blockmachines~687:
   multiblock: true
   valid_options: item_pipe_casing, coil, pipe_casing
   unspecified: true
+  speedup_behaviour:
+    type: coil_temperature
+    base_speed: 1
+    speed_per_coil_tier: 0.25
   name: Industrial Autoclave
   voltage_tier:
   - 0
@@ -6364,7 +6467,9 @@ i~gregtech~gt.blockmachines~790:
   machine_types:
   - Centrifuge
   multiblock: true
-  speedup: 2.25
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2.25
   energy_behaviour:
     type: default
     energy_multiplier: 0.9
@@ -6417,7 +6522,9 @@ i~gregtech~gt.blockmachines~792:
   - Bending Machine
   - Forming Press
   multiblock: true
-  speedup: 6
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 6
   parallel_behaviour:
     type: default
     parallels_per_voltage_tier: 4
@@ -6444,6 +6551,7 @@ i~gregtech~gt.blockmachines~793:
   - Rocket Engine
   multiblock: false
   efficiency: 0.8
+  disabled: true
   name: Basic Rocket Engine
   voltage_tier:
   - 4
@@ -6452,6 +6560,7 @@ i~gregtech~gt.blockmachines~794:
   - Rocket Engine
   multiblock: false
   efficiency: 0.7
+  disabled: true
   name: Advanced Rocket Engine
   voltage_tier:
   - 5
@@ -6460,6 +6569,7 @@ i~gregtech~gt.blockmachines~795:
   - Rocket Engine
   multiblock: false
   efficiency: 0.6
+  disabled: true
   name: Turbo Rocket Engine
   voltage_tier:
   - 6
@@ -6467,7 +6577,9 @@ i~gregtech~gt.blockmachines~796:
   machine_types:
   - Electrolyzer
   multiblock: true
-  speedup: 2.8
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2.8
   energy_behaviour:
     type: default
     energy_multiplier: 0.9
@@ -6497,7 +6609,9 @@ i~gregtech~gt.blockmachines~797:
   - Macerator
   multiblock: true
   valid_options: maceration_upgrade
-  speedup: 1.6
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 1.6
   unspecified: true
   name: Industrial Maceration Stack
   voltage_tier:
@@ -6520,7 +6634,9 @@ i~gregtech~gt.blockmachines~798:
   machine_types:
   - Wiremill
   multiblock: true
-  speedup: 3
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3
   energy_behaviour:
     type: default
     energy_multiplier: 0.75
@@ -6593,7 +6709,9 @@ i~gregtech~gt.blockmachines~811:
   machine_types:
   - Mixer
   multiblock: true
-  speedup: 3.5
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3.5
   parallel_behaviour:
     type: default
     parallels_per_voltage_tier: 8
@@ -6761,6 +6879,7 @@ i~gregtech~gt.blockmachines~837:
   - Semifluid Generator
   multiblock: false
   efficiency: 0.95
+  disabled: true
   name: Basic Semifluid Generator
   voltage_tier:
   - 1
@@ -6769,6 +6888,7 @@ i~gregtech~gt.blockmachines~838:
   - Semifluid Generator
   multiblock: false
   efficiency: 0.9
+  disabled: true
   name: Advanced Semifluid Generator
   voltage_tier:
   - 2
@@ -6777,6 +6897,7 @@ i~gregtech~gt.blockmachines~839:
   - Semifluid Generator
   multiblock: false
   efficiency: 0.85
+  disabled: true
   name: Turbo Semifluid Generator
   voltage_tier:
   - 3
@@ -6784,7 +6905,9 @@ i~gregtech~gt.blockmachines~840:
   machine_types:
   - Sifter
   multiblock: true
-  speedup: 5
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 5
   energy_behaviour:
     type: default
     energy_multiplier: 0.75
@@ -6813,7 +6936,9 @@ i~gregtech~gt.blockmachines~849:
   machine_types:
   - Thermal Centrifuge
   multiblock: true
-  speedup: 2.5
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2.5
   energy_behaviour:
     type: default
     energy_multiplier: 0.8
@@ -6844,7 +6969,9 @@ i~gregtech~gt.blockmachines~850:
   - Simple Washer
   - Chemical Bath
   multiblock: true
-  speedup: 5
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 5
   parallel_behaviour:
     type: default
     parallels_per_voltage_tier: 4
@@ -6870,7 +6997,9 @@ i~gregtech~gt.blockmachines~859:
   machine_types:
   - Extruder
   multiblock: true
-  speedup: 3.5
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3.5
   parallel_behaviour:
     type: default
     parallels_per_voltage_tier: 4
@@ -6898,7 +7027,9 @@ i~gregtech~gt.blockmachines~862:
   - Plasma Arc Furnace
   multiblock: true
   valid_options: width
-  speedup: 3.5
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3.5
   unspecified: true
   name: High Current Industrial Arc Furnace
   voltage_tier:
@@ -7195,7 +7326,9 @@ i~gregtech~gt.blockmachines~942:
   - Packager
   - Unpackager
   multiblock: true
-  speedup: 6
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 6
   energy_behaviour:
     type: default
     energy_multiplier: 0.75
@@ -7270,7 +7403,11 @@ i~gregtech~gt.blockmachines~965:
   machine_types:
   - Fusion Reactor
   multiblock: true
-  unspecified: true
+  overclock_behaviour:
+    type: fusion
+    perfect_overclocks: True
+  additional_stats:
+    fusion_tier: 4
   name: FusionTech MK IV
   voltage_tier:
   - 0
@@ -7292,7 +7429,11 @@ i~gregtech~gt.blockmachines~975:
   machine_types:
   - Fusion Reactor
   multiblock: true
-  unspecified: true
+  overclock_behaviour:
+    type: fusion
+    perfect_overclocks: True
+  additional_stats:
+    fusion_tier: 5
   name: FusionTech MK V
   voltage_tier:
   - 0
@@ -7315,7 +7456,9 @@ i~gregtech~gt.blockmachines~992:
   - Cutting Machine
   - Slicing Machine
   multiblock: true
-  speedup: 3
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3
   energy_behaviour:
     type: default
     energy_multiplier: 0.75
@@ -7345,6 +7488,7 @@ i~gregtech~gt.blockmachines~993:
   - Semifluid Generator
   multiblock: false
   efficiency: 0.8
+  disabled: true
   name: Turbo Semifluid Generator II
   voltage_tier:
   - 4
@@ -7353,6 +7497,7 @@ i~gregtech~gt.blockmachines~994:
   - Semifluid Generator
   multiblock: false
   efficiency: 0.75
+  disabled: true
   name: Turbo Semifluid Generator III
   voltage_tier:
   - 5
@@ -7407,6 +7552,10 @@ i~gregtech~gt.blockmachines~998:
   multiblock: true
   unspecified: true
   valid_options: coil, pipe_casing
+  speedup_behaviour:
+    type: coil_temperature
+    base_speed: 1
+    speed_per_coil_tier: 0.5
   name: ExxonMobil Chemical Plant
   voltage_tier:
   - 0

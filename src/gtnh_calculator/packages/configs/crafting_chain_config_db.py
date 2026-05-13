@@ -133,12 +133,12 @@ class CraftingChainConfig:
         self.machine_limit = machine_limit
 
         self.default_machine_options = {
-            'coil': machine_options_book.get_machine_option(default_coil, machine_options_book.coils),
-            'pipe_casing': machine_options_book.get_machine_option(default_pipe_casing, machine_options_book.pipe_casings),
-            'item_pipe_casing': machine_options_book.get_machine_option(default_item_pipe_casing, machine_options_book.item_pipe_casings),
-            'electromagnet': machine_options_book.get_machine_option(default_electromagnet, machine_options_book.electromagnets),
-            'solenoid_coil': machine_options_book.get_machine_option(default_solenoid_coil, machine_options_book.solenoid_coils),
-            'anvil': machine_options_book.get_machine_option(default_anvil, machine_options_book.anvils)
+            'coil': machine_options_book.get_machine_option(default_coil, machine_options_book.coil),
+            'pipe_casing': machine_options_book.get_machine_option(default_pipe_casing, machine_options_book.pipe_casing),
+            'item_pipe_casing': machine_options_book.get_machine_option(default_item_pipe_casing, machine_options_book.item_pipe_casing),
+            'electromagnet': machine_options_book.get_machine_option(default_electromagnet, machine_options_book.electromagnet),
+            'solenoid_coil': machine_options_book.get_machine_option(default_solenoid_coil, machine_options_book.solenoid_coil),
+            'anvil': machine_options_book.get_machine_option(default_anvil, machine_options_book.anvil)
         }
 
     def __repr__(self) -> str:
@@ -186,13 +186,13 @@ def load_config(
         machine_limit = fields.Integer(required=False, load_default=DEFAULT_MACHINE_LIMIT)
         infinite_production_weights = fields.Dict(keys=fields.String(), values=fields.Float(), required=False)
 
-        default_coil = fields.String(required=False, load_default=machine_options_book.coils[0].material.id)
-        default_pipe_casing = fields.String(required=False, load_default=machine_options_book.pipe_casings[0].material.id)
+        default_coil = fields.String(required=False, load_default=machine_options_book.coil[0].material.id)
+        default_pipe_casing = fields.String(required=False, load_default=machine_options_book.pipe_casing[0].material.id)
         default_item_pipe_casing = fields.String(required=False,
-                                                 load_default=machine_options_book.item_pipe_casings[0].material.id)
-        default_solenoid_coil = fields.String(required=False, load_default=machine_options_book.solenoid_coils[0].material.id)
-        default_electromagnet = fields.String(required=False, load_default=machine_options_book.electromagnets[0].material.id)
-        default_anvil = fields.String(required=False, load_default=machine_options_book.anvils[0].material.id)
+                                                 load_default=machine_options_book.item_pipe_casing[0].material.id)
+        default_solenoid_coil = fields.String(required=False, load_default=machine_options_book.solenoid_coil[0].material.id)
+        default_electromagnet = fields.String(required=False, load_default=machine_options_book.electromagnet[0].material.id)
+        default_anvil = fields.String(required=False, load_default=machine_options_book.anvil[0].material.id)
 
         @post_load
         def create_config(self, data, **kwargs) -> CraftingChainConfig:
@@ -234,32 +234,32 @@ def load_config(
 
         @validates('default_coil')
         def validate_default_coil(self, default_coil: str, data_key: str) -> None:
-            if default_coil not in [c.material.id for c in machine_options_book.coils]:
+            if default_coil not in [c.material.id for c in machine_options_book.coil]:
                 raise ValidationError(f'Invalid default coil: "{default_coil}"')
 
         @validates('default_pipe_casing')
         def validate_default_pipe_casing(self, default_pipe_casing: str, data_key: str) -> None:
-            if default_pipe_casing not in [c.material.id for c in machine_options_book.pipe_casings]:
+            if default_pipe_casing not in [c.material.id for c in machine_options_book.pipe_casing]:
                 raise ValidationError(f'Invalid default pipe casing: "{default_pipe_casing}"')
 
         @validates('default_item_pipe_casing')
         def validate_default_item_pipe_casing(self, default_item_pipe_casing: str, data_key: str) -> None:
-            if default_item_pipe_casing not in [c.material.id for c in machine_options_book.item_pipe_casings]:
+            if default_item_pipe_casing not in [c.material.id for c in machine_options_book.item_pipe_casing]:
                 raise ValidationError(f'Invalid default item pipe casing: "{default_item_pipe_casing}"')
 
         @validates('default_solenoid_coil')
         def validate_default_solenoid_coil(self, default_solenoid_coil: str, data_key: str) -> None:
-            if default_solenoid_coil not in [c.material.id for c in machine_options_book.solenoid_coils]:
+            if default_solenoid_coil not in [c.material.id for c in machine_options_book.solenoid_coil]:
                 raise ValidationError(f'Invalid default solenoid coil: "{default_solenoid_coil}"')
 
         @validates('default_electromagnet')
         def validate_default_electromagnet(self, default_electromagnet: str, data_key: str) -> None:
-            if default_electromagnet not in [c.material.id for c in machine_options_book.electromagnets]:
+            if default_electromagnet not in [c.material.id for c in machine_options_book.electromagnet]:
                 raise ValidationError(f'Invalid default electromagnet: "{default_electromagnet}"')
 
         @validates('default_anvil')
         def validate_default_anvil(self, default_anvil: str, data_key: str) -> None:
-            if default_anvil not in [c.material.id for c in machine_options_book.anvils]:
+            if default_anvil not in [c.material.id for c in machine_options_book.anvil]:
                 raise ValidationError(f'Invalid default anvil: "{default_anvil}"')
 
         @validates('max_singleblock_machines')

@@ -11,3 +11,4 @@ class MachineOptionType(StrEnum):
     COKE_OVEN_CASING = 'coke_oven_casing'
     WIDTH = 'width'
     MACERATION_UPGRADE = 'maceration_upgrade'
+    CONTAINMENT_BLOCK = 'containment_block'

@@ -32,9 +32,9 @@ class MachineOptions:
         return self._options[type]
 
     def set_option(self, type: MachineOptionType, option: MachineOption) -> None:
-        if type in self.valid_options:
-            self._options[type] = option
-        raise ValueError(f'MachineOptionType {type} not valid for {self}')
+        if type not in self.valid_options:
+            raise ValueError(f'MachineOptionType {type} not valid for {self}')
+        self._options[type] = option
 
 
 class MachineOption:
@@ -69,7 +69,7 @@ class MachineOption:
 class MachineOptionSchema(Schema):
     def __init__(self, *args, extracted_materials=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.extracted_materials = extracted_materials
+        self.extracted_materials: Dict[str, Material] = extracted_materials
 
     name = fields.String(required=True)
     option_type = fields.Enum(MachineOptionType, by_value=True, required=True)
