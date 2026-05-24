@@ -1,9 +1,12 @@
 import streamlit as st
 import plotly.express as px
+from collections import Counter
 
 from packages.database_extraction.database_extractor import GTNHDatabase
 from packages.utility.streamlit_functions import load_database
+from packages.database_algorithms.bfs import calculate_unlock_tiers
 from packages.recipes_db.voltage_tiers import VoltageTier
+from packages.utility.general_utility import print_df
 
 
 # Run via: poetry run streamlit run ./src/gtnh_calculator/GTNH_Calculator.py
@@ -22,6 +25,11 @@ st.set_page_config(
 
 st.write("# Welcome to the GTNH Calculator! ️")
 database: GTNHDatabase = load_database()
+
+# allowed_machines = {x for x in database.extracted_machines.values() if x.name == 'Steam Alloy Smelter'}
+# print(f'allowed_machines: {allowed_machines}')
+ #df = database.filter_recipes(database.df_recipes, allowed_machines=allowed_machines)
+ #print_df(df)
 
 a, b = st.columns(2)
 c, d = st.columns(2)
@@ -63,3 +71,14 @@ with col_3:
         hole=0.4
     )
     st.plotly_chart(fig, width=500)
+
+
+unlock_tiers = calculate_unlock_tiers(database.df_recipes, database.extracted_materials)
+counts = Counter(unlock_tiers.values())
+fig = px.pie(
+    names=counts.keys(),
+    values=counts.values(),
+    title='Unlock Tiers',
+    hole=0.4
+)
+st.plotly_chart(fig, width=500)

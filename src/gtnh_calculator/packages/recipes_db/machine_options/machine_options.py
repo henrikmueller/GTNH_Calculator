@@ -36,6 +36,9 @@ class MachineOptions:
             raise ValueError(f'MachineOptionType {type} not valid for {self}')
         self._options[type] = option
 
+    def __repr__(self) -> str:
+        return f'MachineOptions(valid={self.valid_options}, options={[o.__repr__() for o in self._options.values()]})'
+
 
 class MachineOption:
     name: str
@@ -52,8 +55,11 @@ class MachineOption:
         self.option_type = option_type
         self.options = {} if options is None else options
 
+    def __repr__(self) -> str:
+        return f'{self.name} ({self.options})' if self.options else self.name
+
     def __str__(self) -> str:
-        return f'{self.name} ({self.options})'
+        return f'{self.name} ({self.options})' if self.options else self.name
 
     @property
     def tier(self) -> int:

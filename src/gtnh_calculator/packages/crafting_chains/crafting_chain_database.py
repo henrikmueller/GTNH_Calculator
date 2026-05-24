@@ -5,9 +5,12 @@ import logging
 from dataclasses import dataclass
 from itertools import product
 from collections import Counter
+import math
 
-from ..database_extraction.database_extractor import GTNHDatabase
+from ..database_extraction.gtnh_database import GTNHDatabase
+from ..database_algorithms.bfs import get_reachable_recipes, get_ingredient_recipes
 from ..configs.crafting_chain_config_db import CraftingChainConfig
+from ..database_extraction.database_extractor import create_recipe_from_row
 from ..recipes_db.machines import Machine
 from ..recipes_db.machine_options.machine_options import MachineOptions
 from ..recipes_db.machine_options.machine_option_types import MachineOptionType
@@ -21,49 +24,6 @@ from ..utility.general_utility import Timer
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
-
-
-def create_recipe_from_row(recipe_row, default_voltage_tier: int) -> Recipe:
-    base_recipe = RawRecipe(
-        eu_per_tick=-recipe_row.VOLTAGE * recipe_row.AMPERAGE,
-        processing_time=recipe_row.DURATION,
-        amperage=recipe_row.AMPERAGE,
-        voltage_tier=recipe_row.VOLTAGE_TIER,
-        inputs=recipe_row.TOTAL_INPUTS,
-        output_specifications=recipe_row.OUTPUTS,
-        recipe_options=RecipeOptions.get_recipe_options(recipe_row.METADATA, recipe_row.ADDITIONAL_INFO)
-    )
-    machine = recipe_row.SELECTED_MACHINE
-    valid_voltage_tiers = [v for v in machine.voltage_tiers if base_recipe.voltage_tier <= v <= default_voltage_tier]
-    if valid_voltage_tiers:
-        voltage_tier = max(valid_voltage_tiers)
-    else:
-        _LOGGER.debug(f'No valid voltage tier found for machine {machine} and recipe {recipe_row.ID}. '
-                      f'Recipe voltage tier: {base_recipe.voltage_tier}, '
-                      f'default voltage tier: {default_voltage_tier}')
-        voltage_tier = base_recipe.voltage_tier
-    raw_recipe = machine.fit_recipe(raw_recipe=base_recipe, voltage_tier=voltage_tier)
-    return Recipe(
-        id=recipe_row.ID,
-        base_recipe=base_recipe,
-        raw_recipe=raw_recipe,
-        valid_machines=recipe_row.MACHINES,
-        machine=machine,
-        cap=None,
-        cap_specified=False
-    )
-
-
-def initialize_machine_options(database: GTNHDatabase) -> None:
-    for machine in database.extracted_machines.values():
-        for option_type in machine.machine_options.valid_options:
-            options = database.machine_options_book.get_machine_option_list(
-                option_type=option_type
-            )
-            if options:
-                machine.machine_options.set_option(
-                    option_type, min(options, key=lambda o: o.tier)
-                )
 
 
 @dataclass
@@ -82,46 +42,35 @@ class CraftingChainDatabase:
             _LOGGER.info(f'Disabled machines: {set(m.name for m in database.extracted_machines.values() if m.disabled)}')
             df = database.filter_recipes(
                 database.df_recipes,
+                excluded_outputs=set(database.extracted_materials[id] for id in config.disabled_materials),
                 voltage_tiers={v for v in VoltageTier.valid_voltage_tiers() if v <= config.max_voltage_tier},
                 machines={m for m in database.extracted_machines.values() if not m.disabled}
             )
-            # df['MACHINES'] = df['MACHINES'].map(
-            #     lambda machines: {m for m in machines if not m.unspecified})
-
             df = df[df['MACHINES'].map(len) > 0].drop(columns='TOTAL_EU').copy().reset_index()
+            df = df[df['ID'].map(lambda id: id not in config.disabled_recipes)].reset_index()
 
             starting_materials = config.inputs | config.infinite_materials
             _LOGGER.info(f'Starting materials: {starting_materials}')
-            initial_material_grading, df = database.get_reachable_recipes(df, starting_materials, sort=False)
+            initial_material_grading, df = get_reachable_recipes(
+                df, database.extracted_materials, starting_materials, sort=False
+            )
             reachable_materials = {m.id: m for m, g in initial_material_grading.items() if g >= 0}
             _LOGGER.info(f'Reachable recipes: {df.shape[0]}')
 
             target_materials = list(config.outputs.union(config.inputs))
-            _, df = database.get_ingredient_recipes(df, target_materials, sort=False)
+            _, df = get_ingredient_recipes(df, database.extracted_materials, target_materials, sort=False)
 
             if df.shape[0] <= 0:
                 raise ValueError(f'No recipes found for the specified config.')
 
             # Take the cross product of all input groups
-            reachable_set = set(reachable_materials.values())
-            rows = []
-            for row in df.itertuples(index=False):
-                input_groups = list(row.TOTAL_INPUTS.keys())
-                amounts = list(row.TOTAL_INPUTS.values())
-                material_lists = [g.materials for g in input_groups]
+            df = database.blow_up_input_groups(df)
 
-                for index, materials in enumerate(product(*material_lists)):
-                    recipe_id = f"{row.ID}{index}"
-                    inputs = {
-                        k: (m, v[1]) for (k, v), m in zip(row.INPUT_GROUPS.items(), materials)
-                    }
-                    total_inputs = dict(zip(materials, amounts))
-                    rows.append(
-                        row._replace(ID=recipe_id, INPUT_GROUPS=inputs, TOTAL_INPUTS=total_inputs)._asdict()
-                    )
-                    for material in materials:
+            # Add missing materials from inputs to reachable materials
+            for row in df.itertuples(index=False):
+                for material in row.TOTAL_INPUTS.keys():
                         reachable_materials[material.id] = material
-            df = pd.DataFrame(rows)
+
 
             def get_machine(row):
                 return database.get_default_machine(row, config.default_voltage_tier)
@@ -139,7 +88,7 @@ class CraftingChainDatabase:
                 extracted_machines={k: m for k, m in database.extracted_machines.items()},
                 machine_options_book=database.machine_options_book
             )
-            initialize_machine_options(cc_database)
+            # cc_database.initialize_machine_options()
 
             recipes = {}
             for row in cc_database.df_recipes.itertuples(index=False):

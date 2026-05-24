@@ -101,11 +101,12 @@ class DefaultMachineBehaviour(MachineBehaviour):
             raise ValueError(
                 f'Heat Capacity {heat_capacity} not sufficient for the recipe temperature {recipe_min_temperature}')
 
-        energy_multiplier = self.energy_behaviour.get_energy_multiplier(EnergyContext(
+        energy_context = EnergyContext(
             machine_options=machine_options,
             recipe_options=raw_recipe.recipe_options,
             machine_heat_capacity=heat_capacity,
-        ))
+        )
+        energy_multiplier = self.energy_behaviour.get_energy_multiplier(energy_context)
         max_parallels = self.parallel_behaviour.get_parallels(
             voltage_tier=voltage_tier,
             machine_options=machine_options
@@ -117,14 +118,15 @@ class DefaultMachineBehaviour(MachineBehaviour):
             else max_parallels
 
         max_overclocks = self.overclock_behaviour.get_max_overclocks(voltage_tier)
-        non_perfect_overclocks, perfect_overclocks = self.overclock_behaviour.get_overclocks(OverclockContext(
+        overclock_context = OverclockContext(
             current_eu_per_tick=used_parallels * reduced_eu_per_tick,
             max_eu_per_tick=max_eu_per_tick,
             max_overclocks=max_overclocks,
             machine_stats=machine_stats,
             recipe_options=raw_recipe.recipe_options,
             machine_heat_capacity=heat_capacity
-        ))
+        )
+        non_perfect_overclocks, perfect_overclocks = self.overclock_behaviour.get_overclocks(overclock_context)
 
         total_eu = (raw_recipe.total_eu * energy_multiplier * used_parallels *
                     2 ** non_perfect_overclocks / speedup)
@@ -141,6 +143,8 @@ class DefaultMachineBehaviour(MachineBehaviour):
         def print_logs():
             _LOGGER.warning(raw_recipe)
             _LOGGER.warning(self)
+            _LOGGER.warning(f'energy_context: {energy_context}')
+            _LOGGER.warning(f'overclock_context: {overclock_context}')
             _LOGGER.warning(f'max_parallels: {max_parallels}')
             _LOGGER.warning(f'max_eu_per_tick: {max_eu_per_tick}')
             _LOGGER.warning(f'reduced_eu_per_tick: {reduced_eu_per_tick}')

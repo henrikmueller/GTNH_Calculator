@@ -8,7 +8,7 @@ from ..recipes_db.material import Material
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.machine_options.machine_options import MachineOption
 from ..recipes_db.machine_options.machine_option_books import MachineOptionsBook
-from ..database_extraction.database_extractor import GTNHDatabase
+from ..database_extraction.gtnh_database import GTNHDatabase
 from ..utility.general_utility import str_to_float, load_file
 from ..utility.constants import COMMENT_CHARACTER, DEFAULT_MACHINE_LIMIT
 
@@ -35,6 +35,8 @@ class CraftingChainConfig:
     max_multiblock_machines: int | None
     default_machine_options: Dict[str, MachineOption]
     machine_limit: int
+    disabled_materials: list[str]
+    disabled_recipes: list[str]
 
     def __init__(
         self,
@@ -58,6 +60,8 @@ class CraftingChainConfig:
         max_voltage_tier: str | None,
         maximal_energy_increase: float,
         machine_limit: int,
+        disabled_materials: list[str],
+        disabled_recipes: list[str],
         max_singleblock_machines: int | None = None,
         max_multiblock_machines: int | None = None,
         infinite_production_weights: Dict[str, float] | None = None
@@ -131,6 +135,8 @@ class CraftingChainConfig:
         self.max_singleblock_machines = max_singleblock_machines
         self.max_multiblock_machines = max_multiblock_machines
         self.machine_limit = machine_limit
+        self.disabled_materials = disabled_materials
+        self.disabled_recipes = disabled_recipes
 
         self.default_machine_options = {
             'coil': machine_options_book.get_machine_option(default_coil, machine_options_book.coil),
@@ -193,6 +199,9 @@ def load_config(
         default_solenoid_coil = fields.String(required=False, load_default=machine_options_book.solenoid_coil[0].material.id)
         default_electromagnet = fields.String(required=False, load_default=machine_options_book.electromagnet[0].material.id)
         default_anvil = fields.String(required=False, load_default=machine_options_book.anvil[0].material.id)
+
+        disabled_materials = fields.List(fields.String(), required=False, load_default=[])
+        disabled_recipes = fields.List(fields.String(), required=False, load_default=[])
 
         @post_load
         def create_config(self, data, **kwargs) -> CraftingChainConfig:

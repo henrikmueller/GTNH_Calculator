@@ -8,214 +8,60 @@ from typing import Dict, Generator
 from collections import defaultdict
 import json
 from itertools import chain
-from collections import deque
 
+from ..database_extraction.gtnh_database import GTNHDatabase
 from ..recipes_db.material import ExtractedItem, ExtractedFluid, Material, MaterialGroup
 from ..recipes_db.voltage_tiers import VoltageTier
-from ..recipes_db.machine_stats import MachineStats, MachineStatType
+from ..recipes_db.machine_stats import MachineStats
+from ..recipes_db.recipes import Recipe
+from ..recipes_db.raw_recipes import RawRecipe
+from ..recipes_db.recipe_options import RecipeOptions
 from ..recipes_db.machines import Machine, MachineType
 from ..recipes_db.machine_options.machine_options import MachineOptions
 from ..recipes_db.behaviours.machine_behaviours import MachineBehaviour
-from ..recipes_db.machine_options.machine_option_books import load_possible_machine_options, MachineOptionsBook
+from ..recipes_db.machine_options.machine_option_books import load_possible_machine_options
 from ..recipes_db.machine_options.machine_option_types import MachineOptionType
 from .database_building_options import steam_machines
 from ..utility.general_utility import str_to_float, Timer, print_df
-from ..utility.constants import GT_EU_KEY, INCLUDE_DEPRECATED_MACHINES
+from ..utility.constants import INCLUDE_DEPRECATED_MACHINES
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
 
 
-@dataclass
-class GTNHDatabase:
-    df_recipes: pd.DataFrame
-    extracted_materials: Dict[str, Material]
-    extracted_machines: Dict[str, Machine]
-    machine_options_book: MachineOptionsBook
-    includes_deprecated_machines: bool = INCLUDE_DEPRECATED_MACHINES
+def create_recipe_from_row(recipe_row, default_voltage_tier: int | None = None) -> Recipe:
+    base_recipe = RawRecipe(
+        eu_per_tick=-recipe_row.VOLTAGE * recipe_row.AMPERAGE,
+        processing_time=recipe_row.DURATION,
+        amperage=recipe_row.AMPERAGE,
+        voltage_tier=recipe_row.VOLTAGE_TIER,
+        inputs=recipe_row.TOTAL_INPUTS,
+        output_specifications=recipe_row.OUTPUTS,
+        recipe_options=RecipeOptions.get_recipe_options(recipe_row.METADATA, recipe_row.ADDITIONAL_INFO)
+    )
+    machine = recipe_row.SELECTED_MACHINE
+    if default_voltage_tier is None:
+        valid_voltage_tiers = [v for v in machine.voltage_tiers if base_recipe.voltage_tier <= v]
+    else:
+        valid_voltage_tiers = [v for v in machine.voltage_tiers if base_recipe.voltage_tier <= v <= default_voltage_tier]
 
-    def mod_set_materials(self) -> set[str]:
-        return set(m.mod for m in self.extracted_materials.values())
-
-    def mod_set_recipes(self) -> set[str]:
-        return set(self.df_recipes['CATEGORY'].unique())
-
-    def add_eu(self) -> None:
-        if GT_EU_KEY in self.extracted_materials.keys():
-            raise AssertionError(f'{GT_EU_KEY} must not a key of material.')
-        self.extracted_materials[GT_EU_KEY] = Material(
-            id=GT_EU_KEY,
-            image_file_path='',
-            name='EU',
-            mod='gregtech',
-            nbt='',
-            tooltip='The Electric Unit, the standard unit of energy in GTNH.'
-        )
-
-    def filter_recipes(
-        self,
-        df_recipes: pd.DataFrame,
-        inputs: set[Material] | None = None,
-        outputs: set[Material] | None = None,
-        voltage_tiers: set[int] | None = None,
-        categories: set[str] | None = None,
-        machines: set[Machine] | None = None
-    ) -> pd.DataFrame:
-        df_result = df_recipes.copy(deep=False)
-        if inputs is not None:
-            df_result = df_result[df_result['TOTAL_INPUTS'].map(lambda input_groups: all(
-                any(input in input_group.materials for input_group in input_groups) for input in inputs
-            ))]
-        if outputs is not None:
-            df_result = df_result[df_result['AVG_OUTPUTS'].map(lambda avg_outputs: all(
-                output in avg_outputs.keys() for output in outputs
-            ))]
-        if voltage_tiers is not None:
-            if max(voltage_tiers) - min(voltage_tiers) + 1 == len(voltage_tiers):
-                df_result = df_result[(df_result['VOLTAGE_TIER'] >= min(voltage_tiers)) &
-                                       (df_result['VOLTAGE_TIER'] <= max(voltage_tiers))]
-            else:
-                df_result = df_result[df_result['VOLTAGE_TIER'].isin(voltage_tiers)]
-        if categories is not None:
-            df_result = df_result[df_result['CATEGORY'].isin(categories)]
-        if machines is not None:
-            df_result['MACHINES'] = df_result['MACHINES'].map(lambda s: s & machines)
-            df_result = df_result[df_result['MACHINES'].map(len) > 0]
-        return df_result
-
-    def get_reachable_recipes(
-            self, df_recipes: pd.DataFrame,
-            starting_materials: set[Material], sort=False
-        ) -> tuple[Dict[Material, int], pd.DataFrame]:
-        outputs = df_recipes['AVG_OUTPUTS']
-        node_to_edges = defaultdict(list)
-        remaining = []
-        for edge_id, inputs_groups in enumerate(df_recipes['TOTAL_INPUTS']):
-            tmp = [True] * len(inputs_groups)
-            for i, (input_group, amount) in enumerate(inputs_groups.items()):
-                if amount == 0:
-                    tmp[i] = False
-                    continue
-                for material in input_group.materials:
-                    node_to_edges[material].append((edge_id, i))
-            remaining.append(tmp)
-
-        material_grading = {m: -1 for m in self.extracted_materials.values()}  # positive values = visited
-        recipe_grading = [-1] * df_recipes.shape[0]  # positive values = visited
-        double_ended_queue = deque(starting_materials)
-        for m in double_ended_queue:
-            material_grading[m] = 0
-
-        while double_ended_queue:
-            material = double_ended_queue.popleft()
-            if material_grading[material] < 0:  # TODO: Remove later
-                raise AssertionError(f'Negative grading for material in queue: {material} | {double_ended_queue}')
-            for edge_id, index in node_to_edges[material]:
-                remaining[edge_id][index] = False
-
-                if sum(remaining[edge_id]) == 0 and recipe_grading[edge_id] < 0:
-                    recipe_grading[edge_id] = material_grading[material]
-                    for output in outputs.iloc[edge_id].keys():
-                        if material_grading[output] < 0:
-                            material_grading[output] = material_grading[material] + 1
-                            double_ended_queue.append(output)
-
-        df_reachable_recipes = df_recipes.assign(GRADING=recipe_grading)[[r >= 0 for r in recipe_grading]]
-        if sort:
-            df_reachable_recipes = df_reachable_recipes.sort_values(by='GRADING')
-        return material_grading, df_reachable_recipes
-
-    def get_ingredient_recipes(
-        self, df_recipes: pd.DataFrame,
-        target_materials: list[Material], sort=False
-    ) -> tuple[list[tuple[Material, int]], pd.DataFrame]:
-        """
-        Calculates recipes and materials which can be used to craft the target materials
-        :param df_recipes:
-        :param target_materials:
-        :param sort:
-        :return:
-        """
-        input_groups = df_recipes['TOTAL_INPUTS']
-        node_to_edges = defaultdict(list)
-        for edge_id, avg_outputs in enumerate(df_recipes['AVG_OUTPUTS']):
-            for i, (output, amount) in enumerate(avg_outputs.items()):
-                if amount <= 0:
-                    continue
-                node_to_edges[output].append(edge_id)
-
-        material_grading = {m: -1 for m in self.extracted_materials.values()}  # positive values = visited
-        recipe_grading = [-1] * df_recipes.shape[0]  # positive values = visited
-        double_ended_queue = deque(target_materials)
-        for m in target_materials:
-            material_grading[m] = 0
-
-        while double_ended_queue:
-            material = double_ended_queue.popleft()
-            for edge_id in node_to_edges[material]:
-                if recipe_grading[edge_id] < 0:
-                    recipe_grading[edge_id] = material_grading[material]
-                    for input_group in input_groups.iloc[edge_id].keys():
-                        for input in input_group.materials:
-                            if material_grading[input] < 0:
-                                material_grading[input] = material_grading[material] + 1
-                                double_ended_queue.append(input)
-
-        reachable_materials_graded = [(m, r) for m, r in material_grading.items() if r >= 0]
-        reachable_materials_graded.sort(key=lambda x: x[1])
-        df_reachable_recipes = df_recipes.assign(OUTPUT_GRADING=recipe_grading)[[r >= 0 for r in recipe_grading]]
-        if sort:
-            df_reachable_recipes = df_reachable_recipes.sort_values(by='OUTPUT_GRADING')
-        return reachable_materials_graded, df_reachable_recipes
-
-    @staticmethod
-    def _get_base_machines(recipe_row, default_voltage_tier: int | None = None) -> list[Machine]:
-        groups = defaultdict(set)
-        for machine in recipe_row.MACHINES:
-            for voltage_tier in machine.voltage_tiers:
-                if default_voltage_tier is None or voltage_tier <= default_voltage_tier:
-                    groups[(frozenset(machine.machine_types), machine.multiblock)].add(machine)
-                    break
-        if default_voltage_tier is None:
-            base_machines = [
-                min(group, key=lambda m: (m.weight, m.minimal_voltage_tier()))
-                for group in groups.values()
-            ]
-        else:
-            base_machines = [
-                min(group, key=lambda m: (m.weight, -m.minimal_voltage_tier()))
-                for group in groups.values()
-            ]
-        if not base_machines:
-            _LOGGER.debug(f'No base machines found. Machine groups: '
-                            f'{[(t, [(m.name, m.voltage_tiers) for m in g]) for t, g in groups.items()]}')
-        return base_machines
-
-    def get_default_machine(self, recipe_row, default_voltage_tier: int) -> Machine | None:
-        base_machines = self._get_base_machines(recipe_row, default_voltage_tier)
-        if not all(m.multiblock for m in base_machines):
-            base_machines = [m for m in base_machines if not m.multiblock]
-        base_machine_names = [m.name for m in base_machines]
-        if 'Large Chemical Reactor' in base_machine_names and 'Mega Chemical Reactor' in base_machine_names:
-            base_machines = [m for m in base_machines if m.name != 'Mega Chemical Reactor']
-        if 'Large Scale Auto-Assembler v1.01' in base_machine_names and 'Precise Auto-Assembler MT-3662' in base_machine_names:
-            base_machines = [m for m in base_machines if m.name != 'Precise Auto-Assembler MT-3662']
-        if 'Dangote Distillus' in base_machine_names and 'Mega Distillation Tower' in base_machine_names:
-            base_machines = [m for m in base_machines if m.name != 'Mega Distillation Tower']
-        if 'Distillation Tower' in base_machine_names and 'Dangote Distillus' in base_machine_names:
-            base_machines = [m for m in base_machines if m.name != 'Dangote Distillus']
-        if 'Neutronium Compressor' in base_machine_names and 'Pseudostable Black Hole Containment Field' in base_machine_names:
-            base_machines = [m for m in base_machines if m.name != 'Pseudostable Black Hole Containment Field']
-
-        if len(base_machines) == 1:
-            return base_machines[0]
-        if 'Superdense Magnetohydrodynamically Constrained Star Matter Plate' in [m.name for m in
-                                                                                  recipe_row.AVG_OUTPUTS.keys()]:
-            return [m for m in base_machines if m.name == 'Pseudostable Black Hole Containment Field'][0]
-
-        _LOGGER.debug(f'No default machine: {base_machines} | {recipe_row}. \n'
-                      f'Machines: {[(m.name, m.voltage_tiers) for m in recipe_row.MACHINES]}')
-        return None
+    if valid_voltage_tiers:
+        voltage_tier = min(valid_voltage_tiers) if default_voltage_tier is None else max(valid_voltage_tiers)
+    else:
+        _LOGGER.debug(f'No valid voltage tier found for machine {machine} and recipe {recipe_row.ID}. '
+                      f'Recipe voltage tier: {base_recipe.voltage_tier}, '
+                      f'default voltage tier: {default_voltage_tier}')
+        voltage_tier = base_recipe.voltage_tier
+    raw_recipe = machine.fit_recipe(raw_recipe=base_recipe, voltage_tier=voltage_tier)
+    return Recipe(
+        id=recipe_row.ID,
+        base_recipe=base_recipe,
+        raw_recipe=raw_recipe,
+        valid_machines=recipe_row.MACHINES,
+        machine=machine,
+        cap=None,
+        cap_specified=False
+    )
 
 
 @dataclass
@@ -236,13 +82,16 @@ class DatabaseExtractor:
         machines, machine_types = self.extract_machine_types(extracted_items)
         yield 0.2
         df_recipes = yield from self.extract_recipes(extracted_items, extracted_fluids, machines)
-        return GTNHDatabase(
+        df_recipes = df_recipes.reset_index(drop=True)
+        database = GTNHDatabase(
             df_recipes=df_recipes,
             extracted_materials=extracted_materials,
             extracted_machines=machines,
             machine_options_book=machine_options_book
         )
-
+        database.initialize_machine_options()
+        return database
+    
     def extract_recipes(
         self, extracted_items: Dict[str, ExtractedItem], extracted_fluids: Dict[str, ExtractedFluid],
             extracted_machines: Dict[str, Machine]
@@ -369,11 +218,6 @@ class DatabaseExtractor:
             item_inputs_all_df["ITEM_INPUTS_JSON"] = item_inputs_all_df["ITEM_INPUTS_JSON"].apply(json.loads)
             yield 0.4
             item_inputs_all = {}
-            # for row in item_inputs_all_df.itertuples(index=False):
-            #     for input_group in row.ITEM_INPUTS_JSON:
-            #         item_inputs_all.setdefault(row.ID, defaultdict(int))[
-            #             MaterialGroup([extracted_items[id] for id in input_group['item_ids']])
-            #         ] += input_group['amount']
             for row in item_inputs_all_df.itertuples(index=False):
                 for input_group in row.ITEM_INPUTS_JSON:
                     item_inputs_all.setdefault(row.ID, {})[input_group['key']] = (
@@ -559,28 +403,11 @@ class DatabaseExtractor:
         yield 0.88
         df_all = df_all.join(df_valid_machines.set_index("ID"))
         df_all = df_all[df_all['MACHINES'].map(len) > 0]
+        df_all = df_all.reset_index()
         yield 0.9
-
-        # df_test = df_all[df_all['OUTPUTS'].map(lambda x: any('Sodium Hydroxide' in o[0].name for o in x.values()))]
-        # df_test = df_all[df_all['MACHINES'].map(lambda x: any('Assembling Machine' in m.name for m in x))]
-        # print_df(df_test, limit_rows=False)
-
-        # TODO: Special Cases: Plant Mass. Save number of output slots of every machine somewhere
-
-        # starting_materials = [extracted_materials['i~IC2~itemCellEmpty~0']]
-        # reachable_materials, df_reachable_recipes = (
-        #     self.get_reachable_recipes(df_all, extracted_materials, starting_materials, sort=True))
-        # print_df(df_reachable_recipes, limit_rows=False, max_rows=100)
 
         yield 1
         return df_all
-
-    # def get_recipes(self, df_recipes: pd.DataFrame) -> Dict[int, Recipe]:
-    #     recipes = {}
-    #     for row in df_recipes.itertuples(index=True):
-    #         # raw_recipe = RawRecipe()
-    #         recipes[row.INDEX] = 0
-    #     return recipes
 
     def extract_items(self, extracted_fluids: Dict[str, ExtractedFluid]) -> Dict[str, ExtractedItem]:
         conn = sqlite3.connect(self.database_path)

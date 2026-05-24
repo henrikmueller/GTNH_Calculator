@@ -2,9 +2,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 import re
+from typing import Any
 from enum import Enum
 from abc import abstractmethod
 
+from ..utility.constants import STARTING_MATERIAL_NAMES
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -47,8 +49,17 @@ class Material:
     def __repr__(self):
         return self.name
 
-    def __eq__(self, other: Material):
-        return self.id == other.id
+    def __eq__(self, other: Any):
+        return isinstance(other, Material) and self.id == other.id
+
+    def is_ore(self) -> bool:
+        return not self.is_fluid() and ' Ore ' in self.tooltip
+
+    def is_starting(self) -> bool:
+        return (
+            self.is_ore() or self.name in STARTING_MATERIAL_NAMES or 
+            (self.name == 'Crafting Table' and self.mod == 'minecraft')
+            )
 
     @abstractmethod
     def is_fluid(self) -> bool:
@@ -126,5 +137,5 @@ class MaterialGroup:
     def __repr__(self):
         return f'{[m for m in self.materials]}'
 
-    def __eq__(self, other: MaterialGroup):
-        return set(self.materials) == set(other.materials)
+    def __eq__(self, other: Any):
+        return isinstance(other, MaterialGroup) and set(self.materials) == set(other.materials)

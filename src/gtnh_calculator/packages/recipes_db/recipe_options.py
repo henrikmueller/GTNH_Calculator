@@ -31,17 +31,17 @@ class RecipeOptions:
             match = re.match(r"^To start: .*? EU \(MK (.*?)\)$", additional_info)
             if match:
                 options[RecipeOptionType.FUSION_TIER] = str_to_float(match.group(1))
-        return RecipeOptions(options=metadata)
+        return RecipeOptions(options=metadata | options)
 
     @property
     def fusion_tier(self) -> float:
-        if RecipeOptionType.FUSION_TIER in self.options:
+        if RecipeOptionType.FUSION_TIER in self.options.keys():
             return self.options[RecipeOptionType.FUSION_TIER]
         return nan
 
     @property
     def temperature(self) -> float:
-        if RecipeOptionType.TEMPERATURE in self.options:
+        if RecipeOptionType.TEMPERATURE in self.options.keys():
             return self.options[RecipeOptionType.TEMPERATURE]
         return nan
 

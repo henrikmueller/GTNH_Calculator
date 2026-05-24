@@ -89,6 +89,7 @@ i~gregtech~gt.blockmachines~1002:
   - Vacuum Freezer
   multiblock: true
   name: Vacuum Freezer
+  weight: -1
   voltage_tier:
   - 0
   - 1
@@ -3017,7 +3018,12 @@ i~gregtech~gt.blockmachines~12731:
   machine_types:
   - Vacuum Freezer
   multiblock: true
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 0
+    base_parallels: 256
   name: Mega Vacuum Freezer
+  weight: 1
   voltage_tier:
   - 0
   - 1
@@ -7115,6 +7121,7 @@ i~gregtech~gt.blockmachines~910:
   multiblock: true
   unspecified: true
   name: Cryogenic Freezer
+  weight: 2
   voltage_tier:
   - 0
   - 1

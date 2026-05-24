@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 
 from packages.configs.crafting_chain_config_db import CraftingChainConfig, load_config
 from packages.crafting_chains.crafting_chain_database import CraftingChainDatabase
-from packages.database_extraction.database_extractor import GTNHDatabase
+from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.utility.streamlit_functions import (
     load_database, load_crafting_chain_database, display_crafting_chain_recipe
 )
@@ -347,7 +347,7 @@ def recipe_configuration(crafting_chain: CraftingChain):
     st.markdown('## Recipe Configuration')
     crafting_chain_recipes = crafting_chain.recipe_list
     for recipe in crafting_chain_recipes:
-        display_crafting_chain_recipe(recipe)
+        display_crafting_chain_recipe(recipe, database.machine_options_book)
 
 
 if crafting_chain is not None:

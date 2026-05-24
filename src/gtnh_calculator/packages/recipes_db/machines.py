@@ -43,6 +43,15 @@ class Machine:
     def voltage_tiers(self) -> list[int]:
         return self.machine_stats.voltage_tiers
 
+    def __repr__(self):
+        if all(v < 0 for v in self.voltage_tiers):
+            repr_string = f'{self.name}'
+        elif len(self.voltage_tiers) == 1:
+            repr_string = f'{self.name} ({VoltageTier.voltage_tier_name(self.voltage_tiers[0])})'
+        else:
+            repr_string = f'{self.name}'
+        return repr_string if not self.deprecated else repr_string + ' (DEPRECATED)'
+
     def __str__(self):
         if all(v < 0 for v in self.voltage_tiers):
             repr_string = f'{self.name}'

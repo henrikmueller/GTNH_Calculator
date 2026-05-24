@@ -50,9 +50,6 @@ machine_type_book = None
 config = None
 update = 'update' in st.session_state and st.session_state['update']
 
-
-# database: GTNHDatabase = load_database()
-
 uploaded_file = st.file_uploader("Choose a config file to specify the recipe chain", type='yaml')
 if uploaded_file is not None:
     if 'file_hash' not in st.session_state or st.session_state['file_hash'] != hash(uploaded_file):

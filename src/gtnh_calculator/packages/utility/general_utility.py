@@ -94,6 +94,8 @@ def str_to_float_with_exception(text: str) -> float:
 
 def time_to_seconds(time_string: str) -> tuple[float, str]:
     tmp = str_to_float(time_string[:-1])
+    if tmp is None:
+        raise ValueError('time and display_interval need to end with s or t and start with a number')
     if time_string.endswith('t'):
         return 0.05 * tmp, 'tick'
     elif time_string.endswith('s'):
@@ -104,23 +106,6 @@ def time_to_seconds(time_string: str) -> tuple[float, str]:
 
 def is_empty(text: str) -> bool:
     return text == '' or text.isspace()
-
-
-def get_differences(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
-    diff = df1.compare(df2, keep_shape=True)
-    result = pd.DataFrame(index=df1.index, columns=df1.columns)
-    for col in df1.columns:
-        if col in diff.columns.levels[0]:
-            old_vals = diff[(col, "self")]
-            new_vals = diff[(col, "other")]
-
-            result[col] = [
-                (old, new) if not pd.isna(old) or not pd.isna(new) else np.nan
-                for old, new in zip(old_vals, new_vals)
-            ]
-        else:
-            result[col] = np.nan
-    return result
 
 
 def load_file(file_or_filepath: BytesIO | str) -> Any:
@@ -163,13 +148,7 @@ def is_contained_in(text: str, text_list: list[str], case_sensitive=True) -> boo
     return any(lowercase_text in s.lower() for s in text_list)
 
 
-def format_float(x):
-    s = f"{x:.20f}".rstrip("0")
-    if "." not in s:
-        return s + ".0"
-
-    whole, frac = s.split(".")
-    for i, ch in enumerate(frac):
-        if ch != "0":
-            return whole + "." + frac[:i+2]
-    return whole + ".0"
+def format_float(x, decimal_places: int = 6, separate_thousands: bool = False) -> str:
+    if separate_thousands:
+        return f"{x:,.{decimal_places}f}".rstrip("0").rstrip(".")
+    return f"{x:.{decimal_places}f}".rstrip("0").rstrip(".")
