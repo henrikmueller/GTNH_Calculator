@@ -2,7 +2,7 @@ import streamlit as st
 import plotly.express as px
 from collections import Counter
 
-from packages.database_extraction.database_extractor import GTNHDatabase
+from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.utility.streamlit_functions import load_database
 from packages.database_algorithms.bfs import calculate_unlock_tiers
 from packages.recipes_db.voltage_tiers import VoltageTier
