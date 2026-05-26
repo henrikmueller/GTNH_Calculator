@@ -1,3 +1,16 @@
+import lzma
+import shutil
+import sqlite3
+
+
+def compress_database():
+    conn = sqlite3.connect("db/gtnh-2-8-db.db")
+    conn.execute("VACUUM")
+    conn.close()
+
+    with open("db/gtnh-2-8-db.db", "rb") as f_in:
+        with lzma.open("db/gtnh-2-8-db.db.xz", "wb", preset=9) as f_out:
+            shutil.copyfileobj(f_in, f_out)
 
 
 steam_machines = [

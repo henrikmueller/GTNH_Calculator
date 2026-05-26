@@ -10,15 +10,11 @@ import math
 from ..database_extraction.gtnh_database import GTNHDatabase
 from ..database_algorithms.bfs import get_reachable_recipes, get_ingredient_recipes
 from ..configs.crafting_chain_config_db import CraftingChainConfig
-from ..database_extraction.database_extractor import create_recipe_from_row
-from ..recipes_db.machines import Machine
-from ..recipes_db.machine_options.machine_options import MachineOptions
-from ..recipes_db.machine_options.machine_option_types import MachineOptionType
+from ..database_extraction.recipe_initialization import RecipeInitializer
 from ..recipes_db.material import Material
+from ..recipes_db.machines import Machine
 from ..recipes_db.voltage_tiers import VoltageTier
-from ..recipes_db.raw_recipes import RawRecipe
 from ..recipes_db.recipes import Recipe
-from ..recipes_db.recipe_options import RecipeOptions
 from .crafting_chain_utility import calculate_gradings
 from ..utility.general_utility import Timer
 
@@ -88,13 +84,9 @@ class CraftingChainDatabase:
                 extracted_machines={k: m for k, m in database.extracted_machines.items()},
                 machine_options_book=database.machine_options_book
             )
-            # cc_database.initialize_machine_options()
-
-            recipes = {}
-            for row in cc_database.df_recipes.itertuples(index=False):
-                if row.SELECTED_MACHINE is None:
-                    continue
-                recipes[row.ID] = create_recipe_from_row(row, config.default_voltage_tier)
+    
+            recipe_initializer = RecipeInitializer(machine_options_book=database.machine_options_book)
+            recipes = recipe_initializer.initialize_all(cc_database, config)
 
             recipe_grading, material_grading = calculate_gradings(
                 recipes=list(recipes.values()),

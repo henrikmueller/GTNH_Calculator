@@ -38,7 +38,7 @@ class MachineBehaviour:
         machine_stats: MachineStats,
         machine_options: MachineOptions,
         log=False
-    ) -> RawRecipe:
+    ) -> RawRecipe | None:
         ...
 
     @classmethod
@@ -81,22 +81,27 @@ class DefaultMachineBehaviour(MachineBehaviour):
         machine_stats: MachineStats,
         machine_options: MachineOptions,
         log=False
-    ) -> RawRecipe:
+    ) -> RawRecipe | None:
         if raw_recipe.total_eu > 0:
             # EU Generators cannot be overclocked
             return raw_recipe
         if voltage_tier not in machine_stats.voltage_tiers:
             raise ValueError(f'Voltage tier {voltage_tier} is invalid for machine stats {machine_stats}.')
-
-        # EU Generator efficiency missing
-        speedup = self.speedup_behaviour.get_speedup_multiplier(machine_options=machine_options)
-
-        # Heat mechanics
+        
         heat_capacity = self.heat_capacity_behaviour.get_heat_capacity(
             machine_voltage_tier=voltage_tier,
             machine_options=machine_options
         )
-        recipe_min_temperature = raw_recipe.recipe_options.temperature
+        if not isnan(raw_recipe.recipe_options.coil_heat) and heat_capacity < raw_recipe.recipe_options.coil_heat:
+            return None  # Cannot fit the recipe to the machine due to insufficient heat capacity
+        if not isnan(raw_recipe.recipe_options.fusion_tier) and machine_stats.fusion_tier < raw_recipe.recipe_options.fusion_tier:
+            return None  # Cannot fit the recipe to the machine due to insufficient fusion tier
+        
+
+        # EU Generator efficiency missing
+        speedup = self.speedup_behaviour.get_speedup_multiplier(machine_options=machine_options)
+
+        recipe_min_temperature = raw_recipe.recipe_options.coil_heat
         if not isnan(recipe_min_temperature) and heat_capacity < recipe_min_temperature:
             raise ValueError(
                 f'Heat Capacity {heat_capacity} not sufficient for the recipe temperature {recipe_min_temperature}')
@@ -182,7 +187,7 @@ class NeutronActivatorBehaviour(MachineBehaviour):
         machine_stats: MachineStats,
         machine_options: MachineOptions,
         log=False
-    ) -> RawRecipe:
+    ) -> RawRecipe | None:
         speedup = 1
         processing_time = (raw_recipe.processing_time / speedup)
         eu_per_tick = -6  # As if ULV Accelerator is used
@@ -209,5 +214,5 @@ class NotImplementedMachineBehaviour(MachineBehaviour):
         machine_stats: MachineStats,
         machine_options: MachineOptions,
         log=False
-    ) -> RawRecipe:
+    ) -> RawRecipe | None:
         raise NotImplementedError('Machine Behaviour not implemented')

@@ -5,6 +5,7 @@ from typing import Callable
 from .machine_options import *
 from ..material import Material
 from .machine_option_types import MachineOptionType
+from ..machines import Machine
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -61,6 +62,14 @@ class MachineOptionsBook:
         maximum = options[-1] if maximum is None else maximum
         return [o for o in options if rank(minimum) <= rank(o) <= rank(maximum)]
 
+    def get_max_machine_option(
+        self,
+        option_type: MachineOptionType,
+        rank: Callable[[MachineOption], int | float],
+    ) -> MachineOption:
+        options: list[MachineOption] = getattr(self, option_type)
+        return max(options, key=rank)
+
     @staticmethod
     def get_machine_option(input_id: str, options: list[MachineOption]) -> MachineOption | None:
         for option in options:
@@ -68,7 +77,18 @@ class MachineOptionsBook:
                 return option
         _LOGGER.warning(f'No Machine Option to the ID "{input_id}" found.')
         return None
-
+    
+    def max_coil_heat(self, machine: Machine) -> int:
+        match machine.name:
+            case 'Electric Blast Furnace' | 'Mega Electric Blast Furnace':
+                return int(max([c.temperature for c in self.coil])) + 12 * 100
+            case 'Volcanus':
+                return int(max([c.temperature for c in self.coil]))
+            case 'Helioflare Power Forge':
+                return 10000000
+            case _:
+                return 0
+            
 
 class MachineOptionsBookSchema(Schema):
     machine_options = fields.List(fields.Nested(MachineOptionSchema(), required=True), required=True)

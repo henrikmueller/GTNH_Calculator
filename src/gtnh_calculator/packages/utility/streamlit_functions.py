@@ -4,6 +4,7 @@ from typing import Iterable
 import streamlit as st
 import logging
 import sys
+from typing import Dict
 from io import BytesIO
 from rapidfuzz import fuzz
 from streamlit_extras.stylable_container import stylable_container
@@ -17,6 +18,8 @@ from packages.configs.crafting_chain_config_db import CraftingChainConfig, load_
 from packages.recipes_db import material
 from packages.recipes_db.material import Material
 from packages.recipes_db.machine_options.machine_option_books import MachineOptionsBook
+from packages.recipes_db.machine_options.machine_option_types import MachineOptionType
+from packages.recipes_db.machine_options.machine_options import MachineOption
 from packages.recipes_db.recipes import Recipe
 from packages.utility.general_utility import get_base64_image, format_float
 from packages.exceptions import DataLoadingException
@@ -28,9 +31,13 @@ _LOGGER.setLevel(logging.INFO)
 
 
 def load_database() -> GTNHDatabase:
+    database_extractor = DatabaseExtractor(validity_check=False)
+
+    with st.spinner('Decompressing database...', show_time=True):
+        database_extractor.decompress_database()
+
     progress_text = 'Loading GTNH recipes...'
     if 'database' not in st.session_state:
-        database_extractor = DatabaseExtractor(validity_check=False)
         progress_bar = st.progress(0, text=progress_text)
         gen = database_extractor.extract_database()
 
@@ -243,6 +250,7 @@ def load_crafting_chain_database(uploaded_file: BytesIO | str, database: GTNHDat
 #             st.markdown(info_string)
 
 
+@st.fragment()
 def display_crafting_chain_recipe(recipe: Recipe, machine_options_book: MachineOptionsBook):
     valid_machines = sorted(recipe.valid_machines, key=lambda m: m.minimal_voltage_tier())
     with st.container(border=True):
@@ -258,85 +266,107 @@ def display_crafting_chain_recipe(recipe: Recipe, machine_options_book: MachineO
         # ):
         a, b = st.columns(2)
         with a:
-            options = {
-                index: m.__str__() for index, m in enumerate(valid_machines)
-            }
-            selected_machine_index = st.selectbox(
-                'Machine',
-                options=options.keys(),
-                index=valid_machines.index(recipe.machine),
-                key=f"selectbox_valid_machines_{recipe.id}",
-                width=500,
-                format_func=lambda index: options[index]
-            )
-            selected_machine = valid_machines[selected_machine_index]
-            st.markdown(f'#### {selected_machine.name}')
+            aa, bb = st.columns(2)
 
-            @st.dialog("Select Machine")
-            def change_machine():
-                for i, machine in enumerate(valid_machines):
-                    a, b = st.columns([0.5, 5], gap='small')
-                    with a:
-                        material_image(machine.item)
-                    with b:
-                        if st.button(machine.name, key=f"vote_{recipe.id}_machine_{i}"):
-                            st.rerun()
+            with aa:  # Select machine
+                if f"selected_machine_{recipe.id}" in st.session_state:
+                    selected_machine = st.session_state[f"selected_machine_{recipe.id}"]
+                else:
+                    selected_machine = recipe.machine
+                st.markdown(f'#### {selected_machine.name}')
+                st.markdown(f'Recipe ID: {recipe.id}')
 
-            if st.button('Change Machine', key=f"change_machine_{recipe.id}"):
-                change_machine()
-
-            # Select voltage tier
-            valid_voltage_tiers = [v for v in selected_machine.voltage_tiers if v >= recipe.minimum_voltage_tier]
-            if recipe.voltage_tier in valid_voltage_tiers:
-              initial_voltage_tier = recipe.voltage_tier
-            else:
-              initial_voltage_tier = min(valid_voltage_tiers)
-
-            options = {
-                index: VoltageTier.voltage_tier_name(v) for index, v in enumerate(valid_voltage_tiers)
-            }
-            voltage_tier_index = st.selectbox(
-                'Voltage Tier',
-                options=options.keys(),
-                index=valid_voltage_tiers.index(initial_voltage_tier),
-                key=f"voltage_tier_select_{recipe.id}",
-                width=300,
-                format_func=lambda index: options[index]
-            )
-            voltage_tier = valid_voltage_tiers[voltage_tier_index]
-
-            # Select machine options
-            st.markdown("#### Machine Options:")
-            for machine_option_type in selected_machine.machine_options.valid_options:
-                option_name = machine_option_type.name.replace('_', ' ').title()
-                @st.dialog(f"Select {option_name}")
-                def change_machine_option():
-                    for i, machine_option in enumerate(
-                        machine_options_book.get_machine_option_list(machine_option_type, rank=lambda o: o.tier)):
+                @st.dialog("Select Machine")
+                def change_machine():
+                    for i, machine in enumerate(valid_machines):
                         a, b = st.columns([0.5, 5], gap='small')
                         with a:
-                            if machine_option.material is not None:
-                                material_image(machine_option.material)
+                            material_image(machine.item)
                         with b:
-                            text = f'{machine_option.name} (Tier {machine_option.tier})' if machine_option.tier >= 0 else machine_option.name
-                            if st.button(text, key=f"vote_{recipe.id}_{machine_option_type.name}_{i}"):
+                            if st.button(machine.name, key=f"vote_{recipe.id}_machine_{i}"):
+                                st.session_state[f"selected_machine_{recipe.id}"] = machine
                                 st.rerun()
 
-                current_machine_option = selected_machine.machine_options.get_option(machine_option_type)
-                c, d = st.columns([0.5, 5], gap='small')
+                c, d = st.columns([0.5, 5], gap='small', vertical_alignment='center')
                 with c:
-                    if st.button(option_name, key=f"change_{recipe.id}_{machine_option_type.name}"):
-                        change_machine_option()
+                    material_image(selected_machine.item)
                 with d:
-                    if current_machine_option.material is not None:
-                        material_image(current_machine_option.material)
+                    if st.button('Change Machine', key=f"change_machine_{recipe.id}", type='tertiary'):
+                        change_machine()
+
+                # Select machine options
+                machine_option_dict: Dict[MachineOptionType, MachineOption] = {}
+                for machine_option_type in recipe.machine_options.valid_options:
+                    option_name = machine_option_type.name.replace('_', ' ').title()
+                    if f"selected_option_{recipe.id}_{machine_option_type}" in st.session_state:
+                        selected_option = st.session_state[f"selected_option_{recipe.id}_{machine_option_type}"]
+                    else:
+                        selected_option = recipe.machine_options.get_option(machine_option_type)
+                    machine_option_dict[machine_option_type] = selected_option
+
+                    @st.dialog(f"Select {option_name}")
+                    def change_machine_option():
+                        for i, machine_option in enumerate(
+                            machine_options_book.get_machine_option_list(machine_option_type, rank=lambda o: o.tier)):
+                            a, b = st.columns([0.5, 5], gap='small')
+                            with a:
+                                if machine_option.material is not None:
+                                    material_image(machine_option.material)
+                            with b:
+                                text = f'{machine_option.name} (Tier {machine_option.tier})' if machine_option.tier >= 0 else machine_option.name
+                                if st.button(text, key=f"vote_{recipe.id}_{machine_option_type.name}_{i}"):
+                                    st.session_state[f"selected_option_{recipe.id}_{machine_option_type}"] = machine_option
+                                    st.rerun()
+
+                    with c:
+                        if selected_option.material is not None:
+                            material_image(selected_option.material)
+                    with d:
+                        if st.button(f'Change {option_name}', key=f"change_{recipe.id}_{machine_option_type.name}", 
+                                    type='tertiary'):
+                            change_machine_option()
+                
+            with bb:  # Select voltage tier
+                valid_voltage_tiers = [v for v in selected_machine.voltage_tiers if v >= recipe.minimum_voltage_tier]
+                if recipe.voltage_tier in valid_voltage_tiers:
+                    initial_voltage_tier = recipe.voltage_tier
+                else:
+                    initial_voltage_tier = min(valid_voltage_tiers)
+
+                # Reset selectbox on faulty voltage tier
+                if f"reset_vt_{recipe.id}" not in st.session_state:
+                    st.session_state[f"reset_vt_{recipe.id}"] = True
+                if st.session_state[f"reset_vt_{recipe.id}"]:
+                    st.session_state[f"voltage_tier_select_{recipe.id}"] = valid_voltage_tiers.index(initial_voltage_tier)
+                    st.session_state[f"reset_vt_{recipe.id}"] = False
+
+                options = {
+                    index: VoltageTier.voltage_tier_name(v) for index, v in enumerate(valid_voltage_tiers)
+                }
+                voltage_tier_index = st.selectbox(
+                    'Voltage Tier',
+                    options=options.keys(),
+                    key=f"voltage_tier_select_{recipe.id}",
+                    width=100,
+                    format_func=lambda index: options[index]
+                )
+                voltage_tier = valid_voltage_tiers[voltage_tier_index]
 
             # Apply changes
-            if not recipe.update(machine=selected_machine, voltage_tier=voltage_tier, log=True):
-              raise ValueError(f'Invalid recipe update: {selected_machine}. '
-                               f'VTs: {selected_machine.voltage_tiers}. Selected: {voltage_tier} '
-                               f'Valid: {valid_voltage_tiers} '
-                               f'Recipe min: {recipe.minimum_voltage_tier} ')
+            if not recipe.update(
+                machine=selected_machine, voltage_tier=voltage_tier, machine_option_dict=machine_option_dict, log=False
+            ):
+                _LOGGER.warning(f'Invalid recipe update: {selected_machine}. '
+                              f'VTs: {selected_machine.voltage_tiers}. Selected: {voltage_tier}. '
+                              f'Initial: {initial_voltage_tier}. Valid: {valid_voltage_tiers}. '
+                              f'Recipe min: {recipe.minimum_voltage_tier} ')
+                st.toast(f'Invalid recipe configuration (Recipe ID: {recipe.id})', icon='❗', duration='long')
+                st.session_state[f"selected_machine_{recipe.id}"] = recipe.machine
+                st.session_state[f"reset_vt_{recipe.id}"] = True
+                for machine_option_type in recipe.machine_options.valid_options:
+                    st.session_state[f"selected_option_{recipe.id}_{machine_option_type}"] = \
+                        recipe.machine_options.get_option(machine_option_type)
+                st.rerun()
         with b:
             html = Template("""
             <style>
@@ -380,7 +410,7 @@ def display_crafting_chain_recipe(recipe: Recipe, machine_options_book: MachineO
               bottom: -1;
               right: 0;
               color: white;
-              font-size: 11px;
+              font-size: 10px;
             }
 
             .tooltip .tooltiptext {
@@ -454,11 +484,12 @@ def display_crafting_chain_recipe(recipe: Recipe, machine_options_book: MachineO
             inputs_html = ''
             for i, (input, amount) in enumerate(recipe.input_dict.items()):
                 try:
+                    tooltip = f'{format_float(abs(amount), decimal_places=1, separate_thousands=True)} {input.name}'
                     img_base64 = get_base64_image(f'db/images/{input.image_file_path}')
                     inputs_html += f"""<div class="tooltip">
                         <img src="data:image/png;base64,{img_base64}" width="36">
                         <div class="tooltip-number">{abs(int(amount))}</div>
-                        <span class="tooltiptext">{input.name}</span>
+                        <span class="tooltiptext">{tooltip}</span>
                     </div>
                     """
                 except Exception as e:
@@ -467,13 +498,13 @@ def display_crafting_chain_recipe(recipe: Recipe, machine_options_book: MachineO
             outputs_html = ''
             for i, (output, amount, probability) in enumerate(recipe.raw_recipe.output_specifications.values()):
                 try:
-                    tooltip = f'{output.name}'
+                    tooltip = f'{f"{format_float(amount, decimal_places=1, separate_thousands=True)} {output.name}"}'
                     if probability < 1:
                         tooltip += f' ({100 * probability:.2g}%)'
                     img_base64 = get_base64_image(f'db/images/{output.image_file_path}')
                     outputs_html += f"""<div class="tooltip">
                         <img src="data:image/png;base64,{img_base64}" width="36">
-                        <div class="tooltip-number">{abs(int(amount))}</div>
+                        <div class="tooltip-number">{int(amount)}</div>
                         <span class="tooltiptext">{tooltip}</span>
                     </div>
                     """
@@ -485,12 +516,17 @@ def display_crafting_chain_recipe(recipe: Recipe, machine_options_book: MachineO
                 unsafe_allow_html=True
             )
             info_string = ''
-            info_string += f'**Processing Time**: {format_float(recipe.processing_time, decimal_places=6)}s  \n'
-            info_string += f'**Voltage**: {format_float(abs(recipe.eu_per_tick), decimal_places=2, separate_thousands=True)} EU/t  \n'
-            info_string += f'**Total EU**: {format_float(abs(recipe.total_eu), decimal_places=2, separate_thousands=True)} EU  \n'
+            if recipe.processing_time > 0:
+                t = format_float(recipe.processing_time, decimal_places=2, separate_thousands=True)
+                info_string += f'**Processing Time**: {t}s  \n'
+            if recipe.eu_per_tick != 0:
+                v = format_float(abs(recipe.eu_per_tick), decimal_places=2, separate_thousands=True)
+                t = format_float(abs(recipe.total_eu), decimal_places=2, separate_thousands=True)
+                info_string += f'**Voltage**: {v} EU/t ({int(recipe.raw_recipe.amperage)}A)  \n'
+                info_string += f'**Total EU**: {t} EU  \n'
             if recipe.raw_recipe.recipe_options:
                 info_string += f'{recipe.raw_recipe.recipe_options}  \n'
-            if recipe.used_parallels > 1:
+            if recipe.used_parallels != 1:
                 info_string += f'Used parallels: {recipe.used_parallels}  \n'
             if info_string:
                 st.markdown(info_string)
@@ -510,12 +546,34 @@ def copy_button(text, key):
     """, height=50)
 
 
+# def material_image(material: Material, width: int = 36):
+#     try:
+#         img_base64 = get_base64_image(f'db/images/{material.image_file_path}')
+
+#         st.html(f"""
+#             <div style="
+#                 display:flex;
+#                 align-items:center;
+#                 height:100%;
+#             ">
+#                 <img
+#                     src="data:image/png;base64,{img_base64}"
+#                     width="{width}"
+#                     title="{material.name}"
+#                 />
+#             </div>
+#         """)
+#     except Exception as e:
+#         pass
+
+
 def material_image(material: Material, width: int = 36):
     html = Template("""
         <style>
         .tooltip {
             position: relative;
-            display: inline-block;
+            display: block;
+            margin-bottom: 1.18rem;
         }
 
         .tooltip .tooltiptext {
@@ -549,7 +607,10 @@ def material_image(material: Material, width: int = 36):
     try:
         img_base64 = get_base64_image(f'db/images/{material.image_file_path}')
         inputs_html = f"""<div class="tooltip">
-            <img src="data:image/png;base64,{img_base64}" width="{width}">
+            <img
+                src="data:image/png;base64,{img_base64}"
+                width="{width}"
+            >
             <span class="tooltiptext">{material.name}</span>
         </div>
         """

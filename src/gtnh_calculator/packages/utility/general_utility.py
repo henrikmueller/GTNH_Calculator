@@ -8,6 +8,7 @@ from io import BytesIO
 import time
 import base64
 import pandas as pd
+from decimal import Decimal
 
 
 class Timer:
@@ -148,7 +149,42 @@ def is_contained_in(text: str, text_list: list[str], case_sensitive=True) -> boo
     return any(lowercase_text in s.lower() for s in text_list)
 
 
-def format_float(x, decimal_places: int = 6, separate_thousands: bool = False) -> str:
+def format_float(
+    x,
+    decimal_places: int = 2,
+    separate_thousands: bool = False
+) -> str:
+    d = Decimal(str(x))
+
+    sign = "-" if d < 0 else ""
+    d = abs(d)
+
+    integer_part = int(d)
+    frac_str = format(d, "f").split(".")[1] if "." in format(d, "f") else ""
+    normal_part = frac_str[:decimal_places]
+
+    if any(c != "0" for c in normal_part):
+        result_frac = normal_part.rstrip("0")
+
+    else:
+        first_non_zero = None
+        for i, c in enumerate(frac_str):
+            if c != "0":
+                first_non_zero = i
+                break
+
+        if first_non_zero is None:
+            result_frac = ""
+        else:
+            end = first_non_zero + 2
+            result_frac = frac_str[:end].rstrip("0")
+
     if separate_thousands:
-        return f"{x:,.{decimal_places}f}".rstrip("0").rstrip(".")
-    return f"{x:.{decimal_places}f}".rstrip("0").rstrip(".")
+        integer_str = f"{integer_part:,}"
+    else:
+        integer_str = str(integer_part)
+
+    if result_frac:
+        return f"{sign}{integer_str}.{result_frac}"
+
+    return f"{sign}{integer_str}"

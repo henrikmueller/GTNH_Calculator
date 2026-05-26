@@ -79,11 +79,14 @@ def _machine_options_for_test(
     *options: tuple[MachineOptionType, MachineOption],
 ) -> MachineOptions:
     valid = tuple(t for t, _ in options)
-    return MachineOptions(valid, {t: opt for t, opt in options})
+    return MachineOptions(
+        valid, {t: opt for t, opt in options},
+        min_tier={t: -1 for t in valid}
+    )
 
     
 def empty_machine_options() -> MachineOptions:
-    return MachineOptions((), {})
+    return MachineOptions((), {}, {})
 
 
 def coil_only_machine_options(temperature: float = 3600.0, tier: int = 1) -> MachineOptions:

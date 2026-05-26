@@ -73,7 +73,7 @@ class CoilTemperatureEnergyBehaviour(EnergyBehaviour):
 
     def get_energy_multiplier(self, context: EnergyContext) -> float:
         return self.energy_multiplier * 0.95 ** max(
-            (context.machine_heat_capacity - context.recipe_options.temperature) // 900, 0)
+            (context.machine_heat_capacity - context.recipe_options.coil_heat) // 900, 0)
 
 
 class NotImplementedEnergyBehaviour(EnergyBehaviour):

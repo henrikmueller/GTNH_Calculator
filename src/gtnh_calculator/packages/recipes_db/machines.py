@@ -30,7 +30,6 @@ class Machine:
     machine_types: set[MachineType]
     valid_options: tuple[MachineOptionType, ...]
     machine_stats: MachineStats
-    machine_options: MachineOptions
 
     @property
     def id(self) -> str:
@@ -63,15 +62,6 @@ class Machine:
 
     def minimal_voltage_tier(self) -> int:
         return min(self.voltage_tiers) if self.voltage_tiers else VoltageTier.NO_REQUIREMENT
-
-    def fit_recipe(self, raw_recipe: RawRecipe, voltage_tier: int, log=False) -> RawRecipe:
-        return self.machine_behaviour.fit_recipe(
-            raw_recipe=raw_recipe,
-            voltage_tier=voltage_tier,
-            machine_stats=self.machine_stats,
-            machine_options=self.machine_options,
-            log=log
-        )
 
 
 @dataclass

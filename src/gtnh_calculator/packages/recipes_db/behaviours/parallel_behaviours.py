@@ -9,6 +9,9 @@ from ..machine_options.machine_option_types import MachineOptionType
 
 @dataclass
 class ParallelBehaviour:
+    base_parallels: int = 1
+    parallels_per_voltage_tier: int = 0
+
     @abstractmethod
     def get_parallels(self, voltage_tier: int, machine_options: MachineOptions) -> int:
         ...
@@ -42,11 +45,17 @@ class DefaultParallelBehaviour(ParallelBehaviour):
 
 @dataclass
 class EICParallelBehaviour(ParallelBehaviour):
+    base_parallels: int = 1
+    parallels_per_voltage_tier: int = 0
+
     def get_parallels(self, voltage_tier: int, machine_options: MachineOptions) -> int:
         containment_block_tier = machine_options.get_option(MachineOptionType.CONTAINMENT_BLOCK).tier
         return 4 ** (containment_block_tier - 1)
 
 
 class NotImplementedParallelBehaviour(ParallelBehaviour):
+    base_parallels: int = 1
+    parallels_per_voltage_tier: int = 0
+    
     def get_parallels(self, voltage_tier: int, machine_options: MachineOptions) -> int:
         raise NotImplementedError('Parallel Behaviour not implemented')

@@ -16,7 +16,7 @@ _LOGGER.setLevel(logging.WARNING)
 
 
 class RecipeOptionType(StrEnum):
-    TEMPERATURE = 'temperature'
+    COIL_HEAT = 'coil_heat'
     FUSION_TIER = 'fusion_tier'
 
 
@@ -25,13 +25,13 @@ class RecipeOptions:
     options: Dict[str, float]
 
     @classmethod
-    def get_recipe_options(cls, metadata: Dict[str, float], additional_info: str) -> RecipeOptions:
+    def get_recipe_options(cls, recipe_row) -> RecipeOptions:
         options = {}
-        if additional_info:
-            match = re.match(r"^To start: .*? EU \(MK (.*?)\)$", additional_info)
+        if recipe_row.ADDITIONAL_INFO:
+            match = re.match(r"^To start: .*? EU \(MK (.*?)\)$", recipe_row.ADDITIONAL_INFO)
             if match:
                 options[RecipeOptionType.FUSION_TIER] = str_to_float(match.group(1))
-        return RecipeOptions(options=metadata | options)
+        return RecipeOptions(options=recipe_row.METADATA | options)
 
     @property
     def fusion_tier(self) -> float:
@@ -40,15 +40,15 @@ class RecipeOptions:
         return nan
 
     @property
-    def temperature(self) -> float:
-        if RecipeOptionType.TEMPERATURE in self.options.keys():
-            return self.options[RecipeOptionType.TEMPERATURE]
+    def coil_heat(self) -> float:
+        if RecipeOptionType.COIL_HEAT in self.options.keys():
+            return self.options[RecipeOptionType.COIL_HEAT]
         return nan
 
     def markdown_string(self) -> str:
         result = []
-        if self.temperature is not None:
-            result.append(f'**Temperature**: {self.temperature} K')
+        if self.coil_heat is not None:
+            result.append(f'**Coil Heat**: {self.coil_heat} K')
         return ', '.join(result)
 
     def __repr__(self):

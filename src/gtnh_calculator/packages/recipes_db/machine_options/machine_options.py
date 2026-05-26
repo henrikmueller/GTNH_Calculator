@@ -3,6 +3,7 @@ from abc import abstractmethod
 import logging
 from typing import Dict, Any
 from math import nan
+from copy import deepcopy
 
 from attr import dataclass
 from marshmallow import Schema, fields, post_load, validates, ValidationError
@@ -24,6 +25,7 @@ _LOGGER.setLevel(logging.INFO)
 class MachineOptions:
     valid_options: tuple[MachineOptionType, ...]
     _options: Dict[MachineOptionType, MachineOption]
+    min_tier: Dict[MachineOptionType, int]
 
     def has_option(self, type: MachineOptionType) -> bool:
         return type in self._options.keys()
@@ -37,7 +39,17 @@ class MachineOptions:
         self._options[type] = option
 
     def __repr__(self) -> str:
-        return f'MachineOptions(valid={self.valid_options}, options={[o.__repr__() for o in self._options.values()]})'
+        return (f'MachineOptions(valid={self.valid_options}, options={[o.__repr__() for o in self._options.values()]}, '
+                f'min_tier={self.min_tier})')
+    
+    def copy(self, machine_option_dict: Dict[MachineOptionType, MachineOption] | None = None) -> MachineOptions:
+        new_machine_options = deepcopy(self)
+        if machine_option_dict is None:
+            return new_machine_options
+        
+        for machine_option_type, machine_option in machine_option_dict.items():
+            new_machine_options.set_option(machine_option_type, machine_option)
+        return new_machine_options
 
 
 class MachineOption:

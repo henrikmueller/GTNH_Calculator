@@ -90,6 +90,8 @@ class VoltageTier:
                 return 'UXV'
             case 14:
                 return 'MAX'
+            case _:
+                raise ValueError(f'Invalid voltage tier: {voltage_tier}')
 
     @classmethod
     def eu_per_tick(cls, voltage_tier: int) -> int:

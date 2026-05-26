@@ -115,7 +115,7 @@ class FusionOverclockBehaviour(OverclockBehaviour):
 @dataclass
 class CoilTemperatureOverclockBehaviour(OverclockBehaviour):
     def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
-        recipe_temperature = context.recipe_options.temperature
+        recipe_temperature = context.recipe_options.coil_heat
         if recipe_temperature is None:
             raise ValueError(f'Invalid recipe temperature {recipe_temperature} for CoilTemperatureOverclockBehaviour')
         
@@ -123,7 +123,7 @@ class CoilTemperatureOverclockBehaviour(OverclockBehaviour):
             floor(log(context.max_eu_per_tick // context.current_eu_per_tick, 4)) 
             if context.current_eu_per_tick > 0 else 0, context.max_overclocks
         )
-        max_perfect_overclocks = max((context.machine_heat_capacity - context.recipe_options.temperature) // 1800, 0)
+        max_perfect_overclocks = max((context.machine_heat_capacity - context.recipe_options.coil_heat) // 1800, 0)
         perfect_overclocks = overclocks if isnan(max_perfect_overclocks) \
             else int(min(overclocks, max_perfect_overclocks))
         return overclocks - perfect_overclocks, perfect_overclocks

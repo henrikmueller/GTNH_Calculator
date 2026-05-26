@@ -6,6 +6,8 @@ from collections import defaultdict
 
 from .material import Material
 from .machines import Machine
+from .machine_options.machine_options import MachineOptions, MachineOption
+from .machine_options.machine_option_types import MachineOptionType
 from .raw_recipes import RawRecipe
 from .voltage_tiers import VoltageTier
 
@@ -19,6 +21,7 @@ class Recipe:
     raw_recipe: RawRecipe
     valid_machines: set[Machine]
     _machine: Machine
+    machine_options: MachineOptions
     cap: float | None
     cap_specified: bool
 
@@ -29,6 +32,7 @@ class Recipe:
         raw_recipe: RawRecipe,
         valid_machines: set[Machine],
         machine: Machine,
+        machine_options: MachineOptions,
         cap: float | None,
         cap_specified: bool
     ):
@@ -37,6 +41,7 @@ class Recipe:
         self.raw_recipe = raw_recipe
         self.valid_machines = valid_machines
         self._machine = machine
+        self.machine_options = machine_options
         self.cap = cap
         self.cap_specified = cap_specified
 
@@ -48,7 +53,13 @@ class Recipe:
     def machine(self, machine: Machine) -> None:
         self.update(machine=machine)
 
-    def update(self, machine: Machine | None = None, voltage_tier: int | None = None, log: bool = False) -> bool:
+    def update(
+        self, 
+        machine: Machine | None = None, 
+        voltage_tier: int | None = None, 
+        machine_option_dict: Dict[MachineOptionType, MachineOption] | None = None,
+        log: bool = False
+    ) -> bool:
         """
         Update the recipe.
         """
@@ -60,10 +71,23 @@ class Recipe:
                 raise ValueError(f'Machine {machine} is not valid for recipe {self}')
         if voltage_tier not in machine.voltage_tiers:
             return False
+        
+        new_machine_options = self.machine_options if machine_option_dict is None \
+            else self.machine_options.copy(machine_option_dict)
 
-        new_raw_recipe = machine.fit_recipe(self.base_recipe, voltage_tier=voltage_tier, log=log)
+        new_raw_recipe = machine.machine_behaviour.fit_recipe(
+            raw_recipe=self.base_recipe,
+            voltage_tier=voltage_tier,
+            machine_stats=machine.machine_stats,
+            machine_options=new_machine_options,
+            log=log
+        )
+        if new_raw_recipe is None:
+            _LOGGER.error(f'Could not fit recipe {self} to machine {machine} with voltage tier {voltage_tier}')
+            return False
         self.raw_recipe = new_raw_recipe
         self._machine = machine
+        self.machine_options = new_machine_options
         return True
 
     @property

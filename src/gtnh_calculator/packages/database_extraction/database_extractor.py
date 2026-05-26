@@ -8,17 +8,17 @@ from typing import Dict, Generator
 from collections import defaultdict
 import json
 from itertools import chain
+import os
+import lzma
+import shutil
 
 from ..database_extraction.gtnh_database import GTNHDatabase
-from ..recipes_db.material import ExtractedItem, ExtractedFluid, Material, MaterialGroup
+from ..recipes_db.material import ExtractedItem, ExtractedFluid, MaterialGroup
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.machine_stats import MachineStats
-from ..recipes_db.recipes import Recipe
-from ..recipes_db.raw_recipes import RawRecipe
-from ..recipes_db.recipe_options import RecipeOptions
 from ..recipes_db.machines import Machine, MachineType
-from ..recipes_db.machine_options.machine_options import MachineOptions
 from ..recipes_db.behaviours.machine_behaviours import MachineBehaviour
+from ..recipes_db.recipe_options import RecipeOptions
 from ..recipes_db.machine_options.machine_option_books import load_possible_machine_options
 from ..recipes_db.machine_options.machine_option_types import MachineOptionType
 from .database_building_options import steam_machines
@@ -27,41 +27,6 @@ from ..utility.constants import INCLUDE_DEPRECATED_MACHINES
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
-
-
-def create_recipe_from_row(recipe_row, default_voltage_tier: int | None = None) -> Recipe:
-    base_recipe = RawRecipe(
-        eu_per_tick=-recipe_row.VOLTAGE * recipe_row.AMPERAGE,
-        processing_time=recipe_row.DURATION,
-        amperage=recipe_row.AMPERAGE,
-        voltage_tier=recipe_row.VOLTAGE_TIER,
-        inputs=recipe_row.TOTAL_INPUTS,
-        output_specifications=recipe_row.OUTPUTS,
-        recipe_options=RecipeOptions.get_recipe_options(recipe_row.METADATA, recipe_row.ADDITIONAL_INFO)
-    )
-    machine = recipe_row.SELECTED_MACHINE
-    if default_voltage_tier is None:
-        valid_voltage_tiers = [v for v in machine.voltage_tiers if base_recipe.voltage_tier <= v]
-    else:
-        valid_voltage_tiers = [v for v in machine.voltage_tiers if base_recipe.voltage_tier <= v <= default_voltage_tier]
-
-    if valid_voltage_tiers:
-        voltage_tier = min(valid_voltage_tiers) if default_voltage_tier is None else max(valid_voltage_tiers)
-    else:
-        _LOGGER.debug(f'No valid voltage tier found for machine {machine} and recipe {recipe_row.ID}. '
-                      f'Recipe voltage tier: {base_recipe.voltage_tier}, '
-                      f'default voltage tier: {default_voltage_tier}')
-        voltage_tier = base_recipe.voltage_tier
-    raw_recipe = machine.fit_recipe(raw_recipe=base_recipe, voltage_tier=voltage_tier)
-    return Recipe(
-        id=recipe_row.ID,
-        base_recipe=base_recipe,
-        raw_recipe=raw_recipe,
-        valid_machines=recipe_row.MACHINES,
-        machine=machine,
-        cap=None,
-        cap_specified=False
-    )
 
 
 @dataclass
@@ -89,9 +54,16 @@ class DatabaseExtractor:
             extracted_machines=machines,
             machine_options_book=machine_options_book
         )
-        database.initialize_machine_options()
         return database
     
+    def decompress_database(self) -> None:
+        compressed_file_path = self.database_path + '.xz'
+
+        if not os.path.exists(self.database_path):
+            with lzma.open(compressed_file_path, "rb") as f_in:
+                with open(self.database_path, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                    
     def extract_recipes(
         self, extracted_items: Dict[str, ExtractedItem], extracted_fluids: Dict[str, ExtractedFluid],
             extracted_machines: Dict[str, Machine]
@@ -403,8 +375,11 @@ class DatabaseExtractor:
         yield 0.88
         df_all = df_all.join(df_valid_machines.set_index("ID"))
         df_all = df_all[df_all['MACHINES'].map(len) > 0]
-        df_all = df_all.reset_index()
         yield 0.9
+
+        df_all['RECIPE_OPTIONS'] = df_all.apply(RecipeOptions.get_recipe_options, axis=1)
+        df_all = df_all.drop(columns=['METADATA', 'ADDITIONAL_INFO'])
+        df_all = df_all.reset_index()
 
         yield 1
         return df_all
@@ -549,7 +524,6 @@ class DatabaseExtractor:
                     )
                 except ValueError as e:
                     raise ValueError(f'MachineOptionType could not be determined for {specification}')
-                machine_options = MachineOptions(valid_options, {})
                 additional_stats = {}
                 if 'additional_stats' in specification:
                     additional_stats = {k: v for k, v in specification['additional_stats'].items()}
@@ -570,7 +544,6 @@ class DatabaseExtractor:
                         efficiency=specification['efficiency'] if 'efficiency' in specification else 1
                     ),
                     machine_behaviour=MachineBehaviour.create_machine_behaviour(specification),
-                    machine_options=machine_options
                 )
                 for machine_type_name in specification['machine_types']:
                     if machine_type_name not in machine_types.keys():

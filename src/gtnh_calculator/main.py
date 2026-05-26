@@ -7,7 +7,7 @@ from packages.data_loading.data_loader import load_data
 from packages.configs.game_state_config import load_game_state
 from packages.utility.general_utility import time_to_seconds
 from packages.recipes.machine_options.machine_option_books import load_possible_machine_options
-from packages.utility.general_utility import load_file
+from packages.utility.general_utility import load_file, format_float
 from packages.database_extraction.database_extractor import DatabaseExtractor
 
 logging.basicConfig(stream=sys.stdout)
@@ -21,12 +21,6 @@ _LOGGER.setLevel(logging.INFO)
 ------------------------------------------------------------------------------------------------------------------------
 """
 
-database_extractor = DatabaseExtractor(validity_check=False)
-
-extracted_fluids = database_extractor.extract_fluids()
-extracted_items = database_extractor.extract_items(extracted_fluids)
-machines, machine_types = database_extractor.extract_machine_types(extracted_items)
-database_extractor.extract_recipes(extracted_items, extracted_fluids, machines, machine_types)
 
 """
 ------------------------------------------------------------------------------------------------------------------------
