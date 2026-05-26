@@ -4841,6 +4841,7 @@ i~gregtech~gt.blockmachines~32019:
   additional_stats:
     fusion_tier: 1
   name: Compact Fusion Computer MK-I Prototype
+  weight: 1
   voltage_tier:
   - 0
   - 1
@@ -4867,6 +4868,7 @@ i~gregtech~gt.blockmachines~32020:
   additional_stats:
     fusion_tier: 2
   name: Compact Fusion Computer MK-II
+  weight: 1
   voltage_tier:
   - 0
   - 1
@@ -4893,6 +4895,7 @@ i~gregtech~gt.blockmachines~32021:
   additional_stats:
     fusion_tier: 3
   name: Compact Fusion Computer MK-III
+  weight: 1
   voltage_tier:
   - 0
   - 1
@@ -4918,7 +4921,9 @@ i~gregtech~gt.blockmachines~32022:
     type: fusion
   additional_stats:
     fusion_tier: 4
+    perfect_overclocks: True
   name: Compact Fusion Computer MK-IV Prototype
+  weight: 1
   voltage_tier:
   - 0
   - 1
@@ -4944,7 +4949,9 @@ i~gregtech~gt.blockmachines~32023:
     type: fusion
   additional_stats:
     fusion_tier: 5
+    perfect_overclocks: True
   name: Compact Fusion Computer MK-V
+  weight: 1
   voltage_tier:
   - 0
   - 1
