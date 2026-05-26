@@ -19,6 +19,7 @@ class OverclockContext:
     machine_heat_capacity: float
 
 
+@dataclass(frozen=True)
 class OverclockBehaviour:
     @abstractmethod
     def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
@@ -61,7 +62,7 @@ class OverclockBehaviour:
         return NotImplementedOverclockBehaviour()
 
 
-@dataclass
+@dataclass(frozen=True)
 class DefaultOverclockBehaviour(OverclockBehaviour):
     maximal_overclocks: int | None = None
 
@@ -78,7 +79,7 @@ class DefaultOverclockBehaviour(OverclockBehaviour):
         return voltage_tier - 1 if self.maximal_overclocks is None else min(voltage_tier - 1, self.maximal_overclocks)
 
 
-@dataclass
+@dataclass(frozen=True)
 class InfiniteOverclockBehaviour(OverclockBehaviour):
     def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
         overclocks = min(
@@ -93,7 +94,7 @@ class InfiniteOverclockBehaviour(OverclockBehaviour):
         return voltage_tier - 1
 
 
-@dataclass
+@dataclass(frozen=True)
 class FusionOverclockBehaviour(OverclockBehaviour):
     perfect_overclocks: bool = False
 
@@ -112,7 +113,7 @@ class FusionOverclockBehaviour(OverclockBehaviour):
         return voltage_tier - 1
 
 
-@dataclass
+@dataclass(frozen=True)
 class CoilTemperatureOverclockBehaviour(OverclockBehaviour):
     def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
         recipe_temperature = context.recipe_options.coil_heat
@@ -134,7 +135,7 @@ class CoilTemperatureOverclockBehaviour(OverclockBehaviour):
         return voltage_tier - 1
 
 
-@dataclass
+@dataclass(frozen=True)
 class NotImplementedOverclockBehaviour(OverclockBehaviour):
     def get_overclocks(self, context: OverclockContext) -> tuple[int, int]:
         raise NotImplementedError('Overclock Behaviour not implemented')

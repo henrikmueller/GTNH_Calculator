@@ -1,42 +1,36 @@
-# GTNH: Recipe Calculator
-## Installation
+# GTNH Calculator
+
+A calculator and optimizer for production chains in the well-known [GregTech: New Horizons](https://www.gtnewhorizons.com/) (GTNH) modpack (Version 2.8.0). The underlying database is directly extracted from the game using the [NESQL Exporter](https://github.com/ShadowTheAge/nesql-exporter).
+
+Link to the tool: https://gtnhcalculator.streamlit.app/
+
+_Note_: This project is still work in progress.
+
+## Overview
+
+- Recipe and material data is stored in a SQLite database. Due to over 200,000 recipes, the aggregation process may take up to 30 seconds depending on the hardware.
+- Existing materials and recipes can be explored in their respective tabs on the website. Changing the machine, the voltage tier or any machine-specific options like coils or pipe casings correctly influences the properties of the recipes.
+- In the Crafting Chain Calculator tab, one can specify inputs, outputs and other options for a production chain using a config file in yaml format (template will follow). The tool then returns a _mathematically optimal production chain_ by leveraging the [HiGHS](https://highs.dev/) optimizer for sparse matrices.
+
+## Local installation
 
 To install this project and the required libraries, the following steps are required:
 1. Clone the repository.
-2. Install all packages via ```poetry install```. (To install the venv in the project folder, use ```poetry config virtualenvs.in-project true``` in advance.)
+2. Install all packages via `poetry install`. (To install the venv in the project folder, use `poetry config virtualenvs.in-project true` in advance.)
 
-## Usage
+## Config file
 
-1. Specify **input and output materials** in the main.py file.
-2. Edit the ```time``` variable. It is a string starting with an integer and ending in either 's' or 't' (for seconds of ticks). 
+1. Specify **input and output materials** along possible constraints.
+2. Edit the `time` variable. It is a string starting with an integer and ending in either 's' or 't' (for seconds of ticks). 
 The time variable defines the amount of time, in which the output materials are to be produced.
-3. Edit the ```time_interval``` variable. It needs to be formatted in the same way as the ```time``` variable, but has no influence
-on the calculation itself, only one the displayed information about the recipe chain at the end. All materials in this
-recipe chain are displayed in the form "x per time interval" (usually, x/tick oder x/second).
-4. Associate **weights to materials** to prioritize some materials over others. Input materials should have negative
+3. Edit the `time_interval` variable. It needs to be formatted in the same way as the `time` variable, but has no influence on the calculation itself, only on the displayed information about the production chain at the end. All materials in this production chain are displayed in the form "x per time interval" (usually, x/tick oder x/second).
+4. Associate weights to materials to prioritize some materials over others. Input materials should have negative
 weights, output materials should have positive weights. Every non-infinite input and output material should be
 assigned a weight.
-5. Note: All materials in the ```infinite_materials``` set are automatically included as inputs with weight 0.
-6. Adapt the ```recipe_weight_factor``` variable to emphasize material costs or machine costs (higher ```recipe_weight_factor``` means more emphasis on machine costs).
-7. To each material one can also assign a **upper bound** via the `material_weights` dictionary. If `None` is inserted as
-an upper bound, then no upper bound is set.
-8. The ```mode``` variable must be one of the following: `Fixed_Input` or `Fixed_Output`. In the former case, there can
-be only one input material (excluding infinite materials) and the `fixed_amount` variable specifies the amount of this
-input material. In the latter case, there can be only one output material and the `fixed_amount` variable specifies the 
-amount of this output material. 
-9. The script then displays the complete optimal recipe chain under the specified constraints.
+5. Note: All materials in the `infinite_materials` set are automatically included as inputs with weight 0.
+6. Additional constraints can be specified under `restrictions`.
 
-## Adding Recipes
+## Planned features
 
-Recipes are stored in the following Google Sheet: https://docs.google.com/spreadsheets/d/1OSog0iIKua5T7ms0Iv9OZxCR1Qw45QSPtZd7EDP-FK4/edit?usp=sharing
-Here one can (currently) also define **upper bound on the number of machines** for each recipe (via the column 
-`Machine Cap`) and specify, whether a **multiblock** should be used for the recipe (Simply insert the voltage tier of 
-the multiblock in the `Parallel Voltage` column). 
-
-Information
-- Catalysts in Chemical Plants are to be added as an input material of amount 1.
-
-## Additional Infos
-
-- Automatically uses multiblocks for Chemical Reactors, Centrifuges, Electrolysers and Mixers
-- If too many machines: Upgrade voltage of singleblocks up to default tier, then try to upgrade to multiblock, then upgrade up to max tier.
+- Multi-objective optimization to weigh production chain outputs against total energy consumption and complexity of the factory (number and size of machines) and allow the user to compare different production chains (i.e. points on the Pareto front).
+- Automatically select machines with parallel mode if the number of machines for one recipe grows too large.

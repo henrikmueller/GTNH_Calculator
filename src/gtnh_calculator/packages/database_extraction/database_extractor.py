@@ -11,6 +11,7 @@ from itertools import chain
 import os
 import lzma
 import shutil
+from frozendict import frozendict
 
 from ..database_extraction.gtnh_database import GTNHDatabase
 from ..recipes_db.material import ExtractedItem, ExtractedFluid, MaterialGroup
@@ -509,8 +510,14 @@ class DatabaseExtractor:
     ) -> tuple[Dict[str, Machine], Dict[str, MachineType]]:
         with (open('config/fixed_settings/machine_types_db.yaml') as f):
             machine_dict = yaml.safe_load(f)
-            machine_count = len(machine_dict)
             machine_types = {}
+            for item_id, specification in machine_dict.items():
+                for machine_type_name in specification['machine_types']:
+                    if machine_type_name not in machine_types.keys():
+                        machine_types[machine_type_name] = []
+                    machine_types[machine_type_name] = MachineType(name=machine_type_name)
+
+            machine_count = len(machine_dict)
             extracted_machines = {}
             for item_id, specification in machine_dict.items():
                 deprecated = 'deprecated' in specification and specification['deprecated']
@@ -528,7 +535,7 @@ class DatabaseExtractor:
                 if 'additional_stats' in specification:
                     additional_stats = {k: v for k, v in specification['additional_stats'].items()}
 
-                extracted_machines[item_id] = Machine(
+                machine = Machine(
                     name=specification['name'],
                     multiblock=specification['multiblock'],
                     deprecated=deprecated,
@@ -537,22 +544,16 @@ class DatabaseExtractor:
                     item=extracted_items[item_id],
                     weight=specification['weight'] if 'weight' in specification else 0,
                     valid_options=valid_options,
-                    machine_types=set(),
+                    machine_types=tuple(machine_types[t] for t in specification['machine_types']),
                     machine_stats=MachineStats(
-                        voltage_tiers=[int(v) for v in specification['voltage_tier']],
-                        additional_stats=additional_stats,
+                        voltage_tiers=tuple(int(v) for v in specification['voltage_tier']),
+                        additional_stats=frozendict(additional_stats),
                         efficiency=specification['efficiency'] if 'efficiency' in specification else 1
                     ),
                     machine_behaviour=MachineBehaviour.create_machine_behaviour(specification),
                 )
-                for machine_type_name in specification['machine_types']:
-                    if machine_type_name not in machine_types.keys():
-                        machine_types[machine_type_name] = []
-                    machine_types[machine_type_name].append(extracted_machines[item_id])
-            machine_types = {name: MachineType(name, machines) for name, machines in machine_types.items()}
-            for machine_type in machine_types.values():
-                for machine in machine_type.machines:
-                    machine.machine_types.add(machine_type)
+                extracted_machines[item_id] = machine
+
             _LOGGER.info(f'Extracted {machine_count} machines')
             _LOGGER.info(f'Built {len(machine_types)} machine types')
 

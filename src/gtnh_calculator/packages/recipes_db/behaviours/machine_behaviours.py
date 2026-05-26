@@ -22,7 +22,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
-@dataclass
+@dataclass(frozen=True)
 class MachineBehaviour:
     overclock_behaviour: OverclockBehaviour
     parallel_behaviour: ParallelBehaviour
@@ -72,7 +72,7 @@ class MachineBehaviour:
             return DefaultMachineBehaviour(*behaviours)
 
 
-@dataclass
+@dataclass(frozen=True)
 class DefaultMachineBehaviour(MachineBehaviour):
     def fit_recipe(
         self,
@@ -179,6 +179,7 @@ class DefaultMachineBehaviour(MachineBehaviour):
         return new_raw_recipe
 
 
+@dataclass(frozen=True)
 class NeutronActivatorBehaviour(MachineBehaviour):
     def fit_recipe(
         self,
@@ -206,6 +207,7 @@ class NeutronActivatorBehaviour(MachineBehaviour):
         return new_raw_recipe
 
 
+@dataclass(frozen=True)
 class NotImplementedMachineBehaviour(MachineBehaviour):
     def fit_recipe(
         self,

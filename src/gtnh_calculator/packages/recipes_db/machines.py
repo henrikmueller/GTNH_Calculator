@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Machine:
     name: str
     multiblock: bool
@@ -27,16 +27,13 @@ class Machine:
     item: Material
     weight: int
     machine_behaviour: MachineBehaviour
-    machine_types: set[MachineType]
+    machine_types: tuple[MachineType, ...]
     valid_options: tuple[MachineOptionType, ...]
     machine_stats: MachineStats
 
     @property
     def id(self) -> str:
         return self.item.id
-
-    def __hash__(self) -> int:
-        return self.item.__hash__()
 
     @property
     def voltage_tiers(self) -> list[int]:
@@ -64,13 +61,6 @@ class Machine:
         return min(self.voltage_tiers) if self.voltage_tiers else VoltageTier.NO_REQUIREMENT
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class MachineType:
     name: str
-    machines: list[Machine]
-
-    def __hash__(self) -> int:
-        return self.name.__hash__()
-
-    def __repr__(self):
-        return f'{self.name}'

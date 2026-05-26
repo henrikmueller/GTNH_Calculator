@@ -7,7 +7,7 @@ from ..machine_options.machine_options import MachineOptions
 from ..machine_options.machine_option_types import MachineOptionType
 
 
-@dataclass
+@dataclass(frozen=True)
 class ParallelBehaviour:
     base_parallels: int = 1
     parallels_per_voltage_tier: int = 0
@@ -34,7 +34,7 @@ class ParallelBehaviour:
                 return NotImplementedParallelBehaviour()
 
 
-@dataclass
+@dataclass(frozen=True)
 class DefaultParallelBehaviour(ParallelBehaviour):
     base_parallels: int = 1
     parallels_per_voltage_tier: int = 0
@@ -43,7 +43,7 @@ class DefaultParallelBehaviour(ParallelBehaviour):
         return self.base_parallels + voltage_tier * self.parallels_per_voltage_tier
 
 
-@dataclass
+@dataclass(frozen=True)
 class EICParallelBehaviour(ParallelBehaviour):
     base_parallels: int = 1
     parallels_per_voltage_tier: int = 0
@@ -53,6 +53,7 @@ class EICParallelBehaviour(ParallelBehaviour):
         return 4 ** (containment_block_tier - 1)
 
 
+@dataclass(frozen=True)
 class NotImplementedParallelBehaviour(ParallelBehaviour):
     base_parallels: int = 1
     parallels_per_voltage_tier: int = 0

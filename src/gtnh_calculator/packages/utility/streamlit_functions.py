@@ -30,6 +30,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
+@st.cache_data(show_spinner=False)
 def load_database() -> GTNHDatabase:
     database_extractor = DatabaseExtractor(validity_check=False)
 
@@ -37,25 +38,47 @@ def load_database() -> GTNHDatabase:
         database_extractor.decompress_database()
 
     progress_text = 'Loading GTNH recipes...'
-    if 'database' not in st.session_state:
-        progress_bar = st.progress(0, text=progress_text)
-        gen = database_extractor.extract_database()
+    progress_bar = st.progress(0, text=progress_text)
+    gen = database_extractor.extract_database()
 
-        try:
-            while True:
-                progress = next(gen)
-                progress_bar.progress(progress, text=progress_text)
+    try:
+        while True:
+            progress = next(gen)
+            progress_bar.progress(progress, text=progress_text)
 
-        except StopIteration as e:
-            database: GTNHDatabase = e.value
-            database.add_eu()
-            # TODO: Add EU to inputs and outputs.
-            progress_bar.progress(1.0, text=f"Successfully extracted all recipes from the database.")
-            st.session_state['database'] = database
-    else:
-        st.progress(1.0, text=f"Successfully extracted all recipes from the database.")
-        database = st.session_state['database']
+    except StopIteration as e:
+        database: GTNHDatabase = e.value
+        database.add_eu()
+        progress_bar.progress(1.0, text=f"Successfully extracted all recipes from the database.")
     return database
+
+
+# def load_database_old() -> GTNHDatabase:
+#     database_extractor = DatabaseExtractor(validity_check=False)
+
+#     with st.spinner('Decompressing database...', show_time=True):
+#         database_extractor.decompress_database()
+
+#     progress_text = 'Loading GTNH recipes...'
+#     if 'database' not in st.session_state:
+#         progress_bar = st.progress(0, text=progress_text)
+#         gen = database_extractor.extract_database()
+
+#         try:
+#             while True:
+#                 progress = next(gen)
+#                 progress_bar.progress(progress, text=progress_text)
+
+#         except StopIteration as e:
+#             database: GTNHDatabase = e.value
+#             database.add_eu()
+#             # TODO: Add EU to inputs and outputs.
+#             progress_bar.progress(1.0, text=f"Successfully extracted all recipes from the database.")
+#             st.session_state['database'] = database
+#     else:
+#         st.progress(1.0, text=f"Successfully extracted all recipes from the database.")
+#         database = st.session_state['database']
+#     return database
 
 
 def load_crafting_chain_database(uploaded_file: BytesIO | str, database: GTNHDatabase) -> CraftingChainDatabase:

@@ -8,7 +8,7 @@ from ..machine_options.machine_options import MachineOptions
 from ..machine_options.machine_option_types import MachineOptionType
 
 
-@dataclass
+@dataclass(frozen=True)
 class HeatCapacityBehaviour:
     @abstractmethod
     def get_heat_capacity(
@@ -29,7 +29,7 @@ class HeatCapacityBehaviour:
                 return NotImplementedHeatCapacityBehaviour()
 
 
-@dataclass
+@dataclass(frozen=True)
 class DefaultHeatCapacityBehaviour(HeatCapacityBehaviour):
     def get_heat_capacity(
         self, machine_voltage_tier: int, machine_options: MachineOptions
@@ -39,7 +39,7 @@ class DefaultHeatCapacityBehaviour(HeatCapacityBehaviour):
         return machine_options.get_option(MachineOptionType.COIL).temperature
 
 
-@dataclass
+@dataclass(frozen=True)
 class EBFHeatCapacityBehaviour(HeatCapacityBehaviour):
     def get_heat_capacity(
         self, machine_voltage_tier: int, machine_options: MachineOptions
@@ -50,6 +50,7 @@ class EBFHeatCapacityBehaviour(HeatCapacityBehaviour):
         return heat_capacity + 100 * max(machine_voltage_tier - 2, 0)
 
 
+@dataclass(frozen=True)
 class NotImplementedHeatCapacityBehaviour(HeatCapacityBehaviour):
     def get_heat_capacity(
         self, machine_voltage_tier: int, machine_options: MachineOptions

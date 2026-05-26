@@ -8,7 +8,7 @@ from packages.recipes_db.machine_options.machine_option_types import MachineOpti
 from ..machine_options.machine_options import MachineOptions
 
 
-@dataclass
+@dataclass(frozen=True)
 class SpeedupBehaviour:
     @abstractmethod
     def get_speedup_multiplier(self, machine_options: MachineOptions) -> float:
@@ -34,14 +34,15 @@ class SpeedupBehaviour:
                 return NotImplementedSpeedupBehaviour()
 
 
-@dataclass
+@dataclass(frozen=True)
 class DefaultSpeedupBehaviour(SpeedupBehaviour):
     speedup_multiplier: float = 1
 
     def get_speedup_multiplier(self, machine_options: MachineOptions) -> float:
         return self.speedup_multiplier
 
-@dataclass
+
+@dataclass(frozen=True)
 class CoilTemperatureSpeedupBehaviour(SpeedupBehaviour):
     speedup_multiplier: float = 1
     base_speed: float = 1
@@ -52,6 +53,7 @@ class CoilTemperatureSpeedupBehaviour(SpeedupBehaviour):
         return self.speedup_multiplier * (self.base_speed + self.speed_per_coil_tier * coil_tier)
 
 
+@dataclass(frozen=True)
 class NotImplementedSpeedupBehaviour(SpeedupBehaviour):
     def get_speedup_multiplier(self, machine_options: MachineOptions) -> float:
         raise NotImplementedError('Speedup Behaviour not implemented')

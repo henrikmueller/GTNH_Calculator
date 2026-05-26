@@ -16,7 +16,7 @@ class EnergyContext:
     machine_heat_capacity: float
 
 
-@dataclass
+@dataclass(frozen=True)
 class EnergyBehaviour:
     @abstractmethod
     def get_energy_multiplier(self, context: EnergyContext) -> float:
@@ -48,14 +48,14 @@ class EnergyBehaviour:
                 return NotImplementedEnergyBehaviour()
 
 
-@dataclass
+@dataclass(frozen=True)
 class DefaultEnergyBehaviour(EnergyBehaviour):
     energy_multiplier: float = 1
 
     def get_energy_multiplier(self, context: EnergyContext) -> float:
         return self.energy_multiplier
 
-@dataclass
+@dataclass(frozen=True)
 class CoilTierEnergyBehaviour(EnergyBehaviour):
     energy_multiplier: float = 1
     multiplier_per_coil_tier: float = 0
@@ -67,7 +67,7 @@ class CoilTierEnergyBehaviour(EnergyBehaviour):
             return self.energy_multiplier * (1 - self.multiplier_per_coil_tier * coil.tier)
         return self.energy_multiplier * max(1 - self.multiplier_per_coil_tier * coil.tier, self.minimal_multiplier)
 
-@dataclass
+@dataclass(frozen=True)
 class CoilTemperatureEnergyBehaviour(EnergyBehaviour):
     energy_multiplier: float = 1
 
@@ -76,6 +76,7 @@ class CoilTemperatureEnergyBehaviour(EnergyBehaviour):
             (context.machine_heat_capacity - context.recipe_options.coil_heat) // 900, 0)
 
 
+@dataclass(frozen=True)
 class NotImplementedEnergyBehaviour(EnergyBehaviour):
     def get_energy_multiplier(self, context: EnergyContext) -> float:
         raise NotImplementedError('Energy Behaviour not implemented')

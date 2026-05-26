@@ -3,6 +3,7 @@ import logging
 from enum import StrEnum
 from typing import Dict
 from math import nan
+from frozendict import frozendict
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
@@ -12,10 +13,10 @@ class MachineStatType(StrEnum):
     FUSION_TIER = 'fusion_tier'
 
 
-@dataclass
+@dataclass(frozen=True)
 class MachineStats:
-    voltage_tiers: list[int]
-    additional_stats: Dict[MachineStatType, float]
+    voltage_tiers: tuple[int, ...]
+    additional_stats: frozendict[MachineStatType, float]
     efficiency: float = 1
 
     @property

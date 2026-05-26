@@ -1,5 +1,6 @@
 import pytest
 from typing import Dict
+from frozendict import frozendict
 
 from packages.recipes_db.behaviours.machine_behaviours import (
     MachineBehaviour,
@@ -179,11 +180,11 @@ def _eic_behaviour() -> MachineBehaviour:
 
 
 def _machine_stats(
-    voltage_tiers: list[int], additional_stats: Dict[MachineStatType, float] | None = None
+    voltage_tiers: tuple[int, ...], additional_stats: Dict[MachineStatType, float] | None = None
 ) -> MachineStats:
     return MachineStats(
         voltage_tiers=voltage_tiers,
-        additional_stats={} if additional_stats is None else additional_stats
+        additional_stats=frozendict({}) if additional_stats is None else frozendict(additional_stats)
     )
 
 
@@ -208,9 +209,10 @@ def test_fit_recipe_scales_by_voltage_tier(voltage_tier: int):
     out = behaviour.fit_recipe(
         raw,
         voltage_tier=voltage_tier,
-        machine_stats=_machine_stats(voltage_tiers=[voltage_tier]),
+        machine_stats=_machine_stats(voltage_tiers=(voltage_tier,)),
         machine_options=empty_machine_options(),
     )
+    assert out is not None
     assert out.eu_per_tick == pytest.approx(-8 * 4**(voltage_tier - 1))
     assert out.processing_time == pytest.approx(3 / 2**(voltage_tier - 1))
     assert raw.inputs[m1] == -1000.0
@@ -240,9 +242,10 @@ def test_fit_recipe_scales_by_voltage_tier_lcr(voltage_tier: int):
     out = behaviour.fit_recipe(
         raw,
         voltage_tier=voltage_tier,
-        machine_stats=_machine_stats(voltage_tiers=VoltageTier.voltage_tiers_int()),
+        machine_stats=_machine_stats(voltage_tiers=tuple(VoltageTier.voltage_tiers_int())),
         machine_options=empty_machine_options(),
     )
+    assert out is not None
     assert out.eu_per_tick == pytest.approx(-240 * 4**(voltage_tier - 3))
     assert out.processing_time == pytest.approx(202.5 / 4**(voltage_tier - 3))
     assert raw.inputs[m1] == -9000.0
@@ -277,9 +280,10 @@ def test_fit_recipe_scales_by_voltage_tier_industrial_electrolyzer(
     out = behaviour.fit_recipe(
         raw,
         voltage_tier=voltage_tier,
-        machine_stats=_machine_stats(voltage_tiers=VoltageTier.voltage_tiers_int()),
+        machine_stats=_machine_stats(voltage_tiers=tuple(VoltageTier.voltage_tiers_int())),
         machine_options=empty_machine_options(),
     )
+    assert out is not None
     assert out.eu_per_tick == pytest.approx(expected_eu_per_tick)
     assert out.processing_time == pytest.approx(expected_processing_time)
     assert out.used_parallels == expected_parallels
@@ -325,9 +329,10 @@ def test_fit_recipe_scales_by_voltage_tier_mega_ebf(
     out = behaviour.fit_recipe(
         raw,
         voltage_tier=voltage_tier,
-        machine_stats=_machine_stats(voltage_tiers=VoltageTier.voltage_tiers_int()),
+        machine_stats=_machine_stats(voltage_tiers=tuple(VoltageTier.voltage_tiers_int())),
         machine_options=coil_only_machine_options(temperature=coil_temperature, tier=coil_tier),
     )
+    assert out is not None
     assert out.eu_per_tick == pytest.approx(expected_eu_per_tick)
     assert out.processing_time == pytest.approx(expected_processing_time)
     assert out.used_parallels == expected_parallels
@@ -366,9 +371,10 @@ def test_fit_recipe_scales_by_voltage_tier_pyrolyse_oven(
     out = behaviour.fit_recipe(
         raw,
         voltage_tier=voltage_tier,
-        machine_stats=_machine_stats(voltage_tiers=VoltageTier.voltage_tiers_int()),
+        machine_stats=_machine_stats(voltage_tiers=tuple(VoltageTier.voltage_tiers_int())),
         machine_options=coil_only_machine_options(temperature=coil_temperature, tier=coil_tier),
     )
+    assert out is not None
     assert out.eu_per_tick == pytest.approx(expected_eu_per_tick)
     assert out.processing_time == pytest.approx(expected_processing_time)
     assert out.used_parallels == 1
@@ -407,9 +413,10 @@ def test_fit_recipe_scales_by_voltage_tier_oil_cracker(
     out = behaviour.fit_recipe(
         raw,
         voltage_tier=voltage_tier,
-        machine_stats=_machine_stats(voltage_tiers=VoltageTier.voltage_tiers_int()),
+        machine_stats=_machine_stats(voltage_tiers=tuple(VoltageTier.voltage_tiers_int())),
         machine_options=coil_only_machine_options(temperature=coil_temperature, tier=coil_tier),
     )
+    assert out is not None
     assert out.eu_per_tick == pytest.approx(expected_eu_per_tick)
     assert out.processing_time == pytest.approx(expected_processing_time)
     assert out.used_parallels == 1
@@ -453,11 +460,12 @@ def test_fit_recipe_scales_by_voltage_tier_fusion(
         raw,
         voltage_tier=voltage_tier,
         machine_stats=_machine_stats(
-            voltage_tiers=VoltageTier.voltage_tiers_int(), 
+            voltage_tiers=tuple(VoltageTier.voltage_tiers_int()), 
             additional_stats={MachineStatType.FUSION_TIER: fusion_mk}
             ),
         machine_options=empty_machine_options()
     )
+    assert out is not None
     assert out.eu_per_tick == pytest.approx(expected_eu_per_tick)
     assert out.processing_time == pytest.approx(expected_processing_time)
     assert out.used_parallels == 1
@@ -500,7 +508,7 @@ def test_fit_recipe_scales_by_voltage_tier_eic(
         raw,
         voltage_tier=voltage_tier,
         machine_stats=_machine_stats(
-            voltage_tiers=VoltageTier.voltage_tiers_int(),
+            voltage_tiers=tuple(VoltageTier.voltage_tiers_int()),
             ),
         machine_options=_machine_options_for_test(
         (
@@ -509,6 +517,7 @@ def test_fit_recipe_scales_by_voltage_tier_eic(
         ),
     )
     )
+    assert out is not None
     assert out.eu_per_tick == pytest.approx(expected_eu_per_tick)
     assert out.processing_time == pytest.approx(expected_processing_time)
     assert out.used_parallels == expected_parallels
@@ -536,9 +545,10 @@ def test_fit_recipe_scales_by_used_parallels():
     out = behaviour.fit_recipe(
         raw,
         voltage_tier=VoltageTier.LV,
-        machine_stats=_machine_stats(voltage_tiers=[VoltageTier.LV]),
+        machine_stats=_machine_stats(voltage_tiers=(VoltageTier.LV,)),
         machine_options=empty_machine_options(),
     )
+    assert out is not None
     assert out.used_parallels >= 1
     assert out.inputs[m1] == pytest.approx(raw.inputs[m1] * out.used_parallels)
     _, amount, prob = out.output_specifications[0]
