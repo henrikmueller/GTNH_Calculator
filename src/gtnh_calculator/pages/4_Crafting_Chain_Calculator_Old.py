@@ -39,10 +39,11 @@ st.set_page_config(
     layout="wide"
 )
 st.markdown('# GTNH Calculator')
-st.markdown('## Recipe Lists')
-st.markdown('Recipes are stored in the following Google Spreadsheet: '
-            'https://docs.google.com/spreadsheets/d/1OSog0iIKua5T7ms0Iv9OZxCR1Qw45QSPtZd7EDP-FK4/edit?usp=sharing')
-st.markdown('Please **DO NOT** change any recipes in existing tabs, but create a separate tab!')
+st.warning('This is an old version of the crafting chain calculator, which is still available for testing and ' \
+'comparison. In this version, the recipes are based on a handcrafted excel file, whereas the new version uses a ' \
+'SQLite database of all GregTech recipes. The new version can be found on the "Crafting Chain Calculator" ' \
+'page.', icon="⚠️")
+
 st.markdown('## CraftingChainConfig File')
 crafting_chain = None
 recipe_book = None

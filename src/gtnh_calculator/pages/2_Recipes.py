@@ -67,14 +67,14 @@ with st.spinner('Applying filters...', show_time=True):
 st.success(f'Displaying {df.shape[0]} / {total_recipe_count} recipes matching the selected filters.', icon="✅")
 
 if df.shape[0] > 0:
-    with st.expander("Filter by materials"):
-        selected_materials = search_and_select_materials(
-            database=database,
-            key='selected_materials',
-            multiselect=True,
-            number_of_columns=3,
-            max_displayed_options=30
-        )
+    # with st.expander("Filter by materials"):
+    #     selected_materials = search_and_select_materials(
+    #         database=database,
+    #         key='selected_materials',
+    #         multiselect=True,
+    #         number_of_columns=3,
+    #         max_displayed_options=30
+    #     )
 
     for recipe_row in df.itertuples(index=False):
         recipe = recipe_initializer.create_recipe_from_row(recipe_row)

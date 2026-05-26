@@ -6,9 +6,8 @@ from rapidfuzz import fuzz
 
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.utility.streamlit_functions import load_database
-from packages.recipes_db.material import Material
-from packages.utility.streamlit_functions import display_recipe, material_card, search_and_select_materials
-from packages.utility.general_utility import print_df
+from packages.database_extraction.recipe_initialization import RecipeInitializer
+from packages.utility.streamlit_functions import display_crafting_chain_recipe, search_and_select_materials
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
@@ -23,6 +22,7 @@ st.set_page_config(
 )
 
 database: GTNHDatabase = load_database()
+recipe_initializer = RecipeInitializer(machine_options_book=database.machine_options_book)
 IMAGE_FOLDER = "db/images/"
 MAX_DISPLAYED_OPTIONS = 300
 NUMBER_OF_COLUMNS = 3
@@ -47,13 +47,15 @@ if material is not None:
         for i, recipe_row in enumerate(detected_recipes.itertuples()):
             if i >= 100:
                 break
-            display_recipe(recipe_row, recipe_row.MACHINES)
+            recipe = recipe_initializer.create_recipe_from_row(recipe_row)
+            display_crafting_chain_recipe(recipe, database.machine_options_book)
     with recipes_tab:
         detected_recipes = database.filter_recipes(df_recipes=database.df_recipes, outputs={material})
         for i, recipe_row in enumerate(detected_recipes.itertuples()):
             if i >= 100:
                 break
-            display_recipe(recipe_row, recipe_row.MACHINES)
+            recipe = recipe_initializer.create_recipe_from_row(recipe_row)
+            display_crafting_chain_recipe(recipe, database.machine_options_book)
 
 # if st.session_state.selected_material is None:
 #     selected_mods = st.sidebar.multiselect(

@@ -50,10 +50,10 @@ def load_database() -> GTNHDatabase:
             database: GTNHDatabase = e.value
             database.add_eu()
             # TODO: Add EU to inputs and outputs.
-            progress_bar.progress(1.0, text=f"Successfully extracted all recipes.")
+            progress_bar.progress(1.0, text=f"Successfully extracted all recipes from the database.")
             st.session_state['database'] = database
     else:
-        st.progress(1.0, text=f"Successfully extracted all recipes.")
+        st.progress(1.0, text=f"Successfully extracted all recipes from the database.")
         database = st.session_state['database']
     return database
 
