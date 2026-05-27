@@ -220,6 +220,7 @@ class CraftingChainFinder:
         ])
         cost_vector = - (c @ self.total_recipe_matrix) + infinite_production_weights  # this will be minimized TODO
         _LOGGER.info(f'MinMax cost_vector: {np.min(np.abs(cost_vector))}, {np.max(np.abs(cost_vector))}')
+        _LOGGER.info(f'Nan in Max cost_vector: {np.isnan(cost_vector).sum()}')
         _LOGGER.info(f'Number of positive cost values: {np.sum(cost_vector > 0)}')
         _LOGGER.info(f'Number of negative cost values: {np.sum(cost_vector < 0)}')
         # restrictions = self.config.lower_bounds
@@ -234,6 +235,7 @@ class CraftingChainFinder:
         eu_cost_vector = np.array([r.eu_per_tick for r in self.recipes])
         eu_cost_vector = - np.concatenate([eu_cost_vector, np.zeros(self.r)])
         _LOGGER.info(f'MinMax eu_cost_vector: {np.min(np.abs(eu_cost_vector))}, {np.max(np.abs(eu_cost_vector))}')
+        _LOGGER.info(f'Nan in Max eu_cost_vector: {np.isnan(eu_cost_vector).sum()}')
         _LOGGER.info(f'Number of positive cost values: {np.sum(eu_cost_vector > 0)}')
         _LOGGER.info(f'Number of negative cost values: {np.sum(eu_cost_vector < 0)}')
         estimation = VoltageTier.eu_per_tick(self.config.max_voltage_tier)
@@ -246,6 +248,7 @@ class CraftingChainFinder:
         c2 = np.zeros(shape=(self.r,))
         cost_vector = np.concatenate([c1, c2])
         _LOGGER.info(f'MinMax machine_amount_cost_vector: {np.min(np.abs(cost_vector))}, {np.max(np.abs(cost_vector))}')
+        _LOGGER.info(f'Nan in Max machine_amount_cost_vector: {np.isnan(cost_vector).sum()}')
         _LOGGER.info(f'Number of positive cost values: {np.sum(cost_vector > 0)}')
         _LOGGER.info(f'Number of negative cost values: {np.sum(cost_vector < 0)}')
         estimation = 0.5 * self.config.machine_limit

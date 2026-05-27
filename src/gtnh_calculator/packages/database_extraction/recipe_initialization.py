@@ -72,14 +72,17 @@ class RecipeInitializer:
 
         raw_recipe = None
         for v in range(voltage_tier, VoltageTier.MAX + 1):
-            raw_recipe = machine.machine_behaviour.fit_recipe(
-                raw_recipe=base_recipe,
-                voltage_tier=v,
-                machine_stats=machine.machine_stats,
-                machine_options=machine_options,
-                log=False
-            )
-            if raw_recipe is None or raw_recipe.used_parallels > 0:
+            try:
+                raw_recipe = machine.machine_behaviour.fit_recipe(
+                    raw_recipe=base_recipe,
+                    voltage_tier=v,
+                    machine_stats=machine.machine_stats,
+                    machine_options=machine_options,
+                    log=False
+                )
+            except ValueError as e:
+                raise ValueError(f'Error occurred while fitting recipe {recipe_row} to machine {machine}. Valid VTs: {valid_voltage_tiers}. VT: {voltage_tier}: {e}')
+            if raw_recipe is None or raw_recipe.used_parallels > 0 or voltage_tier == VoltageTier.NO_REQUIREMENT:
                 break
             
             max_parallels = machine.machine_behaviour.parallel_behaviour.get_parallels(

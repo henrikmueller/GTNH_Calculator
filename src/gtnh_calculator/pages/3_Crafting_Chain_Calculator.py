@@ -46,15 +46,17 @@ config: CraftingChainConfig | None = None
 database: GTNHDatabase = load_database()
 
 uploaded_file = st.file_uploader("Choose a config file to specify the recipe chain", type='yaml')
+
 if uploaded_file is not None:
-    if 'file_hash' not in st.session_state or st.session_state['file_hash'] != hash(uploaded_file):
-        for key in st.session_state:
-            if key == 'database':
-                continue
-            del st.session_state[key]
-    st.session_state['file_hash'] = hash(uploaded_file)
-    crafting_chain_database = load_crafting_chain_database(uploaded_file, database)
-    config = crafting_chain_database.config
+    with st.spinner('Reducing database...', show_time=True):
+        if 'file_hash' not in st.session_state or st.session_state['file_hash'] != hash(uploaded_file):
+            for key in st.session_state:
+                if key == 'database':
+                    continue
+                del st.session_state[key]
+        st.session_state['file_hash'] = hash(uploaded_file)
+        crafting_chain_database = load_crafting_chain_database(uploaded_file, database)
+        config = crafting_chain_database.config
 else:
     crafting_chain_database = None
 
@@ -162,128 +164,127 @@ if crafting_chain_database is not None and config is not None:
     a.metric("Recipes", crafting_chain_database.df_recipes.shape[0], border=True)
     b.metric("Materials", len(crafting_chain_database.extracted_materials), border=True)
 
-    # Crafting Chain Database Exploration
-    st.markdown('## Crafting Chain Database Exploration')
+    with st.expander('Explore Crafting Chain Database'):
+        st.markdown('### Recipe and Material Grades:')
 
-    st.markdown('### Recipe and Material Grades:')
+        a, b = st.columns(2)
+        with a:
+            grading_counts = crafting_chain_database.get_recipe_grading_counts()
+            non_reachable_recipe_amount = grading_counts[-1]
+            del grading_counts[-1]
+            data = {
+                'Grading': list(grading_counts.keys()),
+                'Amount': list(grading_counts.values())
+            }
+            fig = px.bar(data, x='Grading', y='Amount', title='Recipe Grading Distribution')
+            st.plotly_chart(fig, width=500)
+            st.metric("Recipes not reachable from inputs + infinite materials", non_reachable_recipe_amount, border=True)
+        with b:
+            grading_counts = crafting_chain_database.get_material_grading_counts()
+            non_reachable_materials_amount = grading_counts[-1]
+            del grading_counts[-1]
+            data = {
+                'Grading': list(grading_counts.keys()),
+                'Amount': list(grading_counts.values())
+            }
+            fig = px.bar(data, x='Grading', y='Amount', title='Material Grading Distribution')
+            st.plotly_chart(fig, width=500)
+            st.metric("Materials not reachable from inputs + infinite materials", non_reachable_materials_amount,
+                    border=True)
 
-    a, b = st.columns(2)
-    with a:
-        grading_counts = crafting_chain_database.get_recipe_grading_counts()
-        non_reachable_recipe_amount = grading_counts[-1]
-        del grading_counts[-1]
-        data = {
-            'Grading': list(grading_counts.keys()),
-            'Amount': list(grading_counts.values())
-        }
-        fig = px.bar(data, x='Grading', y='Amount', title='Recipe Grading Distribution')
-        st.plotly_chart(fig, width=500)
-        st.metric("Recipes not reachable from inputs + infinite materials", non_reachable_recipe_amount, border=True)
-    with b:
-        grading_counts = crafting_chain_database.get_material_grading_counts()
-        non_reachable_materials_amount = grading_counts[-1]
-        del grading_counts[-1]
-        data = {
-            'Grading': list(grading_counts.keys()),
-            'Amount': list(grading_counts.values())
-        }
-        fig = px.bar(data, x='Grading', y='Amount', title='Material Grading Distribution')
-        st.plotly_chart(fig, width=500)
-        st.metric("Materials not reachable from inputs + infinite materials", non_reachable_materials_amount,
-                  border=True)
+        def material_card(crafting_chain_database: CraftingChainDatabase, material: Material):
+            with st.container(border=True, width=600):
+                col1, col2 = st.columns([4, 1])
 
-    def material_card(crafting_chain_database: CraftingChainDatabase, material: Material):
-        with st.container(border=True, width=600):
-            col1, col2 = st.columns([4, 1])
+                with col1:
+                    if st.button(material.name, key=f"button_{material.id}", width='stretch'):
+                        if st.session_state.selected_material is None:
+                            st.session_state.selected_material = material
+                            st.rerun()
+                    st.write(f'Mod: {material.mod}')
+                    st.write(f'Grading: {crafting_chain_database.material_grading[material] 
+                            if material in crafting_chain_database.material_grading.keys() else '?'}')
+                with col2:
+                    try:
+                        st.image(f'db/images/{material.image_file_path}')
+                    except Exception as e:
+                        pass
 
-            with col1:
-                if st.button(material.name, key=f"button_{material.id}", width='stretch'):
-                    if st.session_state.selected_material is None:
-                        st.session_state.selected_material = material
-                        st.rerun()
-                st.write(f'Mod: {material.mod}')
-                st.write(f'Grading: {crafting_chain_database.material_grading[material] 
-                         if material in crafting_chain_database.material_grading.keys() else '?'}')
-            with col2:
-                try:
-                    st.image(f'db/images/{material.image_file_path}')
-                except Exception as e:
-                    pass
+        mods_materials = crafting_chain_database.database.mod_set_materials()
 
-    mods_materials = crafting_chain_database.database.mod_set_materials()
+        if st.session_state.selected_material is None:
+            search = st.text_input("Search material")
+            if search:
+                search_terms = search.lower().split(' ')
+                matching_materials = [
+                    m for m in crafting_chain_database.extracted_materials.values()
+                    if all(t in m.name.lower() for t in search_terms)
+                ]
+                matching_materials.sort(key=lambda s: fuzz.ratio(search.lower(), s.name.lower()), reverse=True)
+            else:
+                matching_materials = []
 
-    if st.session_state.selected_material is None:
-        search = st.text_input("Search material")
-        if search:
-            search_terms = search.lower().split(' ')
-            matching_materials = [
-                m for m in crafting_chain_database.extracted_materials.values()
-                if all(t in m.name.lower() for t in search_terms)
-            ]
-            matching_materials.sort(key=lambda s: fuzz.ratio(search.lower(), s.name.lower()), reverse=True)
+            cols = st.columns(NUMBER_OF_COLUMNS)
+            for i, material in enumerate(matching_materials[:MAX_DISPLAYED_OPTIONS]):
+                with cols[i % NUMBER_OF_COLUMNS]:
+                    material_card(crafting_chain_database, material)
         else:
-            matching_materials = []
+            material = st.session_state.selected_material
+            material_card(crafting_chain_database, material)
 
-        cols = st.columns(NUMBER_OF_COLUMNS)
-        for i, material in enumerate(matching_materials[:MAX_DISPLAYED_OPTIONS]):
-            with cols[i % NUMBER_OF_COLUMNS]:
-                material_card(crafting_chain_database, material)
-    else:
-        material = st.session_state.selected_material
-        material_card(crafting_chain_database, material)
+            if st.button('Discard material'):
+                st.session_state.selected_material = None
+                st.rerun()
 
-        if st.button('Discard material'):
-            st.session_state.selected_material = None
-            st.rerun()
+            material_info_tab, usage_tab, recipes_tab = st.tabs(['Material Info', 'Usage', 'Recipes'], default='Recipes')
 
-        material_info_tab, usage_tab, recipes_tab = st.tabs(['Material Info', 'Usage', 'Recipes'], default='Recipes')
-
-        with (material_info_tab):
-            grade = (
-                crafting_chain_database.material_grading[material]
-                if material in crafting_chain_database.material_grading.keys() else -1
-            )
-            if grade >= 1:
-                current_grade_materials = {material}
-                for g in range(grade - 1, -1, -1):
-                    st.markdown(f'**Grading Level {g}**')
-                    current_grade_recipes = [
-                        r for r in crafting_chain_database.recipes.values()
-                        if crafting_chain_database.recipe_grading[r] == g and
-                        any(o in current_grade_materials for o in r.get_outputs())
-                    ]
-                    current_grade_materials = {
-                        m for r in current_grade_recipes for m, a in r.input_dict.items() if a < 0
-                    }
-                    st.write(current_grade_materials)
-        with usage_tab:
-            st.write('TODO')
-        with recipes_tab:
-            st.write('TODO')
+            with (material_info_tab):
+                grade = (
+                    crafting_chain_database.material_grading[material]
+                    if material in crafting_chain_database.material_grading.keys() else -1
+                )
+                if grade >= 1:
+                    current_grade_materials = {material}
+                    for g in range(grade - 1, -1, -1):
+                        st.markdown(f'**Grading Level {g}**')
+                        current_grade_recipes = [
+                            r for r in crafting_chain_database.recipes.values()
+                            if crafting_chain_database.recipe_grading[r] == g and
+                            any(o in current_grade_materials for o in r.get_outputs())
+                        ]
+                        current_grade_materials = {
+                            m for r in current_grade_recipes for m, a in r.input_dict.items() if a < 0
+                        }
+                        st.write(current_grade_materials)
+            with usage_tab:
+                st.write('TODO')
+            with recipes_tab:
+                st.write('TODO')
 
     # Crafting Chain Optimization
     st.markdown('## Crafting Chain Optimization')
+    with st.spinner('Calculating optimal crafting chain...', show_time=True):
 
-    crafting_chain_finder = CraftingChainFinder(
-        crafting_chain_database, config=config, machine_limit=config.machine_limit, use_individual_limits=False
-    )
-    cost_vectors = crafting_chain_finder.get_default_cost_vectors()
-
-    weighted_cost_vectors = [(cost_vectors[0], 1.0), (cost_vectors[1], 0.0), (cost_vectors[2], 0.0)]
-    if 'crafting_chain' not in st.session_state or update:
-        st.session_state['crafting_chain'] = crafting_chain_finder._optimal_crafting_chain(
-            weighted_cost_vectors=weighted_cost_vectors, use_individual_limits=False,
-            eu_per_tick_constraint=None, machine_amount_constraint=None
+        crafting_chain_finder = CraftingChainFinder(
+            crafting_chain_database, config=config, machine_limit=config.machine_limit, use_individual_limits=False
         )
-    crafting_chain = st.session_state['crafting_chain']
+        cost_vectors = crafting_chain_finder.get_default_cost_vectors()
+
+        weighted_cost_vectors = [(cost_vectors[0], 1.0), (cost_vectors[1], 0.0), (cost_vectors[2], 0.0)]
+        if 'crafting_chain' not in st.session_state or update:
+            st.session_state['crafting_chain'] = crafting_chain_finder._optimal_crafting_chain(
+                weighted_cost_vectors=weighted_cost_vectors, use_individual_limits=False,
+                eu_per_tick_constraint=None, machine_amount_constraint=None
+            )
+        crafting_chain = st.session_state['crafting_chain']
 
     if crafting_chain is None:
         st.error('Crafting Chain could not be determined!', icon="❗")
     else:
         st.success('Successfully determined the crafting chain!', icon="✅")
 
-    if st.button('Display Pareto Front'):
-        display_pareto_front(crafting_chain_finder, cost_vectors)
+    # if st.button('Display Pareto Front'):
+    #     display_pareto_front(crafting_chain_finder, cost_vectors)
 else:
     crafting_chain = None
 
@@ -310,10 +311,11 @@ if config is not None and crafting_chain is not None:
     )
     st.dataframe(df, hide_index=True)
     unspecified_machines = set().union(*[r.valid_machines for r in crafting_chain.recipe_amounts.keys() if r.machine.unspecified])
-    st.warning(f"""The behaviours of the following machines are not specified. Their behaviours need to be implemented 
-    via the config files and the machine behaviour classes.
-{'\n'.join([f'- {m.__str__()}\n' for m in unspecified_machines])}
-    """, icon="❗")
+    if len(unspecified_machines) > 0:
+        st.warning(f"""The behaviours of the following machines are not specified. Their behaviours need to be implemented 
+        via the config files and the machine behaviour classes.
+    {'\n'.join([f'- {m.__str__()}\n' for m in unspecified_machines])}
+        """, icon="❗")
 
     with st.expander('Material Grading'):
         grading = [(m, g) for m, g in crafting_chain.material_grading.items()]

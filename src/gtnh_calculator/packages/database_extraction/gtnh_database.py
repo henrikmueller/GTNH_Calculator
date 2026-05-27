@@ -90,10 +90,11 @@ class GTNHDatabase:
             if not isnan(recipe_options.coil_heat) and (self.machine_options_book.max_coil_heat(machine) < recipe_options.coil_heat):
                 continue
 
-            for voltage_tier in machine.voltage_tiers:
-                if default_voltage_tier is None or voltage_tier <= default_voltage_tier:
-                    groups[(frozenset(machine.machine_types), machine.multiblock)].add(machine)
-                    break
+            groups[(frozenset(machine.machine_types), machine.multiblock)].add(machine)
+            # for voltage_tier in machine.voltage_tiers:
+            #     if default_voltage_tier is None or voltage_tier <= default_voltage_tier:
+            #         groups[(frozenset(machine.machine_types), machine.multiblock)].add(machine)
+            #         break
         
         voltage_tier_sign = 1 if default_voltage_tier is None else -1
         if not isnan(recipe_options.fusion_tier):
@@ -101,10 +102,7 @@ class GTNHDatabase:
         else:
             key = lambda m: (m.weight, voltage_tier_sign * m.minimal_voltage_tier())
                     
-        base_machines = [
-            min(group, key=key)
-            for group in groups.values()
-        ]
+        base_machines = [min(group, key=key) for group in groups.values()]
         if not base_machines:
             _LOGGER.debug(f'No base machines found. Machine groups: '
                             f'{[(t, [(m.name, m.voltage_tiers) for m in g]) for t, g in groups.items()]}')
@@ -132,7 +130,7 @@ class GTNHDatabase:
                                                                                   recipe_row.AVG_OUTPUTS.keys()]:
             return [m for m in base_machines if m.name == 'Pseudostable Black Hole Containment Field'][0]
 
-        _LOGGER.debug(f'No default machine: {base_machines} | {recipe_row}. \n'
+        _LOGGER.warning(f'No default machine: {base_machines} | {recipe_row}. \n'
                       f'Machines: {[(m.name, m.voltage_tiers) for m in recipe_row.MACHINES]}')
         return None
     

@@ -3,9 +3,8 @@ import pandas as pd
 from typing import Dict
 import logging
 from dataclasses import dataclass
-from itertools import product
 from collections import Counter
-import math
+from math import isnan
 
 from ..database_extraction.gtnh_database import GTNHDatabase
 from ..database_algorithms.bfs import get_reachable_recipes, get_ingredient_recipes
@@ -16,7 +15,7 @@ from ..recipes_db.machines import Machine
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.recipes import Recipe
 from .crafting_chain_utility import calculate_gradings
-from ..utility.general_utility import Timer
+from ..utility.general_utility import Timer, print_df
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -54,6 +53,8 @@ class CraftingChainDatabase:
             _LOGGER.info(f'Reachable recipes: {df.shape[0]}')
 
             target_materials = list(config.outputs.union(config.inputs))
+            _LOGGER.info(f'Outputs: {config.outputs}')
+            _LOGGER.info(f'Target materials: {target_materials}')
             _, df = get_ingredient_recipes(df, database.extracted_materials, target_materials, sort=False)
 
             if df.shape[0] <= 0:
@@ -73,8 +74,10 @@ class CraftingChainDatabase:
 
             df['SELECTED_MACHINE'] = df.apply(get_machine, axis=1)
             if not df['SELECTED_MACHINE'].notna().all():
+                count = df["SELECTED_MACHINE"].isna().sum()
                 _LOGGER.warning(
-                    'Could not determine the default machine for some recipes. Please check the logs for details.')
+                    f'Could not determine the default machine for {count} recipes. Please check the logs for details.')
+                # print_df(df[df['SELECTED_MACHINE'].isna()])
 
             # TODO: Remove materials not part in any recipe
 
@@ -101,6 +104,10 @@ class CraftingChainDatabase:
                 recipe_grading=recipe_grading,
                 material_grading=material_grading
             )
+
+            for recipe in crafting_chain_database.recipes.values():
+                if isnan(recipe.eu_per_tick):
+                    _LOGGER.warning(f'NAN in recipe eu/t {recipe}')
 
             if validity_check:
                 crafting_chain_database._validate_recipe_grading()

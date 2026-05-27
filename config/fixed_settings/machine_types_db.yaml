@@ -5253,7 +5253,6 @@ i~gregtech~gt.blockmachines~366:
   machine_types:
   - Fluid Solidifier
   multiblock: true
-  valid_options: width
   unspecified: true
   name: Fluid Shaper
   voltage_tier:
@@ -7039,7 +7038,6 @@ i~gregtech~gt.blockmachines~862:
   - Arc Furnace
   - Plasma Arc Furnace
   multiblock: true
-  valid_options: width
   speedup_behaviour:
     type: default
     speedup_multiplier: 3.5

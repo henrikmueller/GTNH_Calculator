@@ -68,26 +68,15 @@ class CraftingChainConfig:
     ):
         input_specifications = [extract_substrings(input_string, materials) for input_string in inputs]
         self.inputs = set()
-        for result in input_specifications:
-            if result is None:
-                continue
-            if isinstance(result, Material):
-                self.inputs.add(result)
-            else:
-                self.inputs.add(result[0])
+        for material, _, _ in input_specifications:
+            if material is not None:
+                self.inputs.add(material)
 
         output_specifications = [extract_substrings(output_string, materials) for output_string in outputs]
         self.outputs = set()
-        for result in output_specifications:
-            if result is None:
-                continue
-            if isinstance(result, Material):
-                self.outputs.add(result)
-            elif isinstance(result, tuple):
-                self.outputs.add(result[0])
-            else:
-                _LOGGER.warning(f'Unexpected result from output specification: "{result}".'
-                                f'Type: {type(result)}. Skipping output specification.')
+        for material, _, _ in output_specifications:
+            if material is not None:
+                self.outputs.add(material)
 
         self.infinite_materials = set(materials[m] for m in infinite_materials) \
             if infinite_materials is not None else set()
@@ -115,6 +104,8 @@ class CraftingChainConfig:
         self.upper_bounds = {}
         self.equalities = {}
         for material, comparator, bound in material_specifications:
+            if material is None or comparator is None or bound is None:
+                continue
             match comparator:
                 case '<=':
                     self.upper_bounds[material] = bound
@@ -210,13 +201,13 @@ def load_config(
         @validates('inputs')
         def validate_inputs(self, inputs: list[str], data_key: str) -> None:
             for input in inputs:
-                if extract_substrings(input, materials) is None:
+                if extract_substrings(input, materials)[0] is None:
                     raise ValidationError(f'Invalid material specification: "{input}"')
 
         @validates('outputs')
         def validate_outputs(self, outputs: list[str], data_key: str) -> None:
             for output in outputs:
-                if extract_substrings(output, materials) is None:
+                if extract_substrings(output, materials)[0] is None:
                     raise ValidationError(f'Invalid material specification: "{output}"')
 
         @validates('infinite_materials')
@@ -232,7 +223,7 @@ def load_config(
             if restrictions is None:
                 return
             for r in restrictions:
-                if not isinstance(extract_substrings(r, materials), tuple):
+                if None in extract_substrings(r, materials):
                     raise ValidationError(f'Unknown material restriction: "{r}"')
 
         @validates('weights')
@@ -318,7 +309,7 @@ def load_config(
     return schema.load(yaml_data)
 
 
-def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Material, str, float] | Material | None:
+def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Material | None, str | None, float | None]:
     comment_index = text.find(COMMENT_CHARACTER)
     if comment_index >= 0:
         text = text[:comment_index].strip()
@@ -327,21 +318,23 @@ def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Mater
     less_than = [i for i, c in enumerate(text) if c == '<']
     greater_than = [i for i, c in enumerate(text) if c == '>']
     if len(less_than) > 1 or len(greater_than) > 1 or len(equals) > 1:
-        return None
+        return None, None, None
     if not (equals or less_than or greater_than):
         if text in materials.keys():
-            return materials[text]
-        return None
+            return (materials[text], None, None)
+        return None, None, None
+    
     equals = equals[0] if equals else -1
     less_than = less_than[0] if less_than else -1
     greater_than = greater_than[0] if greater_than else -1
     if less_than >= 0 and greater_than >= 0:
-        return None
+        return None, None, None
     if equals < 0 or not (less_than in [-1, equals - 1] and greater_than in [-1, equals - 1]):
-        return None
+        return None, None, None
     comparator_index = equals if equals >= 0 else (less_than if less_than >= 0 else greater_than)
     if comparator_index <= 1 or len(text) <= comparator_index + 2:
-        return None
+        return None, None, None
+    
     suffix = text[comparator_index + 1:].strip()
     prefix = text[:comparator_index - (less_than >= 0 or greater_than >= 0)].strip()
     if len(prefix) >= 1 and len(suffix) >= 1 and str_to_float(suffix) is not None:
@@ -351,5 +344,5 @@ def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Mater
                 text[comparator_index - (less_than >= 0 or greater_than >= 0):comparator_index + 1],
                 str_to_float(suffix)
             )
-        return None
-    return None
+        return None, None, None
+    return None, None, None

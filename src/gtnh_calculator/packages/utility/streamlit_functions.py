@@ -30,7 +30,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def load_database() -> GTNHDatabase:
     database_extractor = DatabaseExtractor(validity_check=False)
 

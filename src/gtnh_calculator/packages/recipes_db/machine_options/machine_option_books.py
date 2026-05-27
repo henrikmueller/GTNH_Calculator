@@ -38,15 +38,16 @@ class MachineOptionsBook:
         self.anvil.sort(key=lambda o: o.tier)
         self.containment_block = [o for o in machine_options if o.option_type == MachineOptionType.CONTAINMENT_BLOCK]
         self.containment_block.sort(key=lambda o: o.tier)
+        self.coke_oven_casing = [o for o in machine_options if o.option_type == MachineOptionType.COKE_OVEN_CASING]
+        self.coke_oven_casing.sort(key=lambda o: o.tier)
 
-        self.coke_oven_casing = []
         self.width = []
         self.maceration_upgrade = []
 
     @property
     def all_options(self) -> list[MachineOption]:
         return (self.coil + self.pipe_casing + self.item_pipe_casing + self.electromagnet +
-                self.solenoid_coil + self.anvil + self.containment_block)
+                self.solenoid_coil + self.anvil + self.containment_block + self.coke_oven_casing)
 
     def get_machine_option_list(
         self,
@@ -84,7 +85,7 @@ class MachineOptionsBook:
                 return int(max([c.temperature for c in self.coil])) + 12 * 100
             case 'Volcanus':
                 return int(max([c.temperature for c in self.coil]))
-            case 'Helioflare Power Forge':
+            case 'Helioflare Power Forge' | 'Helioflux Melting Core':
                 return 10000000
             case _:
                 return 0

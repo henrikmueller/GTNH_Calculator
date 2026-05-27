@@ -36,7 +36,7 @@ class Machine:
         return self.item.id
 
     @property
-    def voltage_tiers(self) -> list[int]:
+    def voltage_tiers(self) -> tuple[int, ...]:
         return self.machine_stats.voltage_tiers
 
     def __repr__(self):
