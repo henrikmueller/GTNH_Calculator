@@ -1,17 +1,19 @@
 inputs: 
   - i~gregtech~gt.comb~3 = -78  # Oil Comb
+  - i~minecraft~log~1 <= 1000  # Wood Log
 outputs:
-  - i~gregtech~gt.eu  # EU
+  - f~gregtech~highoctanegasoline
 infinite_materials:
-  - i~minecraft~log~1  # Wood Log
   - i~gregtech~gt.comb~74  # Salt Comb
-  - i~minecraft~flowing_water~0  # Water
+  - f~minecraft~water  # Water
+  - f~gregtech~air
 restrictions:
 weights:
-  i~gregtech~gt.eu: 1
+  f~gregtech~highoctanegasoline: 1000
 time: 60s
 display_interval: 60s
 default_coil: i~gregtech~gt.blockcasings5~4
 unlocked_voltage_tier: IV
-default_voltage_tier: EV
+default_voltage_tier: HV
 maximal_energy_increase: 1.5
+machine_limit: 50

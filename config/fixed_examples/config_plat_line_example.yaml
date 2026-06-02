@@ -1,0 +1,47 @@
+inputs: 
+  - i~bartworks~gt.bwMetaGenerateddust~47 = -0.156  # Platinum Metallic Powder Dust
+outputs:
+  - i~gregtech~gt.metaitem.01~2084  # Iridium Dust
+  - i~gregtech~gt.metaitem.01~2083  # Osmium Dust
+  - i~bartworks~gt.bwMetaGenerateddust~78  # Rhodium Dust
+  - i~bartworks~gt.bwMetaGenerateddust~64  # Ruthenium Dust
+  - i~gregtech~gt.metaitem.01~2085  # Platinum Dust
+  - i~gregtech~gt.metaitem.01~2052  # Palladium Dust
+infinite_materials:
+  - f~minecraft~water  # Water
+  - f~gregtech~air
+  - f~GalacticraftMars~oxygen
+  - f~GalacticraftMars~hydrogen
+  - f~GalacticraftMars~nitrogen
+  - f~gregtech~chlorine
+  - i~gregtech~gt.metaitem.01~2025  # Potassium Dust
+  - i~gregtech~gt.metaitem.01~2022  # Sulfur Dust
+  - i~gregtech~gt.metaitem.01~2817  # Salt
+  - i~gregtech~gt.metaitem.01~2836  # Saltpeter Dust
+  - i~gregtech~gt.metaitem.01~2010  # Carbon Dust
+  - i~gregtech~gt.metaitem.01~2036  # Zinc Dust
+restrictions:
+  - i~bartworks~gt.bwMetaGenerateddust~71 <= 0  # Sludge Dust Residue Dust
+  - i~bartworks~gt.bwMetaGenerateddust~77 <= 0  # Metallic Sludge Dust Residue Dust
+  - f~gregtech~molten.potassium <= 0  # Molten Potassium
+  - i~gregtech~gt.metaitem.01~11025 <= 0  # Potassium Ingot
+  - i~bartworks~gt.bwMetaGenerateddust~45 <= 0  # Platinum Salt Dust
+  - i~bartworks~gt.bwMetaGenerateddust~46 <= 0  # Refined Platinum Salt Dust
+  - i~bartworks~gt.bwMetaGenerateddust~84 <= 0  # Zinc Sulfate Dust
+weights:
+  i~gregtech~gt.metaitem.01~2084: 1
+  i~gregtech~gt.metaitem.01~2083: 1
+  i~bartworks~gt.bwMetaGenerateddust~78: 1
+  i~bartworks~gt.bwMetaGenerateddust~64: 1
+  i~gregtech~gt.metaitem.01~2085: 1
+  i~gregtech~gt.metaitem.01~2052: 1
+disabled_machines:
+  - i~gregtech~gt.blockmachines~31072  # Molecular Transformer
+  - i~gregtech~gt.blockmachines~15413  # Helioflux Melting Core
+time: 2s
+display_interval: 60s
+default_coil: i~gregtech~gt.blockcasings5~4
+unlocked_voltage_tier: IV
+default_voltage_tier: HV
+maximal_energy_increase: 1.5
+machine_limit: 50
