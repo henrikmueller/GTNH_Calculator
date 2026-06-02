@@ -26,12 +26,20 @@ class RecipeOptions:
 
     @classmethod
     def get_recipe_options(cls, recipe_row) -> RecipeOptions:
-        options = {}
+        options = recipe_row.METADATA
         if recipe_row.ADDITIONAL_INFO:
             match = re.match(r"^To start: .*? EU \(MK (.*?)\)$", recipe_row.ADDITIONAL_INFO)
             if match:
                 options[RecipeOptionType.FUSION_TIER] = str_to_float(match.group(1))
-        return RecipeOptions(options=recipe_row.METADATA | options)
+
+            match = re.match(r"^Heat capacity: (.*?)K \(.*?\).*?$", recipe_row.ADDITIONAL_INFO)
+            if match:
+                coil_heat = str_to_float(match.group(1).replace(',', ''))
+                if RecipeOptionType.COIL_HEAT in options.keys() and options[RecipeOptionType.COIL_HEAT] != coil_heat:
+                    _LOGGER.warning(f'Different coil heat specifications from metadata ({recipe_row.METADATA} -> {options[RecipeOptionType.COIL_HEAT]}) '
+                                    f'and additional info ({recipe_row.ADDITIONAL_INFO} -> {coil_heat}). Using the specification from additional info.')
+                options[RecipeOptionType.COIL_HEAT] = coil_heat
+        return RecipeOptions(options=options)
 
     @property
     def fusion_tier(self) -> float:
@@ -44,6 +52,9 @@ class RecipeOptions:
         if RecipeOptionType.COIL_HEAT in self.options.keys():
             return self.options[RecipeOptionType.COIL_HEAT]
         return nan
+    
+    def has_option(self, option_type: RecipeOptionType) -> bool:
+        return option_type in self.options.keys()
 
     def markdown_string(self) -> str:
         result = []

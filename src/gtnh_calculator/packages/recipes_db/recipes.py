@@ -1,6 +1,6 @@
 from __future__ import annotations
 import numpy as np
-from typing import Dict
+from typing import Dict, Iterable
 import logging
 from collections import defaultdict
 
@@ -108,6 +108,8 @@ class Recipe:
 
     @property
     def valid_voltage_tiers(self) -> list[int]:
+        if self.base_recipe.voltage_tier == VoltageTier.NO_REQUIREMENT:
+            return [VoltageTier.NO_REQUIREMENT]
         return [v for v in self.machine.voltage_tiers if v >= self.minimum_voltage_tier]
 
     @property
@@ -174,6 +176,22 @@ class Recipe:
     @property
     def materials(self) -> list[Material]:
         return list(self.material_dict.keys())
+    
+    def has_input(self, materials: Iterable[Material], any: bool = True) -> bool:
+        if any:
+            for material in materials:
+                if material in self.input_dict.keys():
+                    return True
+            return False
+        return all(m in self.input_dict.keys() for m in materials)
+    
+    def has_output(self, materials: Iterable[Material], any: bool = True) -> bool:
+        if any:
+            for material in materials:
+                if material in self.output_dict.keys():
+                    return True
+            return False
+        return all(m in self.output_dict.keys() for m in materials)
 
     def material_quantity(self, material: Material):
         return self.material_dict[material] if material in self.material_dict.keys() else 0

@@ -14,6 +14,7 @@ class EnergyContext:
     machine_options: MachineOptions
     recipe_options: RecipeOptions
     machine_heat_capacity: float
+    voltage_tier: int
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,8 @@ class EnergyBehaviour:
                 return DefaultEnergyBehaviour(
                     energy_multiplier=specification['energy_multiplier'] \
                         if 'energy_multiplier' in specification.keys() else 1,
+                    per_voltage_tier=specification['per_voltage_tier'] \
+                        if 'per_voltage_tier' in specification.keys() else 0,
                 )
             case 'coil_tier':
                 return CoilTierEnergyBehaviour(
@@ -51,9 +54,10 @@ class EnergyBehaviour:
 @dataclass(frozen=True)
 class DefaultEnergyBehaviour(EnergyBehaviour):
     energy_multiplier: float = 1
+    per_voltage_tier: float = 0
 
     def get_energy_multiplier(self, context: EnergyContext) -> float:
-        return self.energy_multiplier
+        return self.energy_multiplier * (1 - context.voltage_tier * self.per_voltage_tier)
 
 @dataclass(frozen=True)
 class CoilTierEnergyBehaviour(EnergyBehaviour):
@@ -72,8 +76,8 @@ class CoilTemperatureEnergyBehaviour(EnergyBehaviour):
     energy_multiplier: float = 1
 
     def get_energy_multiplier(self, context: EnergyContext) -> float:
-        return self.energy_multiplier * 0.95 ** max(
-            (context.machine_heat_capacity - context.recipe_options.coil_heat) // 900, 0)
+        recipe_heat = 0 if isnan(context.recipe_options.coil_heat) else context.recipe_options.coil_heat
+        return self.energy_multiplier * 0.95 ** max((context.machine_heat_capacity - recipe_heat) // 900, 0)
 
 
 @dataclass(frozen=True)

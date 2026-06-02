@@ -55,42 +55,33 @@ class RecipeInitializer:
         )
         machine: Machine = recipe_row.SELECTED_MACHINE
 
-        if default_voltage_tier is None:
-            valid_voltage_tiers = [v for v in machine.voltage_tiers if base_recipe.voltage_tier <= v]
-        else:
-            valid_voltage_tiers = [v for v in machine.voltage_tiers if base_recipe.voltage_tier <= v <= default_voltage_tier]
-
-        if valid_voltage_tiers:
-            voltage_tier = min(valid_voltage_tiers) if default_voltage_tier is None else max(valid_voltage_tiers)
-        else:
-            _LOGGER.debug(f'No valid voltage tier found for machine {machine} and recipe {recipe_row.ID}. '
-                        f'Recipe voltage tier: {base_recipe.voltage_tier}, '
-                        f'default voltage tier: {default_voltage_tier}')
-            voltage_tier = base_recipe.voltage_tier
-        
+        voltage_tier = recipe_row.SELECTED_VOLTAGE_TIER
         machine_options = self.create_default_machine_options(machine, base_recipe.recipe_options)
-
         raw_recipe = None
-        for v in range(voltage_tier, VoltageTier.MAX + 1):
-            try:
-                raw_recipe = machine.machine_behaviour.fit_recipe(
-                    raw_recipe=base_recipe,
-                    voltage_tier=v,
-                    machine_stats=machine.machine_stats,
-                    machine_options=machine_options,
-                    log=False
+        try:
+            for v in range(voltage_tier, VoltageTier.MAX + 1):
+                try:
+                    raw_recipe = machine.machine_behaviour.fit_recipe(
+                        raw_recipe=base_recipe,
+                        voltage_tier=v,
+                        machine_stats=machine.machine_stats,
+                        machine_options=machine_options,
+                        log=False
+                    )
+                except ValueError as e:
+                    raise ValueError(f'Error occurred while fitting recipe {recipe_row} to machine {machine}. VT: {voltage_tier}: {e}')
+                if raw_recipe is None or raw_recipe.used_parallels > 0 or voltage_tier == VoltageTier.NO_REQUIREMENT:
+                    break
+                
+                # Only continue if raising the voltage tier would allow for parallels
+                max_parallels = machine.machine_behaviour.parallel_behaviour.get_parallels(
+                    voltage_tier=voltage_tier,
+                    machine_options=machine_options
                 )
-            except ValueError as e:
-                raise ValueError(f'Error occurred while fitting recipe {recipe_row} to machine {machine}. Valid VTs: {valid_voltage_tiers}. VT: {voltage_tier}: {e}')
-            if raw_recipe is None or raw_recipe.used_parallels > 0 or voltage_tier == VoltageTier.NO_REQUIREMENT:
-                break
-            
-            max_parallels = machine.machine_behaviour.parallel_behaviour.get_parallels(
-                voltage_tier=voltage_tier,
-                machine_options=machine_options
-            )
-            if max_parallels != 0 or machine.machine_behaviour.parallel_behaviour.parallels_per_voltage_tier == 0:
-                break
+                if max_parallels != 0 or machine.machine_behaviour.parallel_behaviour.parallels_per_voltage_tier == 0:
+                    break
+        except TypeError as e:
+            raise TypeError(f'TypeError occurred while fitting recipe {recipe_row} to machine {machine}. VT: {voltage_tier}, {type(voltage_tier)}: {e}')
 
         if raw_recipe is None:
             raise ValueError(f'Could not fit recipe {recipe_row} to machine {machine} with voltage tier {voltage_tier}')

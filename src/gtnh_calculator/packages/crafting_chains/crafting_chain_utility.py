@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Dict
+from typing import Dict, Iterable
 from collections import deque
 
 from ..recipes_db.material import Material
@@ -11,7 +11,7 @@ _LOGGER.setLevel(logging.INFO)
 
 
 def calculate_gradings(
-    recipes: list[Recipe], materials: list[Material], starting_materials: set[Material],
+    recipes: list[Recipe], materials: Iterable[Material], starting_materials: set[Material],
     ignore_unreachable: bool = False
 ) -> tuple[Dict[Recipe, int], Dict[Material, int]]:
     node_to_edges = defaultdict(list)

@@ -5,6 +5,7 @@ from io import BytesIO
 from ..exceptions import DataLoadingException
 
 from ..recipes_db.material import Material
+from ..recipes_db.machines import Machine
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.machine_options.machine_options import MachineOption
 from ..recipes_db.machine_options.machine_option_books import MachineOptionsBook
@@ -35,12 +36,13 @@ class CraftingChainConfig:
     max_multiblock_machines: int | None
     default_machine_options: Dict[str, MachineOption]
     machine_limit: int
-    disabled_materials: list[str]
-    disabled_recipes: list[str]
+    disabled_materials: frozenset[Material]
+    disabled_recipe_ids: frozenset[str]
+    disabled_machines: frozenset[Machine]
 
     def __init__(
         self,
-        materials: Dict[str, Material],
+        database: GTNHDatabase,
         machine_options_book: MachineOptionsBook,
         inputs: list[str],
         outputs: list[str],
@@ -61,11 +63,13 @@ class CraftingChainConfig:
         maximal_energy_increase: float,
         machine_limit: int,
         disabled_materials: list[str],
-        disabled_recipes: list[str],
+        disabled_recipe_ids: list[str],
+        disabled_machines: list[str],
         max_singleblock_machines: int | None = None,
         max_multiblock_machines: int | None = None,
         infinite_production_weights: Dict[str, float] | None = None
     ):
+        materials = database.extracted_materials
         input_specifications = [extract_substrings(input_string, materials) for input_string in inputs]
         self.inputs = set()
         for material, _, _ in input_specifications:
@@ -126,8 +130,9 @@ class CraftingChainConfig:
         self.max_singleblock_machines = max_singleblock_machines
         self.max_multiblock_machines = max_multiblock_machines
         self.machine_limit = machine_limit
-        self.disabled_materials = disabled_materials
-        self.disabled_recipes = disabled_recipes
+        self.disabled_materials = frozenset(materials[id] for id in disabled_materials)
+        self.disabled_recipe_ids = frozenset(disabled_recipe_ids)
+        self.disabled_machines = frozenset(database.extracted_machines[id] for id in disabled_machines)
 
         self.default_machine_options = {
             'coil': machine_options_book.get_machine_option(default_coil, machine_options_book.coil),
@@ -192,11 +197,12 @@ def load_config(
         default_anvil = fields.String(required=False, load_default=machine_options_book.anvil[0].material.id)
 
         disabled_materials = fields.List(fields.String(), required=False, load_default=[])
-        disabled_recipes = fields.List(fields.String(), required=False, load_default=[])
+        disabled_recipe_ids = fields.List(fields.String(), required=False, load_default=[])
+        disabled_machines = fields.List(fields.String(), required=False, load_default=[])
 
         @post_load
         def create_config(self, data, **kwargs) -> CraftingChainConfig:
-            return CraftingChainConfig(materials, machine_options_book, **data)
+            return CraftingChainConfig(database, machine_options_book, **data)
 
         @validates('inputs')
         def validate_inputs(self, inputs: list[str], data_key: str) -> None:
@@ -296,6 +302,24 @@ def load_config(
         def validate_machine_limit(self, machine_limit: int, data_key: str) -> None:
             if machine_limit < 0:
                 raise ValidationError(f'Invalid machine_limit: "{machine_limit}"')
+
+        @validates('disabled_materials')
+        def validate_disabled_materials(self, disabled_materials: list[str], data_key: str) -> None:
+            for material_id in disabled_materials:
+                if material_id not in materials.keys():
+                    raise ValidationError(f'Unknown disabled material: "{material_id}"')
+
+        @validates('disabled_recipe_ids')
+        def validate_disabled_recipe_ids(self, disabled_recipe_ids: list[str], data_key: str) -> None:
+            for recipe_id in disabled_recipe_ids:
+                if not database.df_recipes["ID"].str.contains(recipe_id, na=False).any():
+                    raise ValidationError(f'Unknown disabled recipe id: "{recipe_id}"')
+
+        @validates('disabled_machines')
+        def validate_disabled_machines(self, disabled_machines: list[str], data_key: str) -> None:
+            for machine_id in disabled_machines:
+                if machine_id not in database.extracted_machines.keys():
+                    raise ValidationError(f'Unknown disabled machine: "{machine_id}"')
 
     if any('#' in k for k in database.extracted_materials.keys()):
         raise AssertionError(f'Material keys must not contain the comment character "{COMMENT_CHARACTER}"')

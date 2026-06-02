@@ -2,7 +2,6 @@ import lzma
 import shutil
 import sqlite3
 
-
 def compress_database():
     conn = sqlite3.connect("db/gtnh-2-8-db.db")
     conn.execute("VACUUM")

@@ -5,6 +5,7 @@ import sys
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.database_extraction.recipe_initialization import RecipeInitializer
 from packages.recipes_db.voltage_tiers import VoltageTier
+from packages.recipes_db.recipe_options import RecipeOptionType, RecipeOptions
 from packages.utility.streamlit_functions import load_database
 from packages.utility.streamlit_functions import search_and_select_materials, display_crafting_chain_recipe
 
@@ -34,6 +35,10 @@ with a:
         options=mods_recipes,
         default=mods_recipes,
     )
+    selected_recipe_options = set(st.multiselect(
+        "Filter recipes by options",
+        options=list(RecipeOptionType),
+    ))
 with b:
     selected_machine_names = set(st.multiselect(
         "Filter recipes by machines",
@@ -41,7 +46,7 @@ with b:
         default=None,
     ))
 with c:
-    selected_voltage_tiers = set(st.multiselect(
+    selected_voltage_tiers = set(VoltageTier.to_voltage_tier(v) for v in st.multiselect(
         "Filter recipes by voltage tiers",
         options=[VoltageTier.voltage_tier_name(v) for v in VoltageTier.valid_voltage_tiers()],
         default=[VoltageTier.voltage_tier_name(v) for v in VoltageTier.valid_voltage_tiers()],
@@ -53,12 +58,16 @@ with st.spinner('Applying filters...', show_time=True):
         database.df_recipes, 
         categories=selected_mods, 
         allowed_machines=selected_machines if selected_machine_names else None,
-        voltage_tiers={VoltageTier.to_voltage_tier(v) for v in selected_voltage_tiers}
+        voltage_tiers=selected_voltage_tiers,
+        recipe_options=selected_recipe_options if selected_recipe_options else None
     )
-    df = database.blow_up_input_groups(df, pick_any=True)
-
     if df.shape[0] > 0:
-        df['SELECTED_MACHINE'] = df.apply(database.get_default_machine, axis=1)
+        df[['SELECTED_MACHINE', 'SELECTED_VOLTAGE_TIER']] = df.apply(
+            database.get_default_machine_and_voltage_tier,
+            axis=1,
+            result_type='expand'
+        )
+    df = database.blow_up_input_groups(df, pick_any=True)
 
     show_all = st.toggle(f'Show all filtered recipes (Max {MAX_DISPLAYED_RECIPES})', value=False)
     total_recipe_count = df.shape[0]

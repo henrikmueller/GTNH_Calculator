@@ -10,12 +10,13 @@ from rapidfuzz import fuzz
 from streamlit_extras.stylable_container import stylable_container
 import streamlit.components.v1 as components
 from tomlkit import key
+import numpy as np
+import plotly.graph_objects as go
 
 from packages.crafting_chains.crafting_chain_database import CraftingChainDatabase
 from packages.database_extraction.database_extractor import DatabaseExtractor
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.configs.crafting_chain_config_db import CraftingChainConfig, load_config
-from packages.recipes_db import material
 from packages.recipes_db.material import Material
 from packages.recipes_db.machine_options.machine_option_books import MachineOptionsBook
 from packages.recipes_db.machine_options.machine_option_types import MachineOptionType
@@ -24,8 +25,10 @@ from packages.recipes_db.recipes import Recipe
 from packages.utility.general_utility import get_base64_image, format_float
 from packages.exceptions import DataLoadingException
 from packages.recipes_db.voltage_tiers import VoltageTier
+from packages.exceptions import GTNHCalculatorException
+from packages.crafting_chains.crafting_chain_finder_highs import (
+    CraftingChainFinder, OptimalSolution, CostConstraints, CostVectorCollection)
 
-logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
@@ -81,19 +84,20 @@ def load_database() -> GTNHDatabase:
 #     return database
 
 
-def load_crafting_chain_database(uploaded_file: BytesIO | str, database: GTNHDatabase) -> CraftingChainDatabase:
+def load_crafting_chain_database(uploaded_file: BytesIO | str, database: GTNHDatabase) -> CraftingChainDatabase | None:
     if 'crafting_chain_database' not in st.session_state:
         try:
             loaded_config = load_config(uploaded_file, database)
             if 'config' not in st.session_state:
                 st.session_state['config'] = loaded_config
             config: CraftingChainConfig = st.session_state['config']
+
             crafting_chain_database = CraftingChainDatabase.create_crafting_chain_database(
                 database=database, config=config, validity_check=True)
             st.session_state['crafting_chain_database'] = crafting_chain_database
-        except DataLoadingException as e:
+        except GTNHCalculatorException as e:
             st.error(e, icon="❗")
-            raise Exception(f"Data loading failed: {e}")
+            return None
     else:
         crafting_chain_database = st.session_state['crafting_chain_database']
     return crafting_chain_database
@@ -328,7 +332,7 @@ def display_crafting_chain_recipe(recipe: Recipe, machine_options_book: MachineO
                     machine_option_dict[machine_option_type] = selected_option
 
                     @st.dialog(f"Select {option_name}")
-                    def change_machine_option():
+                    def change_machine_option(machine_option_type: MachineOptionType):
                         for i, machine_option in enumerate(
                             machine_options_book.get_machine_option_list(machine_option_type, rank=lambda o: o.tier)):
                             a, b = st.columns([0.5, 5], gap='small')
@@ -347,7 +351,7 @@ def display_crafting_chain_recipe(recipe: Recipe, machine_options_book: MachineO
                     with d:
                         if st.button(f'Change {option_name}', key=f"change_{recipe.id}_{machine_option_type.name}", 
                                     type='tertiary'):
-                            change_machine_option()
+                            change_machine_option(machine_option_type)
                 
             with bb:  # Select voltage tier
                 valid_voltage_tiers = [v for v in selected_machine.voltage_tiers if v >= recipe.minimum_voltage_tier]
@@ -697,17 +701,105 @@ def search_and_select_materials(
     ]
     st.write(f'Found {len(filtered_materials)} materials matching the selected filters.')
 
-    search = st.text_input("Search material")
-    if search:
-        search_terms = search.lower().split(' ')
-        matching_materials = [m for m in filtered_materials if all(t in m.name.lower() for t in search_terms)]
-        matching_materials.sort(key=lambda s: fuzz.ratio(search.lower(), s.name.lower()), reverse=True)
-    else:
-        matching_materials = []
-
+    matching_materials = search_material_name(materials=filtered_materials, label='Search Material')
     cols = st.columns(number_of_columns)
     for i, material in enumerate(matching_materials[:max_displayed_options]):
         with cols[i % number_of_columns]:
             material_card(material, button_key_prefix='display', key=key, multiselect=multiselect)
     
     return st.session_state[key]
+
+
+def search_material_name(materials: Iterable[Material], label: str) -> list[Material]:
+    search = st.text_input(label)
+    if search:
+        search_terms = search.lower().split(' ')
+        matching_materials = [m for m in materials if all(t in m.name.lower() for t in search_terms)]
+        matching_materials.sort(key=lambda s: fuzz.ratio(search.lower(), s.name.lower()), reverse=True)
+        return matching_materials
+    return []
+
+
+def scatter_plot(
+    data: list[tuple[OptimalSolution, CostConstraints]],
+    cost_vectors: CostVectorCollection,
+    crafting_chain_finder: CraftingChainFinder,
+    title: str,
+    x: str,
+    y: str,
+    label_x: str,
+    label_y: str
+):
+    def get_value(cost_vector_name: str, solution: OptimalSolution) -> float | None:
+        match cost_vector_name:
+            case 'recipe_cost_vector':
+                return np.dot(solution.recipe_vector, cost_vectors.recipe_cost_vector.vector).item()
+            case 'eu_cost_vector':
+                return crafting_chain_finder.get_eu_per_tick(solution)
+            case 'machine_amount_cost_vector':
+                return crafting_chain_finder.get_machine_amount(solution)
+
+    data_x = [get_value(x, s) for s, _ in data]
+    data_y = [get_value(y, s) for s, _ in data]
+    labels = [f'Solution {i}' for i in range(len(data))]
+    description = [f'{c}' for _, c in data]
+    colors = ['cyan' for x in data]
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=data_x,
+        y=data_y,
+        mode='markers',
+        marker=dict(
+            size=12,
+            color=colors
+        ),
+        text=labels,
+        customdata=description,
+        hovertemplate=
+        "<b>%{text}</b><br>" "x: %{x}<br>" + "y: %{y}<br>" +
+        "%{customdata}<extra></extra>"
+    ))
+    fig.update_layout(
+        title=title,
+        xaxis_title=label_x,
+        yaxis_title=label_y
+    )
+    st.plotly_chart(fig)
+
+
+def display_pareto_front(crafting_chain_finder: CraftingChainFinder, cost_vectors: CostVectorCollection):
+    pareto_results = crafting_chain_finder.pareto_front(cost_vectors)
+    a, b, c = st.columns(3)
+    with a:
+        scatter_plot(
+            data=pareto_results,
+            cost_vectors=cost_vectors,
+            crafting_chain_finder=crafting_chain_finder,
+            title='Material Cost vs. EU/t',
+            x='recipe_cost_vector',
+            y='eu_cost_vector',
+            label_x='Material Cost',
+            label_y='EU/t'
+        )
+    with b:
+        scatter_plot(
+            data=pareto_results,
+            cost_vectors=cost_vectors,
+            crafting_chain_finder=crafting_chain_finder,
+            title='Material Cost vs. Machine Amount',
+            x='recipe_cost_vector',
+            y='machine_amount_cost_vector',
+            label_x='Material Cost',
+            label_y='Machine Cost'
+        )
+    with c:
+        scatter_plot(
+            data=pareto_results,
+            cost_vectors=cost_vectors,
+            crafting_chain_finder=crafting_chain_finder,
+            title='EU/t vs. Machine Amount',
+            x='eu_cost_vector',
+            y='machine_amount_cost_vector',
+            label_x='Recipe Cost',
+            label_y='Machine Cost'
+        )

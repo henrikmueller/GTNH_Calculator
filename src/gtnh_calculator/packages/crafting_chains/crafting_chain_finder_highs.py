@@ -218,7 +218,7 @@ class CraftingChainFinder:
         infinite_production_weights = np.concatenate([
             np.zeros(self.q), [self.infinite_production_weights[m] for m in self.infinite_material_list]
         ])
-        cost_vector = - (c @ self.total_recipe_matrix) + infinite_production_weights  # this will be minimized TODO
+        cost_vector = - (c @ self.total_recipe_matrix) + infinite_production_weights
         _LOGGER.info(f'MinMax cost_vector: {np.min(np.abs(cost_vector))}, {np.max(np.abs(cost_vector))}')
         _LOGGER.info(f'Nan in Max cost_vector: {np.isnan(cost_vector).sum()}')
         _LOGGER.info(f'Number of positive cost values: {np.sum(cost_vector > 0)}')

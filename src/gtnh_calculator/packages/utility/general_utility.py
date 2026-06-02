@@ -9,6 +9,7 @@ import time
 import base64
 import pandas as pd
 from decimal import Decimal
+from math import isnan
 
 
 class Timer:
@@ -150,10 +151,12 @@ def is_contained_in(text: str, text_list: list[str], case_sensitive=True) -> boo
 
 
 def format_float(
-    x,
+    x: float | int,
     decimal_places: int = 2,
     separate_thousands: bool = False
 ) -> str:
+    if isnan(x):
+        return 'nan'
     d = Decimal(str(x))
 
     sign = "-" if d < 0 else ""

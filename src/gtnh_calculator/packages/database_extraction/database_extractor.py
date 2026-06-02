@@ -518,7 +518,7 @@ class DatabaseExtractor:
                     machine_types[machine_type_name] = MachineType(name=machine_type_name)
 
             machine_count = len(machine_dict)
-            extracted_machines = {}
+            extracted_machines: Dict[str, Machine] = {}
             for item_id, specification in machine_dict.items():
                 deprecated = 'deprecated' in specification and specification['deprecated']
                 if deprecated and not INCLUDE_DEPRECATED_MACHINES:
@@ -568,7 +568,7 @@ class DatabaseExtractor:
                         _LOGGER.error(f'Invalid voltage tier "{v}" for machine {machine}')
 
             for name, machine_type in machine_types.items():
-                machines = [m for m in machine_type.machines if not m.unspecified]
+                machines = [m for m in extracted_machines.values() if not m.unspecified and machine_type in m.machine_types]
                 multiblocks = [m for m in machines if m.multiblock]
                 sb_voltage_tiers = [v for m in machines if not m.multiblock for v in m.voltage_tiers]
                 sb_voltage_tiers.sort()

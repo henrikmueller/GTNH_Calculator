@@ -83,9 +83,9 @@ class MachineOptionsBook:
         match machine.name:
             case 'Electric Blast Furnace' | 'Mega Electric Blast Furnace':
                 return int(max([c.temperature for c in self.coil])) + 12 * 100
-            case 'Volcanus':
+            case 'Volcanus' | 'Digester' | 'Utupu-Tanuri':
                 return int(max([c.temperature for c in self.coil]))
-            case 'Helioflare Power Forge' | 'Helioflux Melting Core':
+            case 'Helioflare Power Forge' | 'Helioflux Melting Core' | 'Dimensionally Transcendent Plasma Forge':
                 return 10000000
             case _:
                 return 0

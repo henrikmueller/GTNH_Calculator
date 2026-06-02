@@ -92,9 +92,12 @@ class DefaultMachineBehaviour(MachineBehaviour):
             machine_voltage_tier=voltage_tier,
             machine_options=machine_options
         )
-        if not isnan(raw_recipe.recipe_options.coil_heat) and heat_capacity < raw_recipe.recipe_options.coil_heat:
+        if not isnan(raw_recipe.recipe_options.coil_heat) and not isnan(heat_capacity) \
+            and heat_capacity < raw_recipe.recipe_options.coil_heat:
+            _LOGGER.warning(f'Insufficient heat capacity: {heat_capacity} for {raw_recipe}. Required: {raw_recipe.recipe_options.coil_heat}')
             return None  # Cannot fit the recipe to the machine due to insufficient heat capacity
         if not isnan(raw_recipe.recipe_options.fusion_tier) and machine_stats.fusion_tier < raw_recipe.recipe_options.fusion_tier:
+            _LOGGER.warning(f'Insufficient fusion tier: {machine_stats.fusion_tier} for {raw_recipe}. Required: {raw_recipe.recipe_options.fusion_tier}')
             return None  # Cannot fit the recipe to the machine due to insufficient fusion tier
         
 
@@ -110,6 +113,7 @@ class DefaultMachineBehaviour(MachineBehaviour):
             machine_options=machine_options,
             recipe_options=raw_recipe.recipe_options,
             machine_heat_capacity=heat_capacity,
+            voltage_tier=voltage_tier
         )
         energy_multiplier = self.energy_behaviour.get_energy_multiplier(energy_context)
         max_parallels = self.parallel_behaviour.get_parallels(

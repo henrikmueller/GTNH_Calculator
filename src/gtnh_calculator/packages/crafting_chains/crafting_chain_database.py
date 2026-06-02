@@ -1,6 +1,6 @@
 from __future__ import annotations
 import pandas as pd
-from typing import Dict
+from typing import Dict, Iterable
 import logging
 from dataclasses import dataclass
 from collections import Counter
@@ -34,15 +34,22 @@ class CraftingChainDatabase:
         cls, database: GTNHDatabase, config: CraftingChainConfig, validity_check: bool = False
     ) -> CraftingChainDatabase:
         with Timer('create_crafting_chain_database', active=True):
-            _LOGGER.info(f'Disabled machines: {set(m.name for m in database.extracted_machines.values() if m.disabled)}')
+            _LOGGER.info(f'Disabled machines: {set(m.name for m in database.extracted_machines.values() if m.disabled or m in config.disabled_machines)}')
+            allowed_machines = {m for m in database.extracted_machines.values() if not m.disabled and m not in config.disabled_machines}
             df = database.filter_recipes(
                 database.df_recipes,
-                excluded_outputs=set(database.extracted_materials[id] for id in config.disabled_materials),
+                excluded_ids=config.disabled_recipe_ids,
+                excluded_outputs=config.disabled_materials,
+                allowed_machines=allowed_machines,
                 voltage_tiers={v for v in VoltageTier.valid_voltage_tiers() if v <= config.max_voltage_tier},
                 machines={m for m in database.extracted_machines.values() if not m.disabled}
             )
             df = df[df['MACHINES'].map(len) > 0].drop(columns='TOTAL_EU').copy().reset_index()
-            df = df[df['ID'].map(lambda id: id not in config.disabled_recipes)].reset_index()
+
+            target_materials = list(config.outputs.union(config.inputs))
+            _LOGGER.info(f'Outputs: {config.outputs}')
+            _LOGGER.info(f'Target materials: {target_materials}')
+            _, df = get_ingredient_recipes(df, database.extracted_materials, target_materials, sort=False)
 
             starting_materials = config.inputs | config.infinite_materials
             _LOGGER.info(f'Starting materials: {starting_materials}')
@@ -51,11 +58,6 @@ class CraftingChainDatabase:
             )
             reachable_materials = {m.id: m for m, g in initial_material_grading.items() if g >= 0}
             _LOGGER.info(f'Reachable recipes: {df.shape[0]}')
-
-            target_materials = list(config.outputs.union(config.inputs))
-            _LOGGER.info(f'Outputs: {config.outputs}')
-            _LOGGER.info(f'Target materials: {target_materials}')
-            _, df = get_ingredient_recipes(df, database.extracted_materials, target_materials, sort=False)
 
             if df.shape[0] <= 0:
                 raise ValueError(f'No recipes found for the specified config.')
@@ -66,20 +68,22 @@ class CraftingChainDatabase:
             # Add missing materials from inputs to reachable materials
             for row in df.itertuples(index=False):
                 for material in row.TOTAL_INPUTS.keys():
-                        reachable_materials[material.id] = material
-
+                    reachable_materials[material.id] = material
 
             def get_machine(row):
-                return database.get_default_machine(row, config.default_voltage_tier)
+                return database.get_default_machine_and_voltage_tier(
+                    row, config.default_voltage_tier, config.max_voltage_tier, prefer_singleblocks=True)
 
-            df['SELECTED_MACHINE'] = df.apply(get_machine, axis=1)
+            df[['SELECTED_MACHINE', 'SELECTED_VOLTAGE_TIER']] = df.apply(
+                get_machine,
+                axis=1,
+                result_type='expand'
+            )
             if not df['SELECTED_MACHINE'].notna().all():
                 count = df["SELECTED_MACHINE"].isna().sum()
                 _LOGGER.warning(
                     f'Could not determine the default machine for {count} recipes. Please check the logs for details.')
                 # print_df(df[df['SELECTED_MACHINE'].isna()])
-
-            # TODO: Remove materials not part in any recipe
 
             cc_database = GTNHDatabase(
                 df_recipes=df,
@@ -93,7 +97,7 @@ class CraftingChainDatabase:
 
             recipe_grading, material_grading = calculate_gradings(
                 recipes=list(recipes.values()),
-                materials=list(reachable_materials.values()),
+                materials=reachable_materials.values(),
                 starting_materials=starting_materials
             )
 
@@ -118,8 +122,8 @@ class CraftingChainDatabase:
         return self.database.df_recipes
 
     @property
-    def extracted_materials(self) -> Dict[str, Material]:
-        return self.database.extracted_materials
+    def materials(self) -> Iterable[Material]:
+        return self.material_grading.keys()
 
     @property
     def extracted_machines(self) -> Dict[str, Machine]:

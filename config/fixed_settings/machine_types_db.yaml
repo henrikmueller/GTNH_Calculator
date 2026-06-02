@@ -3607,6 +3607,7 @@ i~gregtech~gt.blockmachines~15413:
   multiblock: true
   unspecified: true
   name: Helioflux Melting Core
+  weight: 2
   voltage_tier:
   - 0
   - 1
@@ -4114,6 +4115,7 @@ i~gregtech~gt.blockmachines~3005:
     parallels_per_voltage_tier: 2
     base_parallels: 0
   name: Large Electric Compressor
+  weight: -1
   voltage_tier:
   - 0
   - 1
@@ -4137,6 +4139,7 @@ i~gregtech~gt.blockmachines~3006:
   multiblock: true
   unspecified: true
   name: Hot Isostatic Pressurization Unit
+  weight: 1
   voltage_tier:
   - 0
   - 1
@@ -4182,6 +4185,7 @@ i~gregtech~gt.blockmachines~3008:
   multiblock: true
   unspecified: true
   name: Pseudostable Black Hole Containment Field
+  weight: 2
   voltage_tier:
   - 0
   - 1
@@ -4673,6 +4677,7 @@ i~gregtech~gt.blockmachines~31150:
   multiblock: true
   unspecified: true
   name: Mega Alloy Blast Smelter
+  weight: 1
   voltage_tier:
   - 0
   - 1
@@ -6511,7 +6516,13 @@ i~gregtech~gt.blockmachines~791:
   - Industrial Coke Oven
   multiblock: true
   valid_options: coke_oven_casing
-  unspecified: true
+  energy_behaviour:
+    type: default
+    per_voltage_tier: 0.04
+  parallel_behaviour:
+    type: by_machine_option
+    machine_option_type: coke_oven_casing
+    parallels_dict: {1: 18, 2: 30}
   name: Industrial Coke Oven
   voltage_tier:
   - 0
@@ -6701,6 +6712,7 @@ i~gregtech~gt.blockmachines~810:
   - Alloy Blast Smelter
   multiblock: true
   name: Alloy Blast Smelter
+  weight: -1
   voltage_tier:
   - 0
   - 1
@@ -7518,7 +7530,15 @@ i~gregtech~gt.blockmachines~995:
   - Vacuum Furnace
   - Dehydrator
   multiblock: true
-  unspecified: true
+  valid_options: coil
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2.2
+  overclock_behaviour:
+    type: coil_temperature
+  energy_behaviour:
+    type: coil_temperature
+    energy_multiplier: 0.5
   name: Utupu-Tanuri
   voltage_tier:
   - 0
