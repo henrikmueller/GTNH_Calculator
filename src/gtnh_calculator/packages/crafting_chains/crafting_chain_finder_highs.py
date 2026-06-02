@@ -560,7 +560,7 @@ class HighsSolver:
         highs.setOptionValue("solver", "ipm")
         highs.setOptionValue("presolve", "on")
         highs.setOptionValue("parallel", "on")
-        highs.setOptionValue("time_limit", 25.0)
+        highs.setOptionValue("time_limit", 60.0)
         self.highs = highs
         self.name = name
         self.constraint_matrix = constraint_matrix
