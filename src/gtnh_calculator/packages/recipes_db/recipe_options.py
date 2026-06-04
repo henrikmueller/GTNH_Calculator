@@ -1,9 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import logging
-from typing import Dict
 from enum import StrEnum
 from math import nan
+from frozendict import frozendict
 import re
 
 from ..utility.general_utility import str_to_float
@@ -20,9 +20,9 @@ class RecipeOptionType(StrEnum):
     FUSION_TIER = 'fusion_tier'
 
 
-@dataclass
+@dataclass(frozen=True)
 class RecipeOptions:
-    options: Dict[str, float]
+    options: frozendict[str, float]
 
     @classmethod
     def get_recipe_options(cls, recipe_row) -> RecipeOptions:
@@ -39,7 +39,7 @@ class RecipeOptions:
                     _LOGGER.warning(f'Different coil heat specifications from metadata ({recipe_row.METADATA} -> {options[RecipeOptionType.COIL_HEAT]}) '
                                     f'and additional info ({recipe_row.ADDITIONAL_INFO} -> {coil_heat}). Using the specification from additional info.')
                 options[RecipeOptionType.COIL_HEAT] = coil_heat
-        return RecipeOptions(options=options)
+        return RecipeOptions(options=frozendict(options))
 
     @property
     def fusion_tier(self) -> float:

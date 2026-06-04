@@ -6,7 +6,7 @@ from typing import Dict
 from math import ceil
 
 from ..recipes_db.material import Material
-from ..recipes_db.recipes import Recipe
+from ..recipes_db.instantiated_recipes import InstantiatedRecipe
 from .crafting_chain_utility import calculate_gradings
 from ..utility.general_utility import format_float
 
@@ -42,20 +42,20 @@ class CraftingChainStatistics:
 
 
 class CraftingChain:
-    recipe_amounts: Dict[Recipe, float]
+    recipe_amounts: Dict[InstantiatedRecipe, float]
     total_material_needs: Dict[Material, float]
-    machine_amounts: Dict[Recipe, float]
+    machine_amounts: Dict[InstantiatedRecipe, float]
     infinite_materials: set[Material]
-    recipe_grading: Dict[Recipe, int]
+    recipe_grading: Dict[InstantiatedRecipe, int]
     material_grading: Dict[Material, int]
-    eu_per_tick: Dict[Recipe, float]
+    eu_per_tick: Dict[InstantiatedRecipe, float]
     total_eu_per_tick: float
-    infinite_recipes: Dict[Recipe, bool]
+    infinite_recipes: Dict[InstantiatedRecipe, bool]
     time: float
 
     def __init__(
             self,
-            recipe_amounts: Dict[Recipe, float],
+            recipe_amounts: Dict[InstantiatedRecipe, float],
             total_material_needs: Dict[Material, float],
             input_materials: set[Material],
             infinite_materials: set[Material],
@@ -76,7 +76,7 @@ class CraftingChain:
         }
         self.total_eu_per_tick = sum(self.eu_per_tick.values())
         self.recipe_grading, self.material_grading = calculate_gradings(
-            recipes=[recipe for recipe, amount in recipe_amounts.items() if amount > 0],
+            instantiated_recipes=[recipe for recipe, amount in recipe_amounts.items() if amount > 0],
             materials=list(total_material_needs.keys()),
             starting_materials=input_materials | infinite_materials,
             ignore_unreachable=True
@@ -114,7 +114,7 @@ class CraftingChain:
         self.infinite_recipes = {r: False for r in recipe_amounts.keys()}
 
     @property
-    def recipe_list(self) -> list[Recipe]:
+    def recipe_list(self) -> list[InstantiatedRecipe]:
         return [r for r, a in self.recipe_amounts.items() if a > 0]
 
     @property

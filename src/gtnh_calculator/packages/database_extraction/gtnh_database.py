@@ -4,13 +4,13 @@ import pandas as pd
 import logging
 from typing import Dict, Iterable
 from collections import defaultdict
-from itertools import product
 
 from ..recipes_db.material import Material
 from ..recipes_db.machines import Machine
+from ..recipes_db.recipes import Recipe
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.machine_options.machine_option_books import MachineOptionsBook
-from ..recipes_db.recipe_options import RecipeOptions, RecipeOptionType
+from ..recipes_db.recipe_options import RecipeOptionType
 from ..utility.constants import GT_EU_KEY, INCLUDE_DEPRECATED_MACHINES
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class GTNHDatabase:
         return set(m.mod for m in self.extracted_materials.values())
 
     def mod_set_recipes(self) -> set[str]:
-        return set(self.df_recipes['CATEGORY'].unique())
+        return set(set(self.df_recipes["RECIPE"].apply(lambda r: r.category)))
 
     def add_eu(self) -> None:
         if GT_EU_KEY in self.extracted_materials.keys():
@@ -53,52 +53,52 @@ class GTNHDatabase:
         excluded_outputs: Iterable[Material] | None = None,
         voltage_tiers: set[int] | frozenset[int] | None = None,
         categories: Iterable[str] | None = None,
-        machines: set[Machine] | frozenset[Machine] | None = None,
         allowed_machines: set[Machine] | frozenset[Machine] | None = None,
         recipe_options: Iterable[RecipeOptionType] | None = None
     ) -> pd.DataFrame:
         df_result = df_recipes.copy(deep=False)
+
         if excluded_ids is not None:
             df_result = df_result[~df_result['ID'].isin(excluded_ids)]
         if inputs is not None:
-            df_result = df_result[df_result['TOTAL_INPUTS'].map(lambda input_groups: all(
-                any(input in input_group.materials for input_group in input_groups) for input in inputs
-            ))]
+            df_result = df_result[df_result['RECIPE'].map(lambda r: all(
+                any(input in input_group.materials for input_group in r.inputs) for input in inputs)
+            )]
         if outputs is not None:
-            df_result = df_result[df_result['AVG_OUTPUTS'].map(lambda avg_outputs: all(
-                output in avg_outputs.keys() for output in outputs
+            df_result = df_result[df_result['RECIPE'].map(lambda r: all(
+                output in r.outputs for output in outputs
             ))]
         if outputs_any is not None:
-            df_result = df_result[df_result['AVG_OUTPUTS'].map(lambda avg_outputs: any(
-                output in avg_outputs.keys() for output in outputs_any
+            df_result = df_result[df_result['RECIPE'].map(lambda r: any(
+                output in r.outputs for output in outputs_any
             ))]
         if excluded_outputs is not None:
-            df_result = df_result[df_result['AVG_OUTPUTS'].map(lambda avg_outputs: all(
-                output not in excluded_outputs for output in avg_outputs.keys()
+            df_result = df_result[df_result['RECIPE'].map(lambda r: all(
+                output not in excluded_outputs for output in r.outputs
             ))]
         if voltage_tiers is not None:
-            if voltage_tiers and max(voltage_tiers) - min(voltage_tiers) + 1 == len(voltage_tiers):
-                df_result = df_result[(df_result['VOLTAGE_TIER'] >= min(voltage_tiers)) &
-                                       (df_result['VOLTAGE_TIER'] <= max(voltage_tiers))]
+            min_vt, max_vt = min(voltage_tiers), max(voltage_tiers)
+            if voltage_tiers and max_vt - min_vt + 1 == len(voltage_tiers):
+                df_result = df_result[df_result['RECIPE'].map(lambda r: 
+                    r.voltage_tier >= min_vt and r.voltage_tier <= max_vt)]
             else:
-                df_result = df_result[df_result['VOLTAGE_TIER'].isin(voltage_tiers)]
+                df_result = df_result[df_result['RECIPE'].map(lambda r: 
+                    r.voltage_tier in voltage_tiers)]
         if categories is not None:
-            df_result = df_result[df_result['CATEGORY'].isin(categories)]
-        if machines is not None:
-            df_result['MACHINES'] = df_result['MACHINES'].map(lambda s: s & machines)
-            df_result = df_result[df_result['MACHINES'].map(len) > 0]
+            df_result = df_result[df_result['RECIPE'].map(lambda r: 
+                r.category in categories)]
         if allowed_machines is not None:
-            df_result = df_result[df_result['MACHINES'].map(lambda s: bool(s & allowed_machines))]
+            df_result = df_result[df_result['RECIPE'].map(lambda r: bool(r.valid_machines & allowed_machines))]
         if recipe_options is not None:
-            df_result = df_result[df_result['RECIPE_OPTIONS'].map(
-                lambda ro: all(ro.has_option(option) for option in recipe_options))]
+            df_result = df_result[df_result['RECIPE'].map(lambda r: 
+                all(r.recipe_options.has_option(option) for option in recipe_options))]
         return df_result
 
     def get_base_machines(
-        self, recipe_row, default_voltage_tier: int | None = None, max_voltage_tier: int | None = None
+        self, recipe: Recipe, default_voltage_tier: int | None = None, max_voltage_tier: int | None = None
     ) -> list[Machine]:
         max_voltage_tier = VoltageTier.MAX if max_voltage_tier is None else max_voltage_tier
-        machines = sorted([(m, min(m.machine_stats.voltage_tiers)) for m in recipe_row.MACHINES], key=lambda x: x[1])
+        machines = sorted([(m, min(m.machine_stats.voltage_tiers)) for m in recipe.valid_machines], key=lambda x: x[1])
         lv_machines, hv_machines = [], []
         for machine, min_voltage_tier in machines:
             if default_voltage_tier is None or min_voltage_tier <= default_voltage_tier:
@@ -114,7 +114,7 @@ class GTNHDatabase:
                 return
             groups[(frozenset(machine.machine_types), machine.multiblock)].add(machine)
 
-        recipe_options = recipe_row.RECIPE_OPTIONS
+        recipe_options = recipe.recipe_options
         for machine in lv_machines:
             add_to_group(machine)
 
@@ -146,8 +146,10 @@ class GTNHDatabase:
         self, recipe_row, default_voltage_tier: int | None = None, max_voltage_tier: int | None = None, 
         prefer_singleblocks: bool = True
     ) -> tuple[Machine | None, int]:
+        recipe: Recipe = recipe_row.RECIPE
+
         def base_voltage_tier(machine: Machine) -> int:
-            valid_voltage_tiers = [v for v in machine.voltage_tiers if recipe_row.VOLTAGE_TIER <= v]
+            valid_voltage_tiers = [v for v in machine.voltage_tiers if recipe.voltage_tier <= v]
             if not valid_voltage_tiers:
                 raise ValueError(f'No valid voltage tier found for machine {machine} and recipe {recipe_row}. '
                                 f'Default voltage tier: {default_voltage_tier}')
@@ -158,7 +160,7 @@ class GTNHDatabase:
                 valid_low_voltage_tiers = [v for v in valid_voltage_tiers if v <= default_voltage_tier]
                 return max(valid_low_voltage_tiers) if valid_low_voltage_tiers else min(valid_voltage_tiers)
 
-        base_machines = self.get_base_machines(recipe_row, default_voltage_tier, max_voltage_tier)
+        base_machines = self.get_base_machines(recipe, default_voltage_tier, max_voltage_tier)
         if prefer_singleblocks and not all(m.multiblock for m in base_machines):
             base_machines = [m for m in base_machines if not m.multiblock]
 
@@ -186,24 +188,3 @@ class GTNHDatabase:
         
         machine = min(base_machines, key=lambda m: m.weight)
         return machine, base_voltage_tier(machine)
-    
-    @staticmethod
-    def blow_up_input_groups(df_recipes: pd.DataFrame, pick_any: bool = False) -> pd.DataFrame:
-        rows = []
-        for row in df_recipes.itertuples(index=False):
-            input_groups = list(row.TOTAL_INPUTS.keys())
-            amounts = list(row.TOTAL_INPUTS.values())
-            material_lists = [g.materials for g in input_groups]
-
-            for index, materials in enumerate(product(*material_lists)):
-                recipe_id = f"{row.ID}{index}"
-                inputs = {
-                    k: (m, v[1]) for (k, v), m in zip(row.INPUT_GROUPS.items(), materials)
-                }
-                total_inputs = dict(zip(materials, amounts))
-                rows.append(
-                    row._replace(ID=recipe_id, INPUT_GROUPS=inputs, TOTAL_INPUTS=total_inputs)._asdict()
-                )
-                if pick_any:
-                    break
-        return pd.DataFrame(rows)

@@ -3,9 +3,8 @@ from abc import abstractmethod
 from typing import Dict, Any
 from dataclasses import dataclass
 from math import floor, isnan
+from frozendict import frozendict
 import logging
-
-from packages.recipes_db import recipe_options
 
 from .overclock_behaviours import OverclockBehaviour, OverclockContext
 from .parallel_behaviours import ParallelBehaviour
@@ -13,9 +12,9 @@ from .energy_behaviour import EnergyBehaviour, EnergyContext
 from .heat_capacity_behaviour import HeatCapacityBehaviour
 from .speedup_behaviour import SpeedupBehaviour
 from ..raw_recipes import RawRecipe
+from ..adapted_recipes import AdaptedRecipe
 from ..machine_stats import MachineStats
 from ..machine_options.machine_options import MachineOptions
-from ..machine_options.machine_option_types import MachineOptionType
 from ..voltage_tiers import VoltageTier
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,7 +37,7 @@ class MachineBehaviour:
         machine_stats: MachineStats,
         machine_options: MachineOptions,
         log=False
-    ) -> RawRecipe | None:
+    ) -> AdaptedRecipe | None:
         ...
 
     @classmethod
@@ -81,10 +80,10 @@ class DefaultMachineBehaviour(MachineBehaviour):
         machine_stats: MachineStats,
         machine_options: MachineOptions,
         log=False
-    ) -> RawRecipe | None:
+    ) -> AdaptedRecipe | None:
         if raw_recipe.total_eu > 0:
             # EU Generators cannot be overclocked
-            return raw_recipe
+            return None
         if voltage_tier not in machine_stats.voltage_tiers:
             raise ValueError(f'Voltage tier {voltage_tier} is invalid for machine stats {machine_stats}.')
         
@@ -142,12 +141,12 @@ class DefaultMachineBehaviour(MachineBehaviour):
         processing_time = (raw_recipe.processing_time / speedup /
                            (4 ** perfect_overclocks * 2 ** non_perfect_overclocks))
         eu_per_tick = total_eu / processing_time / 20 if processing_time > 0 else 0
-        inputs = {
+        inputs = frozendict({
             m: used_parallels * a for m, a in raw_recipe.inputs.items()
-        }
-        output_specifications = {
+        })
+        output_specifications = frozendict({
             index: (m, used_parallels * a, p) for index, (m, a, p) in raw_recipe.output_specifications.items()
-        }
+        })
 
         def print_logs():
             _LOGGER.warning(raw_recipe)
@@ -170,17 +169,15 @@ class DefaultMachineBehaviour(MachineBehaviour):
         if log:
             print_logs()
 
-        new_raw_recipe = RawRecipe(
+        adapted_recipe = AdaptedRecipe(
             eu_per_tick=eu_per_tick,
             processing_time=processing_time,
             amperage=raw_recipe.amperage,
-            voltage_tier=voltage_tier,
             inputs=inputs,
             output_specifications=output_specifications,
-            recipe_options=raw_recipe.recipe_options,
             used_parallels=used_parallels
         )
-        return new_raw_recipe
+        return adapted_recipe
 
 
 @dataclass(frozen=True)
@@ -192,23 +189,21 @@ class NeutronActivatorBehaviour(MachineBehaviour):
         machine_stats: MachineStats,
         machine_options: MachineOptions,
         log=False
-    ) -> RawRecipe | None:
+    ) -> AdaptedRecipe | None:
         speedup = 1
         processing_time = (raw_recipe.processing_time / speedup)
         eu_per_tick = -6  # As if ULV Accelerator is used
         voltage_tier = VoltageTier.voltage_tier_by_eu(abs(eu_per_tick))
 
-        new_raw_recipe = RawRecipe(
+        adapted_recipe = AdaptedRecipe(
             eu_per_tick=eu_per_tick,
             processing_time=processing_time,
             amperage=raw_recipe.amperage,
-            voltage_tier=voltage_tier,
             inputs=raw_recipe.inputs,
             output_specifications=raw_recipe.output_specifications,
-            recipe_options=raw_recipe.recipe_options,
             used_parallels=1
         )
-        return new_raw_recipe
+        return adapted_recipe
 
 
 @dataclass(frozen=True)
@@ -220,5 +215,5 @@ class NotImplementedMachineBehaviour(MachineBehaviour):
         machine_stats: MachineStats,
         machine_options: MachineOptions,
         log=False
-    ) -> RawRecipe | None:
+    ) -> AdaptedRecipe | None:
         raise NotImplementedError('Machine Behaviour not implemented')

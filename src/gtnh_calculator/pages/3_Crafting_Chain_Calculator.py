@@ -13,7 +13,7 @@ from packages.crafting_chains.crafting_chain_database import CraftingChainDataba
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.utility.streamlit_functions import (
     load_database, load_crafting_chain_database, display_crafting_chain_recipe, material_image,
-    scatter_plot, display_pareto_front
+    scatter_plot, display_pareto_front, show_memory_usage
 )
 from packages.recipes_db.material import Material
 from packages.recipes_db.voltage_tiers import VoltageTier
@@ -48,6 +48,7 @@ st.set_page_config(
 st.markdown('# GTNH Calculator')
 st.markdown('## CraftingChainConfig File')
 database: GTNHDatabase = load_database()
+show_memory_usage(database)
 uploaded_file = st.file_uploader("Choose a config file to specify the recipe chain", type='yaml')
 
 with st.expander('Example files'):
@@ -60,7 +61,9 @@ with st.expander('Example files'):
     The config file specifies that the crafting chain should be optimized for maximal Gasoline output, while 
     adhering to the specified material constraints.
     ''')
-        example_hog = st.button('Calculate Crafting Chain', type='primary', key='example_hog')
+        if st.button('Calculate Crafting Chain', type='primary', key='example_hog'):
+            print('PRESSED')
+            st.session_state['example_yaml'] = 'hog'
         # material_image(database.extracted_materials['f~gregtech~highoctanegasoline'])
 
         st.markdown('**Download config file for High Octane Gasoline example**:')
@@ -79,7 +82,8 @@ with st.expander('Example files'):
     _Iridium_ and _Osmium_. The config file specifies that the crafting chain should be optimized for the unweighted 
     sum of all outputs, while adhering to the specified material constraints.
     ''')
-        example_plat = st.button('Calculate Crafting Chain', type='primary', key='example_plat')
+        if st.button('Calculate Crafting Chain', type='primary', key='example_plat'):
+            st.session_state['example_yaml'] = 'platinum'
         # material_image(database.extracted_materials['i~bartworks~gt.bwMetaGenerateddust~47'])
 
         st.markdown('**Download config file for Platinum Line example**:')
@@ -90,28 +94,27 @@ with st.expander('Example files'):
                 file_name="config_plat_line_example.yaml"
             )
 
-
-if uploaded_file is None:
-    if example_hog:
-        with open("config/fixed_examples/config_hog_example.yaml", "rb") as f:
-            uploaded_file = BytesIO(f.read())
-    elif example_plat:
-        with open("config/fixed_examples/config_plat_line_example.yaml", "rb") as f:
-            uploaded_file = BytesIO(f.read())
+if uploaded_file is None and 'example_yaml' in st.session_state:
+    match st.session_state['example_yaml']:
+        case 'hog':
+            with open("config/fixed_examples/config_hog_example.yaml", "rb") as f:
+                uploaded_file = BytesIO(f.read())
+        case 'platinum':
+            with open("config/fixed_examples/config_plat_line_example.yaml", "rb") as f:
+                uploaded_file = BytesIO(f.read())
 
 
 if uploaded_file is not None:
     with st.spinner('Reducing database...', show_time=True):
         if 'file_hash' not in st.session_state or st.session_state['file_hash'] != hash(uploaded_file):
             for key in st.session_state:
-                if key == 'database':
+                if key in ('database', 'example_yaml'):
                     continue
                 del st.session_state[key]
         st.session_state['file_hash'] = hash(uploaded_file)
         crafting_chain_database = load_crafting_chain_database(uploaded_file, database)
 else:
-    crafting_chain_database = None if 'crafting_chain_database' not in st.session_state \
-        else st.session_state['crafting_chain_database']
+    crafting_chain_database = None
 
 config = crafting_chain_database.config if crafting_chain_database is not None else None
 update = 'update' in st.session_state and st.session_state['update']
@@ -186,7 +189,7 @@ if crafting_chain_database is not None and config is not None:
             #     for g in range(grade - 1, -1, -1):
             #         st.markdown(f'**Grading Level {g}**')
             #         current_grade_recipes = [
-            #             r for r in crafting_chain_database.recipes.values()
+            #             r for r in crafting_chain_database.instantiated_recipes.values()
             #             if crafting_chain_database.recipe_grading[r] == g and
             #             any(o in current_grade_materials for o in r.get_outputs())
             #         ]
@@ -243,10 +246,10 @@ if crafting_chain_database is not None and config is not None:
             with st.spinner('Applying filters...', show_time=True):
                 selected_machines = {m for m in database.extracted_machines.values() if m.name in selected_machine_names}
                 
-                filtered_recipes = list(crafting_chain_database.recipes.values())
+                filtered_recipes = list(crafting_chain_database.instantiated_recipes.values())
                 if selected_machines:
                     filtered_recipes = [
-                        r for r in crafting_chain_database.recipes.values() if bool(selected_machines & r.valid_machines)
+                        r for r in crafting_chain_database.instantiated_recipes.values() if bool(selected_machines & r.valid_machines)
                     ]
                 filtered_recipes = [
                     r for r in filtered_recipes if bool(selected_voltage_tiers & set(r.valid_voltage_tiers))
@@ -293,7 +296,7 @@ if crafting_chain_database is not None and config is not None:
     # Check if all outputs can still be produced by at least one recipe
     outputs_missing = False
     for output in config.outputs:
-        if not any(output in recipe.get_outputs() for recipe in crafting_chain_database.recipes.values()):
+        if not any(output in recipe.get_outputs() for recipe in crafting_chain_database.instantiated_recipes.values()):
             outputs_missing = True
             st.error(f'''Output {output} cannot be produced by any recipe with the given config.
             Please check if the config is too restrictive (e.g. because of unlocked_voltage_tier).''', icon="❗")

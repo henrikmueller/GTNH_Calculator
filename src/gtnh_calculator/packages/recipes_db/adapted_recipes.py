@@ -4,28 +4,24 @@ from frozendict import frozendict
 import logging
 
 from .material import Material, MaterialGroup
-from .recipe_options import RecipeOptions
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
 @dataclass(frozen=True)
-class RawRecipe:
-    category: str
+class AdaptedRecipe:
     eu_per_tick: float
     processing_time: float  # in seconds
     amperage: int
-    voltage_tier: int
     inputs: frozendict[MaterialGroup, float]
     output_specifications: frozendict[int, tuple[Material, float, float]]
-    recipe_options: RecipeOptions
+    used_parallels: int = 1
 
     def __repr__(self) -> str:
-        return (f'RawRecipe(inputs={self.inputs}, output_specifications={self.output_specifications}, '
+        return (f'AdaptedRecipe(inputs={self.inputs}, outputs={self.output_specifications}, '
                 f'eu_per_tick={self.eu_per_tick}, processing_time={self.processing_time}, '
-                f'amperage={self.amperage}, voltage_tier={self.voltage_tier}, '
-                f'recipe_options={self.recipe_options})')
+                f'amperage={self.amperage}, used_parallels={self.used_parallels})')
 
     @property
     def total_eu(self) -> float:

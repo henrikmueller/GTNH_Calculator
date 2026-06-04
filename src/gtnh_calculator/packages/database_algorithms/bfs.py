@@ -5,6 +5,7 @@ from collections import deque
 import logging
 
 from ..utility.general_utility import Timer
+from ..recipes_db.recipes import Recipe
 from ..recipes_db.material import Material, MaterialGroup
 from ..recipes_db.machines import Machine
 from ..recipes_db.voltage_tiers import VoltageTier
@@ -17,10 +18,11 @@ def get_reachable_recipes(
     df_recipes: pd.DataFrame, extracted_materials: Dict[str, Material],
     starting_materials: set[Material], sort=False
 ) -> tuple[Dict[Material, int], pd.DataFrame]:
-    outputs = df_recipes['AVG_OUTPUTS']
-    node_to_edges = defaultdict(list)
+    recipes: list[Recipe] = df_recipes['RECIPE'].tolist()
+    outputs = [r.outputs for r in recipes]
+    node_to_edges = defaultdict(list[tuple[int, int]])
     remaining = []
-    for edge_id, inputs_groups in enumerate(df_recipes['TOTAL_INPUTS']):
+    for edge_id, inputs_groups in enumerate([r.inputs for r in recipes]):
         tmp = [True] * len(inputs_groups)
         for i, (input_group, amount) in enumerate(inputs_groups.items()):
             if amount == 0:
@@ -45,7 +47,7 @@ def get_reachable_recipes(
 
             if sum(remaining[edge_id]) == 0 and recipe_grading[edge_id] < 0:
                 recipe_grading[edge_id] = material_grading[material]
-                for output in outputs.iloc[edge_id].keys():
+                for output in outputs[edge_id]:
                     if material_grading[output] < 0:
                         material_grading[output] = material_grading[material] + 1
                         double_ended_queue.append(output)
@@ -66,12 +68,11 @@ def get_ingredient_recipes(
     :param sort:
     :return:
     """
-    input_groups = df_recipes['TOTAL_INPUTS']
-    node_to_edges = defaultdict(list)
-    for edge_id, avg_outputs in enumerate(df_recipes['AVG_OUTPUTS']):
-        for i, (output, amount) in enumerate(avg_outputs.items()):
-            if amount <= 0:
-                continue
+    recipes: list[Recipe] = df_recipes['RECIPE'].tolist()
+    input_groups = [r.inputs for r in recipes]
+    node_to_edges = defaultdict(list[int])
+    for edge_id, outputs in enumerate([r.outputs for r in recipes]):
+        for i, output in enumerate(outputs):
             node_to_edges[output].append(edge_id)
 
     material_grading = {m: -1 for m in extracted_materials.values()}  # positive values = visited
@@ -85,7 +86,7 @@ def get_ingredient_recipes(
         for edge_id in node_to_edges[material]:
             if recipe_grading[edge_id] < 0:
                 recipe_grading[edge_id] = material_grading[material]
-                for input_group in input_groups.iloc[edge_id].keys():
+                for input_group in input_groups[edge_id].keys():
                     for input in input_group.materials:
                         if material_grading[input] < 0:
                             material_grading[input] = material_grading[material] + 1
@@ -108,7 +109,7 @@ def calculate_unlock_tiers(
         total_inputs = df_recipes['TOTAL_INPUTS']
         outputs = df_recipes['AVG_OUTPUTS']
         voltage_tiers: list[int] = list(df_recipes['VOLTAGE_TIER'])
-        node_to_edges = defaultdict(list)
+        node_to_edges = defaultdict(list[tuple[int, int]])
         unlock_tiers_groups = []
         for edge_id, row in enumerate(df_recipes.itertuples(index=False)):
             input_groups: Dict[MaterialGroup, float] = row.TOTAL_INPUTS

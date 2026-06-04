@@ -7,7 +7,7 @@ from itertools import product
 from highspy import Highs, HighsModelStatus
 
 from ..recipes_db.material import Material
-from ..recipes_db.recipes import Recipe
+from ..recipes_db.instantiated_recipes import InstantiatedRecipe
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..utility.general_utility import time_to_seconds
 from ..configs.crafting_chain_config_db import CraftingChainConfig
@@ -120,7 +120,7 @@ class CraftingChainFinder:
     machine_limit: int
     use_individual_limits: bool
     materials: list[Material]
-    recipes: list[Recipe]
+    recipes: list[InstantiatedRecipe]
     infinite_material_list: list[Material]
     index_by_material: Dict[Material, int]
     p: int
@@ -143,7 +143,7 @@ class CraftingChainFinder:
         self.use_individual_limits = use_individual_limits
         self.materials = list(self.crafting_chain_database.database.extracted_materials.values())
         self.index_by_material = {m: i for i, m in enumerate(self.materials)}
-        self.recipes = list(self.crafting_chain_database.recipes.values())
+        self.recipes = list(self.crafting_chain_database.instantiated_recipes.values())
         self.p, self.q = len(self.materials), len(self.recipes)
 
         validate_config_parameters(config)
@@ -524,7 +524,7 @@ class CraftingChainFinder:
             recipe_vector = optimal_solution.recipe_vector
             recipe_amounts = {r: a for r, a in zip(self.recipes, recipe_vector[:self.q]) if a != 0}
             material_vector = self.total_recipe_matrix @ recipe_vector
-            material_amounts = {m: a for m, a in zip(self.materials, material_vector)}
+            material_amounts = {m: float(a) for m, a in zip(self.materials, material_vector)}
             # for i, x in enumerate(recipe_vector[:q]):
             #     if not np.isinf(ub[i]) and x >= ub[i]:
             #         _LOGGER.warning(f'Machine Limit reached for recipe {recipes[i]}: {x} = {ub[i]}')
@@ -538,7 +538,7 @@ class CraftingChainFinder:
             )
             return crafting_chain
 
-    def machine_amount_cap(self, recipe: Recipe, time: float, use_individual_limits: bool) -> float:
+    def machine_amount_cap(self, recipe: InstantiatedRecipe, time: float, use_individual_limits: bool) -> float:
         if use_individual_limits and recipe.cap is not None and recipe.positive_processing_time():
             return min(recipe.cap * time / recipe.processing_time, self.machine_limit * time / recipe.processing_time)
         return np.inf

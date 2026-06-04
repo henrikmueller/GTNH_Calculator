@@ -1,6 +1,6 @@
 inputs: 
   - i~gregtech~gt.comb~3 = -78  # Oil Comb
-  - i~minecraft~log~1 <= 1000  # Wood Log
+  - i~minecraft~log~1 >= -1000  # Wood Log
 outputs:
   - f~gregtech~highoctanegasoline
 infinite_materials:

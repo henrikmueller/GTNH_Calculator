@@ -5,7 +5,7 @@ import sys
 from rapidfuzz import fuzz
 
 from packages.database_extraction.gtnh_database import GTNHDatabase
-from packages.utility.streamlit_functions import load_database
+from packages.utility.streamlit_functions import load_database, show_memory_usage
 from packages.database_extraction.recipe_initialization import RecipeInitializer
 from packages.utility.streamlit_functions import display_crafting_chain_recipe, search_and_select_materials
 
@@ -22,6 +22,7 @@ st.set_page_config(
 )
 
 database: GTNHDatabase = load_database()
+show_memory_usage(database)
 recipe_initializer = RecipeInitializer(machine_options_book=database.machine_options_book)
 IMAGE_FOLDER = "db/images/"
 MAX_DISPLAYED_OPTIONS = 300

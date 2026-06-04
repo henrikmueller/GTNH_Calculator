@@ -1,0 +1,19 @@
+inputs: 
+  - i~gregtech~gt.comb~10 = -8  # Cryotheum Comb
+outputs:
+  - i~miscutils~FluidCryotheum~0  # Gelid Cryotheum
+infinite_materials:
+  - f~minecraft~water  # Water
+restrictions:
+weights:
+  i~miscutils~FluidCryotheum~0: 1
+time: 1s
+display_interval: 1s
+default_coil: i~gregtech~gt.blockcasings5~6
+disabled_machines:
+  - i~gregtech~gt.blockmachines~31072  # Molecular Transformer
+  - i~gregtech~gt.blockmachines~15413  # Helioflux Melting Core
+unlocked_voltage_tier: ZPM
+default_voltage_tier: EV
+maximal_energy_increase: 1.5
+machine_limit: 50

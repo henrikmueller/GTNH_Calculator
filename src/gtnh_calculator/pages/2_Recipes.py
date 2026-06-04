@@ -5,8 +5,8 @@ import sys
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.database_extraction.recipe_initialization import RecipeInitializer
 from packages.recipes_db.voltage_tiers import VoltageTier
-from packages.recipes_db.recipe_options import RecipeOptionType, RecipeOptions
-from packages.utility.streamlit_functions import load_database
+from packages.recipes_db.recipe_options import RecipeOptionType
+from packages.utility.streamlit_functions import load_database, show_memory_usage
 from packages.utility.streamlit_functions import search_and_select_materials, display_crafting_chain_recipe
 
 logging.basicConfig(stream=sys.stdout)
@@ -25,6 +25,7 @@ st.set_page_config(
 
 st.write("# GTNH Database ️")
 database: GTNHDatabase = load_database()
+show_memory_usage(database)
 mods_recipes = database.mod_set_recipes()
 recipe_initializer = RecipeInitializer(machine_options_book=database.machine_options_book)
 
@@ -67,15 +68,15 @@ with st.spinner('Applying filters...', show_time=True):
             axis=1,
             result_type='expand'
         )
-    df = database.blow_up_input_groups(df, pick_any=True)
+    instantiated_recipes = recipe_initializer.instantiate_recipes(df, pick_any=True)
 
     show_all = st.toggle(f'Show all filtered recipes (Max {MAX_DISPLAYED_RECIPES})', value=False)
-    total_recipe_count = df.shape[0]
-    df = df.head(MAX_DISPLAYED_RECIPES if show_all else 10)
+    total_recipe_count = len(instantiated_recipes)
+    displayed_recipe_count = MAX_DISPLAYED_RECIPES if show_all else 10
 
-st.success(f'Displaying {df.shape[0]} / {total_recipe_count} recipes matching the selected filters.', icon="✅")
+st.success(f'Displaying {displayed_recipe_count} / {total_recipe_count} recipes matching the selected filters.', icon="✅")
 
-if df.shape[0] > 0:
+if displayed_recipe_count > 0:
     # with st.expander("Filter by materials"):
     #     selected_materials = search_and_select_materials(
     #         database=database,
@@ -85,6 +86,5 @@ if df.shape[0] > 0:
     #         max_displayed_options=30
     #     )
 
-    for recipe_row in df.itertuples(index=False):
-        recipe = recipe_initializer.create_recipe_from_row(recipe_row)
-        display_crafting_chain_recipe(recipe, database.machine_options_book)
+    for instantiated_recipe in list(instantiated_recipes.values())[:displayed_recipe_count]:
+        display_crafting_chain_recipe(instantiated_recipe, database.machine_options_book)

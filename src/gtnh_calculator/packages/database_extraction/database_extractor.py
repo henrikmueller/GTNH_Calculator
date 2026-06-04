@@ -20,6 +20,8 @@ from ..recipes_db.machine_stats import MachineStats
 from ..recipes_db.machines import Machine, MachineType
 from ..recipes_db.behaviours.machine_behaviours import MachineBehaviour
 from ..recipes_db.recipe_options import RecipeOptions
+from ..recipes_db.raw_recipes import RawRecipe
+from ..recipes_db.recipes import Recipe
 from ..recipes_db.machine_options.machine_option_books import load_possible_machine_options
 from ..recipes_db.machine_options.machine_option_types import MachineOptionType
 from .database_building_options import steam_machines
@@ -48,7 +50,14 @@ class DatabaseExtractor:
         machines, machine_types = self.extract_machine_types(extracted_items)
         yield 0.2
         df_recipes = yield from self.extract_recipes(extracted_items, extracted_fluids, machines)
+
+        df_recipes = pd.DataFrame({
+            "ID": df_recipes["ID"],
+            "RECIPE": df_recipes.apply(self.create_recipe_from_row, axis=1),
+        })
         df_recipes = df_recipes.reset_index(drop=True)
+        yield 1.0
+
         database = GTNHDatabase(
             df_recipes=df_recipes,
             extracted_materials=extracted_materials,
@@ -156,7 +165,7 @@ class DatabaseExtractor:
                 static_df
                 .merge(df_recipe_types, on="RECIPE_TYPE_ID", how="left")
                 .groupby("ID")["MACHINES"]
-                .agg(lambda x: set(chain.from_iterable(x)))
+                .agg(lambda x: frozenset(chain.from_iterable(x)))
                 .reset_index()
             )
             yield 0.35
@@ -376,14 +385,32 @@ class DatabaseExtractor:
         yield 0.88
         df_all = df_all.join(df_valid_machines.set_index("ID"))
         df_all = df_all[df_all['MACHINES'].map(len) > 0]
+        df_all = df_all[df_all['DURATION'] >= 0]
         yield 0.9
 
         df_all['RECIPE_OPTIONS'] = df_all.apply(RecipeOptions.get_recipe_options, axis=1)
         df_all = df_all.drop(columns=['METADATA', 'ADDITIONAL_INFO'])
         df_all = df_all.reset_index()
 
-        yield 1
+        yield 0.93
         return df_all
+    
+    def create_recipe_from_row(self, recipe_row) -> Recipe:
+        raw_recipe = RawRecipe(
+            category=recipe_row.CATEGORY,
+            eu_per_tick=-recipe_row.VOLTAGE * recipe_row.AMPERAGE,
+            processing_time=recipe_row.DURATION,
+            amperage=recipe_row.AMPERAGE,
+            voltage_tier=recipe_row.VOLTAGE_TIER,
+            inputs=frozendict(recipe_row.TOTAL_INPUTS),
+            output_specifications=frozendict(recipe_row.OUTPUTS),
+            recipe_options=recipe_row.RECIPE_OPTIONS
+        )
+        return Recipe(
+            id=recipe_row.ID,
+            raw_recipe=raw_recipe,
+            valid_machines=frozenset(recipe_row.MACHINES)
+        )
 
     def extract_items(self, extracted_fluids: Dict[str, ExtractedFluid]) -> Dict[str, ExtractedItem]:
         conn = sqlite3.connect(self.database_path)

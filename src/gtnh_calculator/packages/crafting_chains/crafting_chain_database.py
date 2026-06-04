@@ -13,7 +13,7 @@ from ..database_extraction.recipe_initialization import RecipeInitializer
 from ..recipes_db.material import Material
 from ..recipes_db.machines import Machine
 from ..recipes_db.voltage_tiers import VoltageTier
-from ..recipes_db.recipes import Recipe
+from ..recipes_db.instantiated_recipes import InstantiatedRecipe
 from .crafting_chain_utility import calculate_gradings
 from ..utility.general_utility import Timer, print_df
 
@@ -25,8 +25,8 @@ _LOGGER.setLevel(logging.INFO)
 class CraftingChainDatabase:
     database: GTNHDatabase
     config: CraftingChainConfig
-    recipes: Dict[str, Recipe]
-    recipe_grading: Dict[Recipe, int]
+    instantiated_recipes: Dict[str, InstantiatedRecipe]
+    recipe_grading: Dict[InstantiatedRecipe, int]
     material_grading: Dict[Material, int]
 
     @classmethod
@@ -41,10 +41,8 @@ class CraftingChainDatabase:
                 excluded_ids=config.disabled_recipe_ids,
                 excluded_outputs=config.disabled_materials,
                 allowed_machines=allowed_machines,
-                voltage_tiers={v for v in VoltageTier.valid_voltage_tiers() if v <= config.max_voltage_tier},
-                machines={m for m in database.extracted_machines.values() if not m.disabled}
+                voltage_tiers={v for v in VoltageTier.valid_voltage_tiers() if v <= config.max_voltage_tier}
             )
-            df = df[df['MACHINES'].map(len) > 0].drop(columns='TOTAL_EU').copy().reset_index()
 
             target_materials = list(config.outputs.union(config.inputs))
             _LOGGER.info(f'Outputs: {config.outputs}')
@@ -62,12 +60,9 @@ class CraftingChainDatabase:
             if df.shape[0] <= 0:
                 raise ValueError(f'No recipes found for the specified config.')
 
-            # Take the cross product of all input groups
-            df = database.blow_up_input_groups(df)
-
             # Add missing materials from inputs to reachable materials
             for row in df.itertuples(index=False):
-                for material in row.TOTAL_INPUTS.keys():
+                for material in row.RECIPE.all_inputs:
                     reachable_materials[material.id] = material
 
             def get_machine(row):
@@ -93,10 +88,11 @@ class CraftingChainDatabase:
             )
     
             recipe_initializer = RecipeInitializer(machine_options_book=database.machine_options_book)
-            recipes = recipe_initializer.initialize_all(cc_database, config)
+            instantiated_recipes = recipe_initializer.instantiate_recipes(cc_database.df_recipes)
+
 
             recipe_grading, material_grading = calculate_gradings(
-                recipes=list(recipes.values()),
+                instantiated_recipes=list(instantiated_recipes.values()),
                 materials=reachable_materials.values(),
                 starting_materials=starting_materials
             )
@@ -104,12 +100,12 @@ class CraftingChainDatabase:
             crafting_chain_database = CraftingChainDatabase(
                 database=cc_database,
                 config=config,
-                recipes=recipes,
+                instantiated_recipes=instantiated_recipes,
                 recipe_grading=recipe_grading,
                 material_grading=material_grading
             )
 
-            for recipe in crafting_chain_database.recipes.values():
+            for recipe in crafting_chain_database.instantiated_recipes.values():
                 if isnan(recipe.eu_per_tick):
                     _LOGGER.warning(f'NAN in recipe eu/t {recipe}')
 
@@ -137,7 +133,7 @@ class CraftingChainDatabase:
 
     def _validate_recipe_grading(self):
         erroneous_gradings = set()
-        for recipe in self.recipes.values():
+        for recipe in self.instantiated_recipes.values():
             if self.recipe_grading[recipe] >= 0:
                 for material in recipe.consumed_inputs:
                     if self.material_grading[material] > self.recipe_grading[recipe]:
