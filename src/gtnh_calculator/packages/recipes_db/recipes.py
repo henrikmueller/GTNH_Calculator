@@ -3,6 +3,7 @@ from frozendict import frozendict
 import logging
 from dataclasses import dataclass
 from itertools import product
+from math import prod
 
 from .material import Material, MaterialGroup
 from .machines import Machine
@@ -35,6 +36,10 @@ class Recipe:
                 return [input_combination]
             combinations.append(input_combination)
         return combinations
+    
+    @property
+    def input_combination_amount(self) -> int:
+        return prod([len(g) for g in self.inputs.keys()])
     
     @property
     def category(self) -> str:

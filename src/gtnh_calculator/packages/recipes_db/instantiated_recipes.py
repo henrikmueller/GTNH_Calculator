@@ -3,6 +3,7 @@ from typing import Dict, Iterable
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
+from enum import StrEnum
 
 from .recipe_options import RecipeOptions
 from .recipes import Recipe, InputCombination
@@ -46,6 +47,12 @@ class RecipeEnvironment:
         self._machine = machine
 
 
+class RecipeUpdateResult(StrEnum):
+    UPDATED = "updated"
+    NOT_UPDATED = "not_updated"
+    INVALID = "invalid"
+
+
 @dataclass
 class InstantiatedRecipe:
     """
@@ -85,7 +92,7 @@ class InstantiatedRecipe:
         voltage_tier: int | None = None, 
         machine_option_dict: Dict[MachineOptionType, MachineOption] | None = None,
         log: bool = False
-    ) -> bool:
+    ) -> RecipeUpdateResult:
         """
         Update the recipe.
         """
@@ -96,10 +103,17 @@ class InstantiatedRecipe:
             if machine not in self.base_recipe.valid_machines:
                 raise ValueError(f'Machine {machine} is not valid for recipe {self}')
         if voltage_tier not in machine.voltage_tiers:
-            return False
+            return RecipeUpdateResult.INVALID
         
         new_machine_options = self.machine_options if machine_option_dict is None \
             else self.machine_options.copy(machine_option_dict)
+        
+        if log:
+            _LOGGER.info(f'Updating with machine {machine}, voltage tier {voltage_tier} and machine options {new_machine_options}')
+            _LOGGER.info(f'Currently: Machine {self.machine}, voltage tier {self.voltage_tier} and machine options {self.machine_options}')
+        if (machine == self.machine and voltage_tier == self.voltage_tier 
+            and new_machine_options == self.machine_options):
+            return RecipeUpdateResult.NOT_UPDATED
 
         adapted_recipe = machine.machine_behaviour.fit_recipe(
             raw_recipe=self.base_recipe.raw_recipe,
@@ -110,12 +124,12 @@ class InstantiatedRecipe:
         )
         if adapted_recipe is None:
             _LOGGER.error(f'Could not fit recipe {self} to machine {machine} with voltage tier {voltage_tier}')
-            return False
+            return RecipeUpdateResult.INVALID
         self.adapted_recipe = adapted_recipe
         self.recipe_environment.machine = machine
         self.recipe_environment.voltage_tier = voltage_tier
         self.recipe_environment.machine_options = new_machine_options
-        return True
+        return RecipeUpdateResult.UPDATED
 
     @property
     def total_eu(self) -> float:
@@ -146,21 +160,6 @@ class InstantiatedRecipe:
     @property
     def voltage_tier_name(self) -> str:
         return VoltageTier.voltage_tier_name(self.voltage_tier)
-
-    def set_voltage_tier(self, voltage_tier: int) -> bool:
-        if voltage_tier in self.valid_voltage_tiers:
-            self.adapted_recipe = AdaptedRecipe(
-                eu_per_tick=self.adapted_recipe.eu_per_tick,
-                processing_time=self.adapted_recipe.processing_time,
-                amperage=self.adapted_recipe.amperage,
-                inputs=self.adapted_recipe.inputs,
-                output_specifications=self.adapted_recipe.output_specifications,
-                used_parallels=self.adapted_recipe.used_parallels
-            )
-            return True
-        else:
-            _LOGGER.warning(f'Cannot set voltage tier {voltage_tier} for machine {self}')
-            return False
 
     @property
     def used_parallels(self) -> int:

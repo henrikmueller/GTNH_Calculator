@@ -34,9 +34,9 @@ _LOGGER.setLevel(logging.WARNING)
 
 @dataclass
 class DatabaseExtractor:
+    validity_check: bool
     database_path = 'db/gtnh-2-8-db.db'
     timer = True
-    validity_check: bool
 
     def extract_database(self) -> Generator[float, None, GTNHDatabase]:
         extracted_fluids = self.extract_fluids()

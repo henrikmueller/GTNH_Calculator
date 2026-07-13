@@ -76,8 +76,8 @@ class CraftingChain:
         }
         self.total_eu_per_tick = sum(self.eu_per_tick.values())
         self.recipe_grading, self.material_grading = calculate_gradings(
-            instantiated_recipes=[recipe for recipe, amount in recipe_amounts.items() if amount > 0],
-            materials=list(total_material_needs.keys()),
+            instantiated_recipe_list=[recipe for recipe, amount in recipe_amounts.items() if amount > 0],
+            materials={m.id: m for m in total_material_needs.keys()},
             starting_materials=input_materials | infinite_materials,
             ignore_unreachable=True
         )

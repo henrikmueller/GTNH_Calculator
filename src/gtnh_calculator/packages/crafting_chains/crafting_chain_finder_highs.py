@@ -12,12 +12,11 @@ from ..recipes_db.voltage_tiers import VoltageTier
 from ..utility.general_utility import time_to_seconds
 from ..configs.crafting_chain_config_db import CraftingChainConfig
 from ..crafting_chains.crafting_chain_db import CraftingChain
-from ..crafting_chains.crafting_chain_database import CraftingChainDatabase
 from ..utility.constants import FLUID_WEIGHT_FACTOR
 from ..utility.general_utility import Timer
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.INFO)
+_LOGGER.setLevel(logging.WARNING)
 
 
 def validate_config_parameters(config: CraftingChainConfig) -> None:
@@ -116,7 +115,6 @@ class OptimalSolution:
 
 
 class CraftingChainFinder:
-    crafting_chain_database: CraftingChainDatabase
     machine_limit: int
     use_individual_limits: bool
     materials: list[Material]
@@ -135,15 +133,17 @@ class CraftingChainFinder:
     total_recipe_matrix: csr_matrix
 
     def __init__(
-        self, crafting_chain_database: CraftingChainDatabase, config: CraftingChainConfig,
+        self, 
+        instantiated_recipes: list[InstantiatedRecipe], 
+        materials: list[Material],
+        config: CraftingChainConfig,
         machine_limit: int, use_individual_limits: bool = True
     ):
-        self.crafting_chain_database = crafting_chain_database
         self.machine_limit = machine_limit
         self.use_individual_limits = use_individual_limits
-        self.materials = list(self.crafting_chain_database.database.extracted_materials.values())
+        self.materials = materials
         self.index_by_material = {m: i for i, m in enumerate(self.materials)}
-        self.recipes = list(self.crafting_chain_database.instantiated_recipes.values())
+        self.recipes = instantiated_recipes
         self.p, self.q = len(self.materials), len(self.recipes)
 
         validate_config_parameters(config)

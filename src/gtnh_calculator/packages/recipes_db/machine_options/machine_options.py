@@ -42,6 +42,11 @@ class MachineOptions:
         return (f'MachineOptions(valid={self.valid_options}, options={[o.__repr__() for o in self._options.values()]}, '
                 f'min_tier={self.min_tier})')
     
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, MachineOptions):
+            return False
+        return self.valid_options == other.valid_options and self._options == other._options and self.min_tier == other.min_tier
+    
     def copy(self, machine_option_dict: Dict[MachineOptionType, MachineOption] | None = None) -> MachineOptions:
         new_machine_options = deepcopy(self)
         if machine_option_dict is None:
