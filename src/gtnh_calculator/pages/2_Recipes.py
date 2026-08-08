@@ -1,6 +1,7 @@
 import streamlit as st
 import logging
 import sys
+import pandas as pd
 
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.database_extraction.recipe_initialization import RecipeInitializer
@@ -63,12 +64,13 @@ with st.spinner('Applying filters...', show_time=True):
         recipe_options=selected_recipe_options if selected_recipe_options else None
     )
     if df.shape[0] > 0:
-        df[['SELECTED_MACHINE', 'SELECTED_VOLTAGE_TIER']] = df.apply(
-            database.get_default_machine_and_voltage_tier,
-            axis=1,
-            result_type='expand'
+        df[["SELECTED_MACHINE", "SELECTED_VOLTAGE_TIER"]] = pd.DataFrame( # type: ignore
+            df["RECIPE"]
+                .apply(recipe_initializer.get_default_machine_and_voltage_tier)
+                .tolist(),
+            index=df.index,
         )
-    instantiated_recipes = recipe_initializer.instantiate_recipes(df, pick_any=True)
+    instantiated_recipes = recipe_initializer.instantiate_recipes_from_raw(df, pick_any=True)
 
     show_all = st.toggle(f'Show all filtered recipes (Max {MAX_DISPLAYED_RECIPES})', value=False)
     total_recipe_count = len(instantiated_recipes)
@@ -87,4 +89,4 @@ if displayed_recipe_count > 0:
     #     )
 
     for instantiated_recipe in list(instantiated_recipes.values())[:displayed_recipe_count]:
-        display_crafting_chain_recipe(instantiated_recipe, database.machine_options_book)
+        display_crafting_chain_recipe(instantiated_recipe)

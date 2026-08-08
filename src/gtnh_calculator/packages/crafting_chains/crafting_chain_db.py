@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from dataclasses import dataclass
 import numpy as np
@@ -6,7 +7,7 @@ from typing import Dict
 from math import ceil
 
 from ..recipes_db.material import Material
-from ..recipes_db.instantiated_recipes import InstantiatedRecipe
+from ..recipes_db.instantiated_recipes import InstantiatedRecipe, InstantiatedPartialRecipe
 from .crafting_chain_utility import calculate_gradings
 from ..utility.general_utility import format_float
 
@@ -41,41 +42,32 @@ class CraftingChainStatistics:
 """
 
 
+@dataclass(frozen=True)
 class CraftingChain:
-    recipe_amounts: Dict[InstantiatedRecipe, float]
+    partial_recipes: Dict[str, InstantiatedPartialRecipe]
     total_material_needs: Dict[Material, float]
-    machine_amounts: Dict[InstantiatedRecipe, float]
     infinite_materials: set[Material]
-    recipe_grading: Dict[InstantiatedRecipe, int]
+    recipe_grading: Dict[str, int]
     material_grading: Dict[Material, int]
-    eu_per_tick: Dict[InstantiatedRecipe, float]
-    total_eu_per_tick: float
-    infinite_recipes: Dict[InstantiatedRecipe, bool]
+    infinite_recipes: Dict[str, bool]
     time: float
 
-    def __init__(
-            self,
-            recipe_amounts: Dict[InstantiatedRecipe, float],
-            total_material_needs: Dict[Material, float],
-            input_materials: set[Material],
-            infinite_materials: set[Material],
-            time: float
-    ):
-        self.recipe_amounts = recipe_amounts
-        self.total_material_needs = total_material_needs
-        self.input_materials = input_materials
-        self.infinite_materials = infinite_materials
-        self.time = time
-        self.machine_amounts = {
-            recipe: (amount * recipe.processing_time / time if recipe.positive_processing_time() else (1 if amount > 0 else 0))
-            for recipe, amount in recipe_amounts.items()
+    @classmethod
+    def create_crafting_chain(
+        cls,
+        recipe_amounts: Dict[InstantiatedRecipe, float],
+        total_material_needs: Dict[Material, float],
+        input_materials: set[Material],
+        infinite_materials: set[Material],
+        time: float
+    ) -> CraftingChain:
+        recipe_amounts = {r: a for r, a in recipe_amounts.items() if a > 0}
+        partial_recipes = {
+            instantiated_recipe.id: instantiated_recipe.fit_to_capacity_utilization(amount)
+            for instantiated_recipe, amount in recipe_amounts.items()
         }
-        self.eu_per_tick = {
-            r: (-r.eu_per_tick * a if r.positive_processing_time() else 0)
-            for r, a in self.machine_amounts.items()
-        }
-        self.total_eu_per_tick = sum(self.eu_per_tick.values())
-        self.recipe_grading, self.material_grading = calculate_gradings(
+
+        recipe_grading, material_grading = calculate_gradings(
             instantiated_recipe_list=[recipe for recipe, amount in recipe_amounts.items() if amount > 0],
             materials={m.id: m for m in total_material_needs.keys()},
             starting_materials=input_materials | infinite_materials,
@@ -111,11 +103,17 @@ class CraftingChain:
         #     self.infinite_recipes = infinite_recipes
         #
         # calculate_infinites()
-        self.infinite_recipes = {r: False for r in recipe_amounts.keys()}
+        infinite_recipes = {p.id: False for p in partial_recipes.values()}
 
-    @property
-    def recipe_list(self) -> list[InstantiatedRecipe]:
-        return [r for r, a in self.recipe_amounts.items() if a > 0]
+        return cls(
+            partial_recipes=partial_recipes,
+            total_material_needs=total_material_needs,
+            infinite_materials=infinite_materials,
+            recipe_grading=recipe_grading,
+            material_grading=material_grading,
+            infinite_recipes=infinite_recipes,
+            time=time
+        )
 
     @property
     def inputs(self) -> Dict[Material, float]:
@@ -125,26 +123,51 @@ class CraftingChain:
     def outputs(self) -> Dict[Material, float]:
         return {m: a for m, a in self.total_material_needs.items() if a > 0}
 
+    def get_machine_amount(self, recipe_id: str) -> float:
+        partial_recipe = self.partial_recipes[recipe_id]
+        return partial_recipe.capacity_utilization * partial_recipe.processing_time / self.time \
+            if partial_recipe.positive_processing_time() else (1 if partial_recipe.capacity_utilization > 0 else 0)
+
+    @property
+    def machine_amounts(self) -> Dict[str, float]:
+        return {
+            partial_recipe_id: self.get_machine_amount(partial_recipe_id)
+            for partial_recipe_id in self.partial_recipes.keys()
+        }
+
     @property
     def number_of_machines(self) -> int:
         return sum(ceil(a) for a in self.machine_amounts.values())
 
+    @property
+    def min_total_eu_per_tick(self) -> float:
+        return sum(p.min_eu_per_tick for p in self.partial_recipes.values())
+
+    @property
+    def max_total_eu_per_tick(self) -> float:
+        return sum(p.max_eu_per_tick for p in self.partial_recipes.values())
+
+    def get_partial_recipe(self, instantiated_recipe: InstantiatedRecipe) -> InstantiatedPartialRecipe:
+        return self.partial_recipes[instantiated_recipe.id]
+
     def to_dataframe(self, time_factor, display_interval_string: str):
         columns = ['Recipe Grading', 'Machine Amount', 'Machine', 'Voltage', f'Inputs per {display_interval_string}',
                    f'Outputs per {display_interval_string}',
-                   'EU/t', 'Infinite', 'Recipe ID']
-        recipes = [r for r, a in self.recipe_amounts.items() if a > 0]
-        n, q = len(columns), len(recipes)
+                   'Min EU/t', 'Max EU/t', 'Infinite', 'Recipe ID']
+        machine_amounts = self.machine_amounts
+        partial_recipes = list(self.partial_recipes.values())
+        n, q = len(columns), len(partial_recipes)
         data = np.zeros((q, n), dtype=object)
-        data[:, 0] = [self.recipe_grading[r] for r in recipes]
-        data[:, 1] = [self.machine_amounts[r] for r in recipes]
-        data[:, 2] = [r.machine.__str__() for r in recipes]
-        data[:, 3] = [r.voltage_tier_name for r in recipes]
-        data[:, 4] = [r.input_string(time_factor * self.recipe_amounts[r]) for r in recipes]
-        data[:, 5] = [r.output_string(time_factor * self.recipe_amounts[r]) for r in recipes]
-        data[:, 6] = [round(self.eu_per_tick[r], 3) for r in recipes]
-        data[:, 7] = [self.infinite_recipes[r] for r in recipes]
-        data[:, 8] = [r.id for r in recipes]
+        data[:, 0] = [self.recipe_grading[p.id] for p in partial_recipes]
+        data[:, 1] = [machine_amounts[p.id] for p in partial_recipes]
+        data[:, 2] = [p.machine.__str__() for p in partial_recipes]
+        data[:, 3] = [p.voltage_tier_name for p in partial_recipes]
+        data[:, 4] = [p.input_string(time_factor) for p in partial_recipes]
+        data[:, 5] = [p.output_string(time_factor) for p in partial_recipes]
+        data[:, 6] = [round(p.min_eu_per_tick, 3) for p in partial_recipes]
+        data[:, 7] = [round(p.max_eu_per_tick, 3) for p in partial_recipes]
+        data[:, 8] = [self.infinite_recipes[p.id] for p in partial_recipes]
+        data[:, 9] = [p.id for p in partial_recipes]
         df = pd.DataFrame(data=data, columns=columns)
         df = df.sort_values(by='Recipe Grading', ascending=True)
         return df
@@ -164,6 +187,10 @@ class CraftingChain:
 """
 
     def markdown_eu(self) -> str:
-        return f"""
-#### **Total EU/t**: {"{:.2f}".format(sum(self.eu_per_tick.values()))}
-"""
+        min_total_eu_per_tick = self.min_total_eu_per_tick
+        max_total_eu_per_tick = self.max_total_eu_per_tick
+        if min_total_eu_per_tick == max_total_eu_per_tick:
+            return f"#### **Total EU/t**: {format_float(abs(self.min_total_eu_per_tick), decimal_places=2, separate_thousands=True)}"
+        return (f"#### **Total EU/t**: {format_float(abs(self.min_total_eu_per_tick), decimal_places=2, separate_thousands=True)} – "
+                f"{format_float(abs(self.max_total_eu_per_tick), decimal_places=2, separate_thousands=True)}  "
+                f"(depending on parallelization)")

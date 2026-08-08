@@ -12,6 +12,7 @@ from ..recipes_db.machine_options.machine_option_books import MachineOptionsBook
 from ..database_extraction.gtnh_database import GTNHDatabase
 from ..utility.general_utility import str_to_float, load_file
 from ..utility.constants import COMMENT_CHARACTER, DEFAULT_MACHINE_LIMIT
+from ..streamlit.streamlit_logic import ConfigFile
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -160,12 +161,12 @@ class CraftingChainConfig:
         variable_string = '\n'.join([f'{attr}: {value_string(attr, value)}' for attr, value in vars(self).items()])
         return f'CraftingChainConfig:\n{variable_string}'
 
-    def max_machines(self, multiblock: bool) -> int:
+    def max_machines(self, multiblock: bool) -> int | None:
         return self.max_multiblock_machines if multiblock else self.max_singleblock_machines
 
 
 def load_config(
-    file_or_filepath: BytesIO | str,
+    file_or_filepath: ConfigFile,
     database: GTNHDatabase
 ) -> CraftingChainConfig:
     materials = database.extracted_materials
@@ -325,7 +326,7 @@ def load_config(
         raise AssertionError(f'Material keys must not contain the comment character "{COMMENT_CHARACTER}"')
 
     try:
-        yaml_data = load_file(file_or_filepath)
+        yaml_data = load_file(file_or_filepath.file)
     except Exception as e:
         raise DataLoadingException(e)
 

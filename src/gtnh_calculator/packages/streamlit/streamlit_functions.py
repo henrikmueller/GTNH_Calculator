@@ -1,11 +1,10 @@
 from string import Template
 from textwrap import dedent
 from typing import Iterable
-
+from frozendict import frozendict
 import streamlit as st
 import logging
-from typing import Dict
-from io import BytesIO
+from typing import Protocol
 from rapidfuzz import fuzz
 from streamlit_extras.stylable_container import stylable_container
 import streamlit.components.v1 as components
@@ -19,20 +18,67 @@ import psutil
 from packages.crafting_chains.crafting_chain_database import CraftingChainDatabase
 from packages.database_extraction.database_extractor import DatabaseExtractor
 from packages.database_extraction.gtnh_database import GTNHDatabase
-from packages.configs.crafting_chain_config_db import CraftingChainConfig, load_config
+from packages.configs.crafting_chain_config_db import load_config
 from packages.recipes_db.material import Material
+from packages.recipes_db.recipe_options import RecipeOptions
 from packages.recipes_db.machine_options.machine_option_books import MachineOptionsBook
 from packages.recipes_db.machine_options.machine_option_types import MachineOptionType
-from packages.recipes_db.machine_options.machine_options import MachineOption
-from packages.recipes_db.instantiated_recipes import InstantiatedRecipe, RecipeUpdateResult
+from packages.recipes_db.machines import Machine
+from packages.recipes_db.machine_options.machine_options import MachineOptions, MachineOption
+from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
 from packages.utility.general_utility import get_base64_image, format_float
 from packages.recipes_db.voltage_tiers import VoltageTier
 from packages.exceptions import GTNHCalculatorException
 from packages.crafting_chains.crafting_chain_finder_highs import (
     CraftingChainFinder, OptimalSolution, CostConstraints, CostVectorCollection)
+from packages.streamlit.session_state import SessionState, RecipeEnvironmentsState, StoredRecipeEnvironment
+from packages.streamlit.streamlit_logic import ConfigFile
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
+
+
+class DisplayableRecipe(Protocol):
+    @property
+    def processing_time(self) -> float:
+        ...
+
+    @property
+    def input_dict(self) -> frozendict[Material, float]:
+        ...
+
+    @property
+    def output_dict(self) -> frozendict[Material, float]:
+        ...
+
+    @property
+    def output_specifications(self) -> frozendict[int, tuple[Material, float, float]]:
+        ...
+
+    @property
+    def machine(self) -> Machine:
+        ...
+
+    @property
+    def recipe_options(self) -> RecipeOptions:
+        ...
+
+    @property
+    def parallelized(self) -> bool:
+        ...
+
+    def average_eu_per_tick_str(self, factor: float = 1.0) -> str:
+        ...
+
+    def average_total_eu_str(self, factor: float = 1.0) -> str:
+        ...
+
+    def used_parallels_str(self) -> str:
+        ...
+
+    @property
+    def is_valid(self) -> bool:
+        ...
 
 
 def _flatten_html(html_string: str) -> str:
@@ -64,137 +110,191 @@ def load_database() -> GTNHDatabase:
     return database
 
 
-def load_crafting_chain_database(uploaded_file: BytesIO | str, database: GTNHDatabase) -> CraftingChainDatabase | None:
-    if 'crafting_chain_database' not in st.session_state:
-        try:
-            config = load_config(uploaded_file, database)
-            crafting_chain_database = CraftingChainDatabase.create_crafting_chain_database(
-                database=database, config=config)
-            st.session_state['crafting_chain_database'] = crafting_chain_database
-        except GTNHCalculatorException as e:
-            st.error(e, icon="❗")
-            return None
-    else:
-        crafting_chain_database = st.session_state['crafting_chain_database']
+def load_crafting_chain_database(
+    uploaded_file: ConfigFile, database: GTNHDatabase, session_state: SessionState
+) -> CraftingChainDatabase | None:
+    crafting_chain_database: CraftingChainDatabase | None = None
+    try:
+        config = load_config(uploaded_file, database)
+        crafting_chain_database = CraftingChainDatabase.create_crafting_chain_database(
+            database=database, config=config)
+    except GTNHCalculatorException as e:
+        st.error(e, icon="❗")
     return crafting_chain_database
 
 
+# def load_and_cache_crafting_chain_database(
+#     uploaded_file: ConfigFile, database: GTNHDatabase, session_state: SessionState
+# ) -> CraftingChainDatabase | None:
+#     if session_state.crafting_chain_database is None:
+#         try:
+#             config = load_config(uploaded_file, database)
+#             crafting_chain_database = CraftingChainDatabase.create_crafting_chain_database(
+#                 database=database, config=config)
+#             session_state.crafting_chain_database = crafting_chain_database
+#         except GTNHCalculatorException as e:
+#             st.error(e, icon="❗")
+#             return None
+#     else:
+#         crafting_chain_database = session_state.crafting_chain_database
+#     return crafting_chain_database
+
+
 def adapt_crafting_chain_recipe(
-    instantiated_recipe: InstantiatedRecipe, machine_options_book: MachineOptionsBook) -> str | None:
+    instantiated_recipe: InstantiatedRecipe, machine_options_book: MachineOptionsBook,
+    recipe_environments_state: RecipeEnvironmentsState, amount: float = 1, key_suffix: str = ''
+) -> None:
     """
     Allows the user to adapt the machine, voltage tier and machine options of an instantiated recipe.
     :param instantiated_recipe: The instantiated recipe to adapt.
     :param machine_options_book: The machine options book to use for selecting machine options.
-    :return: The ID of the instantiated recipe if it was successfully adapted, None otherwise.
+    :return: None. The recipe_environments_state is adapted in place.
     """
-    valid_machines = sorted(instantiated_recipe.valid_machines, key=lambda m: m.minimal_voltage_tier())
+    id = instantiated_recipe.id
+    selected_recipe_environment = recipe_environments_state.get_recipe_environment(id, instantiated_recipe.recipe_environment)
+    recipe_amount_str = format_float(amount, decimal_places=3, separate_thousands=True)
 
     aa, bb = st.columns(2)
-    with aa:  # Select machine
-        if f"selected_machine_{instantiated_recipe.id}" in st.session_state:
-            selected_machine = st.session_state[f"selected_machine_{instantiated_recipe.id}"]
-        else:
-            selected_machine = instantiated_recipe.machine
-        st.markdown(f'#### {selected_machine.name}')
-        st.markdown(f'Recipe ID: {instantiated_recipe.id}')
+    with aa:
+        c, d = st.columns([0.5, 5], gap='small', vertical_alignment='center')
+        with c:
+            material_image(selected_recipe_environment.machine.item)
+        with d:
+            st.markdown(f'#### {f"{recipe_amount_str} " if amount != 1 else ""}{selected_recipe_environment.machine.machine_name_specified}')
 
-        @st.dialog("Select Machine")
-        def change_machine():
-            for i, machine in enumerate(valid_machines):
-                a, b = st.columns([0.5, 5], gap='small')
-                with a:
-                    material_image(machine.item)
-                with b:
-                    if st.button(machine.name, key=f"vote_{instantiated_recipe.id}_machine_{i}"):
-                        st.session_state[f"selected_machine_{instantiated_recipe.id}"] = machine
-                        st.rerun()
+        st.markdown(f'Recipe ID: {id}')
+        valid_machines = sorted(instantiated_recipe.valid_machines, key=lambda m: m.minimal_voltage_tier())
+        select_machine(
+            instantiated_recipe=instantiated_recipe,
+            selected_recipe_environment=selected_recipe_environment,
+            valid_machines=valid_machines,
+            recipe_environments_state=recipe_environments_state,
+            key_suffix=key_suffix
+        )
+        select_voltage_tier(
+            instantiated_recipe=instantiated_recipe,
+            selected_recipe_environment=selected_recipe_environment,
+            valid_machines=valid_machines,
+            recipe_environments_state=recipe_environments_state,
+            key_suffix=key_suffix
+        )
+
+    with bb: 
+        select_machine_options(
+            instantiated_recipe=instantiated_recipe, 
+            machine_options=instantiated_recipe.machine_options,
+            selected_recipe_environment=selected_recipe_environment, 
+            recipe_environments_state=recipe_environments_state,
+            machine_options_book=machine_options_book,
+            key_suffix=key_suffix
+        )
+
+
+def select_machine(
+    instantiated_recipe: InstantiatedRecipe, selected_recipe_environment: StoredRecipeEnvironment, valid_machines: list[Machine], 
+    recipe_environments_state: RecipeEnvironmentsState, key_suffix: str = ''
+):
+    if len(valid_machines) <= 1:
+        return
+    
+    id = instantiated_recipe.id
+
+    def machine_changed(machine: Machine):
+        if (not recipe_environments_state.has_recipe_environment(id) and machine == instantiated_recipe.machine):
+            return
+        _LOGGER.info(f'Updating stored machine for recipe {id}: {selected_recipe_environment.machine} -> {machine}')
+        selected_recipe_environment.set_machine(machine)
+        recipe_environments_state.set_recipe_environment(id, selected_recipe_environment, instantiated_recipe.recipe_environment)
+    
+    with st.expander('Change machine', width=400):
+        for i, machine in enumerate(valid_machines):
+            a, b = st.columns([0.5, 5], gap='small')
+            with a:
+                material_image(machine.item)
+            with b:
+                if st.button(machine.name, key=f"vote_{id}_machine_{i}_{key_suffix}", on_click=machine_changed, args=(machine,)):
+                    pass
+
+
+def select_voltage_tier(
+    instantiated_recipe: InstantiatedRecipe, selected_recipe_environment: StoredRecipeEnvironment, valid_machines: list[Machine], 
+    recipe_environments_state: RecipeEnvironmentsState, key_suffix: str = ''
+):
+    id = instantiated_recipe.id
+    valid_voltage_tiers = [v for v in selected_recipe_environment.machine.voltage_tiers if v >= instantiated_recipe.minimum_voltage_tier]
+    options = {
+        index: VoltageTier.voltage_tier_name(v) for index, v in enumerate(valid_voltage_tiers)
+    }
+    def voltage_changed():
+        index = st.session_state[f"voltage_tier_select_{id}_{key_suffix}"]
+        selected_voltage_tier = valid_voltage_tiers[index]
+        
+        if (not recipe_environments_state.has_recipe_environment(id) 
+            and selected_voltage_tier == instantiated_recipe.voltage_tier):
+            return
+        _LOGGER.info(f'Updating stored voltage tier for recipe {id}: {instantiated_recipe.voltage_tier} -> {selected_voltage_tier}')
+        selected_recipe_environment.voltage_tier = selected_voltage_tier
+        recipe_environments_state.set_recipe_environment(id, selected_recipe_environment, instantiated_recipe.recipe_environment)
+
+    st.selectbox(
+        'Voltage Tier',
+        options=options.keys(),
+        key=f"voltage_tier_select_{id}_{key_suffix}",
+        width=100,
+        index=valid_voltage_tiers.index(instantiated_recipe.voltage_tier),
+        format_func=lambda index: options[index],
+        on_change=voltage_changed
+    )
+
+
+def select_machine_options(
+    instantiated_recipe: InstantiatedRecipe, machine_options: MachineOptions,
+    selected_recipe_environment: StoredRecipeEnvironment, recipe_environments_state: RecipeEnvironmentsState,
+    machine_options_book: MachineOptionsBook, key_suffix: str = ''
+):
+    if machine_options.valid_option_amount == 0:
+        return
+    id = instantiated_recipe.id
+    st.markdown(f'#### Machine Options')
+
+    def machine_option_changed(machine_option_type: MachineOptionType, machine_option: MachineOption):
+        if (not recipe_environments_state.has_recipe_environment(id) and 
+            machine_option == instantiated_recipe.machine_options.get_option(machine_option_type)):
+            return
+        _LOGGER.info(f'Updating stored machine option for recipe {id}: {machine_option_type.name} -> {machine_option}')
+        selected_recipe_environment.machine_options.set_option(machine_option_type, machine_option)
+        recipe_environments_state.set_recipe_environment(id, selected_recipe_environment, instantiated_recipe.recipe_environment)
+
+    for machine_option_type in machine_options.valid_options:
+        option_name = machine_option_type.name.replace('_', ' ').title()
+        selected_option = selected_recipe_environment.machine_options.get_option(machine_option_type)
 
         c, d = st.columns([0.5, 5], gap='small', vertical_alignment='center')
         with c:
-            material_image(selected_machine.item)
+            if selected_option.material is not None:
+                material_image(selected_option.material)
         with d:
-            if st.button('Change Machine', key=f"change_machine_{instantiated_recipe.id}", type='tertiary'):
-                change_machine()
+            st.markdown(selected_option.name)
 
-        # Select machine options
-        machine_option_dict: Dict[MachineOptionType, MachineOption] = {}
-        for machine_option_type in instantiated_recipe.machine_options.valid_options:
-            option_name = machine_option_type.name.replace('_', ' ').title()
-            if f"selected_option_{instantiated_recipe.id}_{machine_option_type}" in st.session_state:
-                selected_option = st.session_state[f"selected_option_{instantiated_recipe.id}_{machine_option_type}"]
-            else:
-                selected_option = instantiated_recipe.machine_options.get_option(machine_option_type)
-            machine_option_dict[machine_option_type] = selected_option
-
-            @st.dialog(f"Select {option_name}")
-            def change_machine_option(machine_option_type: MachineOptionType):
-                for i, machine_option in enumerate(
-                    machine_options_book.get_machine_option_list(machine_option_type, rank=lambda o: o.tier)):
-                    a, b = st.columns([0.5, 5], gap='small')
-                    with a:
-                        if machine_option.material is not None:
-                            material_image(machine_option.material)
-                    with b:
-                        text = f'{machine_option.name} (Tier {machine_option.tier})' if machine_option.tier >= 0 else machine_option.name
-                        if st.button(text, key=f"vote_{instantiated_recipe.id}_{machine_option_type.name}_{i}"):
-                            st.session_state[f"selected_option_{instantiated_recipe.id}_{machine_option_type}"] = machine_option
-                            st.rerun()
-
-            with c:
-                if selected_option.material is not None:
-                    material_image(selected_option.material)
-            with d:
-                if st.button(f'Change {option_name}', key=f"change_{instantiated_recipe.id}_{machine_option_type.name}", 
-                            type='tertiary'):
-                    change_machine_option(machine_option_type)
-        
-    with bb:  # Select voltage tier
-        valid_voltage_tiers = [v for v in selected_machine.voltage_tiers if v >= instantiated_recipe.minimum_voltage_tier]
-        if instantiated_recipe.voltage_tier in valid_voltage_tiers:
-            initial_voltage_tier = instantiated_recipe.voltage_tier
-        else:
-            initial_voltage_tier = min(valid_voltage_tiers)
-
-        # Reset selectbox on faulty voltage tier
-        if f"reset_vt_{instantiated_recipe.id}" not in st.session_state:
-            st.session_state[f"reset_vt_{instantiated_recipe.id}"] = True
-        if st.session_state[f"reset_vt_{instantiated_recipe.id}"]:
-            st.session_state[f"voltage_tier_select_{instantiated_recipe.id}"] = valid_voltage_tiers.index(initial_voltage_tier)
-            st.session_state[f"reset_vt_{instantiated_recipe.id}"] = False
-
-        options = {
-            index: VoltageTier.voltage_tier_name(v) for index, v in enumerate(valid_voltage_tiers)
-        }
-        voltage_tier_index = st.selectbox(
-            'Voltage Tier',
-            options=options.keys(),
-            key=f"voltage_tier_select_{instantiated_recipe.id}",
-            width=100,
-            format_func=lambda index: options[index]
-        )
-        voltage_tier = valid_voltage_tiers[voltage_tier_index]
-
-    # Apply changes
-    update_result = instantiated_recipe.update(
-        machine=selected_machine, voltage_tier=voltage_tier, machine_option_dict=machine_option_dict, log=True
-    )  # TODO: WHY IS THIS NOT LOGGED EVEN THOUGH LOG=TRUE????
-    if update_result == RecipeUpdateResult.INVALID:
-        _LOGGER.warning(f'Invalid recipe update: {selected_machine}. '
-                        f'VTs: {selected_machine.voltage_tiers}. Selected: {voltage_tier}. '
-                        f'Initial: {initial_voltage_tier}. Valid: {valid_voltage_tiers}. '
-                        f'Recipe min: {instantiated_recipe.minimum_voltage_tier} ')
-        st.toast(f'Invalid recipe configuration (Recipe ID: {instantiated_recipe.id})', icon='❗', duration='long')
-        st.session_state[f"selected_machine_{instantiated_recipe.id}"] = instantiated_recipe.machine
-        st.session_state[f"reset_vt_{instantiated_recipe.id}"] = True
-        for machine_option_type in instantiated_recipe.machine_options.valid_options:
-            st.session_state[f"selected_option_{instantiated_recipe.id}_{machine_option_type}"] = \
-                instantiated_recipe.machine_options.get_option(machine_option_type)
-        st.rerun(scope="fragment")
-    elif update_result == RecipeUpdateResult.UPDATED:
-        return instantiated_recipe.id
+        with st.expander(f'Change {option_name}', width=400):
+            for i, machine_option in enumerate(
+                machine_options_book.get_machine_option_list(machine_option_type, rank=lambda o: o.tier)):
+                a, b = st.columns([0.5, 5], gap='small')
+                with a:
+                    if machine_option.material is not None:
+                        material_image(machine_option.material)
+                with b:
+                    text = f'{machine_option.name} (Tier {machine_option.tier})' if machine_option.tier >= 0 else machine_option.name
+                    if st.button(
+                        text, key=f"vote_{id}_{machine_option_type.name}_{i}_{key_suffix}", 
+                        on_click=machine_option_changed, args=(machine_option_type, machine_option)
+                    ):
+                        pass
 
 
-def display_crafting_chain_recipe(instantiated_recipe: InstantiatedRecipe):
+def display_crafting_chain_recipe(
+    displayable_recipe: DisplayableRecipe, factor: float = 1.0, recipe_headline: str = ''
+) -> None:
     html = Template(dedent("""
     <style>
     .recipe-row {
@@ -298,10 +398,11 @@ def display_crafting_chain_recipe(instantiated_recipe: InstantiatedRecipe):
     """))
 
     try:
-        img_base64 = get_base64_image(f'db/images/{instantiated_recipe.machine.item.image_file_path}')
+        img_base64 = get_base64_image(f'db/images/{displayable_recipe.machine.item.image_file_path}')
         machines_html = f"""<div class="tooltip">
             <img src="data:image/png;base64,{img_base64}" width="36">
-            <span class="tooltiptext">{instantiated_recipe.machine.__str__()}</span>
+            <span style="margin-left:6px;">{recipe_headline}</span>
+            <span class="tooltiptext">{displayable_recipe.machine.__str__()}</span>
         </div>
         """
     except Exception as e:
@@ -309,13 +410,13 @@ def display_crafting_chain_recipe(instantiated_recipe: InstantiatedRecipe):
         _LOGGER.warning(e)
 
     inputs_html = ''
-    for i, (input, amount) in enumerate(instantiated_recipe.input_dict.items()):
+    for i, (input, amount) in enumerate(displayable_recipe.input_dict.items()):
         try:
-            tooltip = f'{format_float(abs(amount), decimal_places=1, separate_thousands=True)} {input.name}'
+            tooltip = f'{format_float(abs(factor * amount), decimal_places=1, separate_thousands=True)} {input.name}'
             img_base64 = get_base64_image(f'db/images/{input.image_file_path}')
             inputs_html += f"""<div class="tooltip">
                 <img src="data:image/png;base64,{img_base64}" width="36">
-                <div class="tooltip-number">{abs(int(amount))}</div>
+                <div class="tooltip-number">{abs(int(factor * amount))}</div>
                 <span class="tooltiptext">{tooltip}</span>
             </div>
             """
@@ -323,15 +424,15 @@ def display_crafting_chain_recipe(instantiated_recipe: InstantiatedRecipe):
             _LOGGER.warning(e)
 
     outputs_html = ''
-    for i, (output, amount, probability) in enumerate(instantiated_recipe.adapted_recipe.output_specifications.values()):
+    for i, (output, amount, probability) in enumerate(displayable_recipe.output_specifications.values()):
         try:
-            tooltip = f'{f"{format_float(amount, decimal_places=1, separate_thousands=True)} {output.name}"}'
+            tooltip = f'{f"{format_float(factor * amount, decimal_places=1, separate_thousands=True)} {output.name}"}'
             if probability < 1:
                 tooltip += f' ({100 * probability:.2g}%)'
             img_base64 = get_base64_image(f'db/images/{output.image_file_path}')
             outputs_html += f"""<div class="tooltip">
                 <img src="data:image/png;base64,{img_base64}" width="36">
-                <div class="tooltip-number">{int(amount)}</div>
+                <div class="tooltip-number">{int(factor * amount)}</div>
                 <span class="tooltiptext">{tooltip}</span>
             </div>
             """
@@ -342,19 +443,18 @@ def display_crafting_chain_recipe(instantiated_recipe: InstantiatedRecipe):
         _flatten_html(html.substitute(inputs_html=inputs_html, outputs_html=outputs_html, machines_html=machines_html)),
         unsafe_allow_html=True
     )
+    if not displayable_recipe.is_valid:
+        st.markdown('**INVALID RECIPE:** Please change machine and machine options.')
     info_string = ''
-    if instantiated_recipe.processing_time > 0:
-        t = format_float(instantiated_recipe.processing_time, decimal_places=2, separate_thousands=True)
+    if displayable_recipe.processing_time > 0:
+        t = format_float(displayable_recipe.processing_time, decimal_places=2, separate_thousands=True)
         info_string += f'**Processing Time**: {t}s  \n'
-    if instantiated_recipe.eu_per_tick != 0:
-        v = format_float(abs(instantiated_recipe.eu_per_tick), decimal_places=2, separate_thousands=True)
-        t = format_float(abs(instantiated_recipe.total_eu), decimal_places=2, separate_thousands=True)
-        info_string += f'**Voltage**: {v} EU/t ({int(instantiated_recipe.adapted_recipe.amperage)}A)  \n'
-        info_string += f'**Total EU**: {t} EU  \n'
-    if instantiated_recipe.recipe_options:
-        info_string += f'{instantiated_recipe.recipe_options}  \n'
-    if instantiated_recipe.used_parallels != 1:
-        info_string += f'Used parallels: {instantiated_recipe.used_parallels}  \n'
+    info_string += f'**Voltage**: {displayable_recipe.average_eu_per_tick_str(factor=factor)}  \n'
+    info_string += f'**Total EU**: {displayable_recipe.average_total_eu_str(factor=factor)}  \n'
+    if displayable_recipe.recipe_options:
+        info_string += f'{displayable_recipe.recipe_options.markdown_string()}  \n'
+    if displayable_recipe.parallelized:
+        info_string += f'Used parallels: {displayable_recipe.used_parallels_str()}  \n'
     if info_string:
         st.markdown(info_string)
 

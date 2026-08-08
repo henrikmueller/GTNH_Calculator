@@ -3,7 +3,6 @@ from abc import abstractmethod
 import logging
 from typing import Dict, Any
 from math import nan
-from copy import deepcopy
 
 from attr import dataclass
 from marshmallow import Schema, fields, post_load, validates, ValidationError
@@ -21,40 +20,46 @@ _LOGGER.setLevel(logging.INFO)
 """
 
 
-@dataclass
+@dataclass(frozen=True)
 class MachineOptions:
     valid_options: tuple[MachineOptionType, ...]
-    _options: Dict[MachineOptionType, MachineOption]
+    options: Dict[MachineOptionType, MachineOption]
     min_tier: Dict[MachineOptionType, int]
 
+    def __post_init__(self):
+        if not set(self.valid_options) == set(self.options.keys()):
+            raise ValueError(f'Invalid machine options! Valid: {self.valid_options}. Stored: {self.options}')
+
     def has_option(self, type: MachineOptionType) -> bool:
-        return type in self._options.keys()
+        return type in self.options.keys()
 
     def get_option(self, type: MachineOptionType) -> MachineOption:
-        return self._options[type]
+        return self.options[type]
 
     def set_option(self, type: MachineOptionType, option: MachineOption) -> None:
         if type not in self.valid_options:
             raise ValueError(f'MachineOptionType {type} not valid for {self}')
-        self._options[type] = option
+        self.options[type] = option
 
     def __repr__(self) -> str:
-        return (f'MachineOptions(valid={self.valid_options}, options={[o.__repr__() for o in self._options.values()]}, '
+        return (f'MachineOptions(valid={self.valid_options}, options={[o.__repr__() for o in self.options.values()]}, '
                 f'min_tier={self.min_tier})')
     
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, MachineOptions):
             return False
-        return self.valid_options == other.valid_options and self._options == other._options and self.min_tier == other.min_tier
-    
+        return self.valid_options == other.valid_options and self.options == other.options and self.min_tier == other.min_tier
+
     def copy(self, machine_option_dict: Dict[MachineOptionType, MachineOption] | None = None) -> MachineOptions:
-        new_machine_options = deepcopy(self)
-        if machine_option_dict is None:
-            return new_machine_options
-        
-        for machine_option_type, machine_option in machine_option_dict.items():
-            new_machine_options.set_option(machine_option_type, machine_option)
-        return new_machine_options
+        return MachineOptions(
+            valid_options=self.valid_options,
+            options=self.options if machine_option_dict is None else machine_option_dict,
+            min_tier=self.min_tier
+        )
+
+    @property
+    def valid_option_amount(self) -> int:
+        return len(self.valid_options)
 
 
 class MachineOption:
@@ -92,7 +97,7 @@ class MachineOption:
 class MachineOptionSchema(Schema):
     def __init__(self, *args, extracted_materials=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.extracted_materials: Dict[str, Material] = extracted_materials
+        self.extracted_materials: Dict[str, Material] = extracted_materials  # type: ignore
 
     name = fields.String(required=True)
     option_type = fields.Enum(MachineOptionType, by_value=True, required=True)

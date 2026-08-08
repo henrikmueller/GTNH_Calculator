@@ -13,7 +13,7 @@ _LOGGER.setLevel(logging.INFO)
 def calculate_gradings(
     instantiated_recipe_list: list[InstantiatedRecipe], materials: Dict[str, Material], starting_materials: set[Material],
     ignore_unreachable: bool = False
-) -> tuple[Dict[InstantiatedRecipe, int], Dict[Material, int]]:
+) -> tuple[Dict[str, int], Dict[Material, int]]:
     node_to_edges = defaultdict(list)
     remaining = []
     for recipe_id, recipe in enumerate(instantiated_recipe_list):
@@ -61,5 +61,5 @@ def calculate_gradings(
             material_grading[m] = 0
         fill_gradings()
 
-    recipe_grading = {r: g for r, g in zip(instantiated_recipe_list, recipe_grading)}
+    recipe_grading = {r.id: g for r, g in zip(instantiated_recipe_list, recipe_grading)}
     return recipe_grading, material_grading

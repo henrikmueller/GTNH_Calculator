@@ -8,13 +8,10 @@ from math import prod
 from .material import Material, MaterialGroup
 from .machines import Machine
 from ..recipes_db.recipe_options import RecipeOptions
-from .raw_recipes import RawRecipe
+from .raw_recipes import RawRecipe, InputCombination
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
-
-
-type InputCombination = frozendict[MaterialGroup, Material]
 
 
 @dataclass(frozen=True)

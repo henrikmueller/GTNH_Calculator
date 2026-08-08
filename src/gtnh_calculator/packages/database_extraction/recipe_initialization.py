@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from math import isnan
 from collections import defaultdict
 
-from ..recipes_db.adapted_recipes import AdaptedRecipe
+from ..recipes_db.adapted_recipes import AdaptedRecipe, InvalidAdaptedRecipe
 from ..recipes_db.recipes import Recipe
 from ..recipes_db.instantiated_recipes import InstantiatedRecipe, RecipeEnvironment
 from ..recipes_db.recipe_options import RecipeOptions
@@ -13,6 +13,9 @@ from ..recipes_db.machine_options.machine_options import MachineOptions
 from ..recipes_db.machine_options.machine_option_books import MachineOptionsBook
 from ..recipes_db.machines import Machine
 from ..recipes_db.voltage_tiers import VoltageTier
+from ..recipes_db.behaviours.machine_behaviours import FittingContext
+from ..configs.crafting_chain_config_db import CraftingChainConfig
+from ..streamlit.session_state import StoredRecipeEnvironment
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
@@ -129,52 +132,54 @@ class RecipeInitializer:
                 selected_options[option_type] = self.machine_options_book.get_max_machine_option(
                     option_type, lambda o: o.tier)  
         return MachineOptions(
-            machine.valid_options,
-            selected_options,
+            valid_options=machine.valid_options,
+            options=selected_options,
             min_tier={t: -1 for t in machine.valid_options}
         )
 
-    def adapt_recipe(self, recipe: Recipe, machine: Machine, machine_options: MachineOptions, voltage_tier: int) -> AdaptedRecipe:
+    def adapt_recipe(self, recipe: Recipe, recipe_environment: RecipeEnvironment) -> AdaptedRecipe:
         adapted_recipe = None
         try:
-            for v in range(voltage_tier, VoltageTier.MAX + 1):
+            for v in range(recipe_environment.voltage_tier, VoltageTier.MAX + 1):
                 try:
-                    adapted_recipe = machine.machine_behaviour.fit_recipe(
+                    adapted_recipe = recipe_environment.machine.machine_behaviour.fit_recipe(FittingContext(
                         raw_recipe=recipe.raw_recipe,
                         voltage_tier=v,
-                        machine_stats=machine.machine_stats,
-                        machine_options=machine_options,
-                        log=False
-                    )
+                        machine_stats=recipe_environment.machine.machine_stats,
+                        machine_options=recipe_environment.machine_options
+                    ))
                 except ValueError as e:
-                    raise ValueError(f'Error occurred while fitting recipe {recipe.raw_recipe} to machine {machine}. VT: {voltage_tier}: {e}')
-                if adapted_recipe is None or adapted_recipe.used_parallels > 0 or voltage_tier == VoltageTier.NO_REQUIREMENT:
+                    raise ValueError(f'Error occurred while fitting recipe {recipe.raw_recipe} to machine {recipe_environment.machine}. VT: {recipe_environment.voltage_tier}: {e}')
+                if adapted_recipe is None or adapted_recipe.used_parallels > 0 or recipe_environment.voltage_tier == VoltageTier.NO_REQUIREMENT:
                     break
                 
                 # Only continue if raising the voltage tier would allow for parallels
-                max_parallels = machine.machine_behaviour.parallel_behaviour.get_parallels(
-                    voltage_tier=voltage_tier,
-                    machine_options=machine_options
+                max_parallels = recipe_environment.machine.machine_behaviour.parallel_behaviour.get_parallels(
+                    voltage_tier=recipe_environment.voltage_tier,
+                    machine_options=recipe_environment.machine_options
                 )
-                if max_parallels != 0 or machine.machine_behaviour.parallel_behaviour.parallels_per_voltage_tier == 0:
+                if max_parallels != 0 or recipe_environment.machine.machine_behaviour.parallel_behaviour.parallels_per_voltage_tier == 0:
                     break
         except TypeError as e:
-            raise TypeError(f'TypeError occurred while fitting recipe {recipe.raw_recipe} to machine {machine}. VT: {voltage_tier}, {type(voltage_tier)}: {e}')
+            raise TypeError(f'TypeError occurred while fitting recipe {recipe.raw_recipe} to machine {recipe_environment.machine}. VT: {recipe_environment.voltage_tier}, {type(recipe_environment.voltage_tier)}: {e}')
 
         if adapted_recipe is None:
-            raise ValueError(f'Could not fit recipe {recipe.raw_recipe} to machine {machine} with voltage tier {voltage_tier}')
+            _LOGGER.warning(f'Could not fit recipe {recipe.raw_recipe} to machine {recipe_environment.machine} with voltage tier {recipe_environment.voltage_tier}')
+            return InvalidAdaptedRecipe()
         return adapted_recipe
     
-    def instantiate_recipes(self, df_recipes: pd.DataFrame, pick_any: bool = False) -> Dict[str, InstantiatedRecipe]:
+    def instantiate_recipes_from_raw(self, df_recipes: pd.DataFrame, pick_any: bool = False) -> Dict[str, InstantiatedRecipe]:
+        """
+        Instantiation without config and without changed recipe environments.
+        """
         instantiated_recipes: Dict[str, InstantiatedRecipe] = {}
         for row in df_recipes.itertuples(index=False):
             if row.SELECTED_MACHINE is None:
                 continue
-            recipe: Recipe = row.RECIPE
-            machine: Machine = row.SELECTED_MACHINE
-            voltage_tier: int = row.SELECTED_VOLTAGE_TIER
+            recipe: Recipe = row.RECIPE  # type: ignore
+            machine: Machine = row.SELECTED_MACHINE  # type: ignore
+            voltage_tier: int = row.SELECTED_VOLTAGE_TIER  # type: ignore
             machine_options = self.create_default_machine_options(machine, recipe.raw_recipe.recipe_options)
-            adapted_recipe = self.adapt_recipe(recipe, machine, machine_options, voltage_tier)
 
             # Take the cross product of all input groups
             for instance_number, input_combination in enumerate(recipe.input_combinations(pick_any=pick_any)):
@@ -183,6 +188,7 @@ class RecipeInitializer:
                     voltage_tier=voltage_tier,
                     machine_options=machine_options
                 )
+                adapted_recipe = self.adapt_recipe(recipe, recipe_environment)
                 instantiated_recipes[recipe.id + str(instance_number)] = InstantiatedRecipe(
                     instance_number=instance_number,
                     base_recipe=recipe,
@@ -192,4 +198,53 @@ class RecipeInitializer:
                     cap=None,
                     cap_specified=False
                 )
+        return instantiated_recipes
+
+    def instantiate(
+        self, recipe: Recipe, config: CraftingChainConfig, pick_any: bool = False, 
+        changed_recipe_environments: Dict[str, tuple[RecipeEnvironment, StoredRecipeEnvironment]] = {}
+    ) -> list[InstantiatedRecipe]:
+        """
+        Used for lazy evaluation (only call when needed)
+        """
+        machine, voltage_tier = self.get_default_machine_and_voltage_tier(
+            recipe, config.default_voltage_tier, config.max_voltage_tier, prefer_singleblocks=True)
+        if machine is None:
+            _LOGGER.warning(f'Could not determine the default machine for recipe: {recipe}')
+            return []
+        machine_options = self.create_default_machine_options(machine, recipe.raw_recipe.recipe_options)
+        instantiated_recipes = []
+        for instance_number, input_combination in enumerate(recipe.input_combinations(pick_any=pick_any)):
+                id = InstantiatedRecipe.get_id(recipe.id, instance_number)
+                if id in changed_recipe_environments.keys():
+                    recipe_environment = changed_recipe_environments[id][1].to_environment()
+                    _LOGGER.info(f'Using changed recipe environment for recipe {id}: {recipe_environment}')
+                else:
+                    recipe_environment = RecipeEnvironment(
+                        machine=machine,
+                        voltage_tier=voltage_tier,
+                        machine_options=machine_options
+                    )
+                adapted_recipe = self.adapt_recipe(recipe, recipe_environment)
+                instantiated_recipes.append(InstantiatedRecipe(
+                    instance_number=instance_number,
+                    base_recipe=recipe,
+                    adapted_recipe=adapted_recipe,
+                    recipe_environment=recipe_environment,
+                    input_combination=input_combination,
+                    cap=None,
+                    cap_specified=False
+                ))
+        return instantiated_recipes
+        
+    def instantiate_all(
+        self, df_recipes: pd.DataFrame, config: CraftingChainConfig, pick_any: bool = False,
+        changed_recipe_environments: Dict[str, tuple[RecipeEnvironment, StoredRecipeEnvironment]] = {}
+    ) -> Dict[str, InstantiatedRecipe]:
+        instantiated_recipes = {}
+        for recipe_row in df_recipes.itertuples(index=False):
+            recipe: Recipe = recipe_row.RECIPE  # type: ignore
+            for instantiated_recipe in self.instantiate(
+                recipe, config=config, pick_any=pick_any, changed_recipe_environments=changed_recipe_environments):
+                instantiated_recipes[instantiated_recipe.id] = instantiated_recipe
         return instantiated_recipes

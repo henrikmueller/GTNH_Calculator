@@ -1,12 +1,19 @@
 import streamlit as st
 import plotly.express as px
 from collections import Counter
+import logging
+import sys
 
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.streamlit.streamlit_functions import load_database, show_memory_usage
 from packages.database_algorithms.bfs import calculate_unlock_tiers
 from packages.recipes_db.voltage_tiers import VoltageTier
 from packages.utility.general_utility import print_df
+from packages.database_extraction.recipe_initialization import RecipeInitializer
+
+logging.basicConfig(stream=sys.stdout)
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel(logging.INFO)
 
 
 # Run via: poetry run streamlit run ./src/gtnh_calculator/GTNH_Calculator.py
@@ -14,6 +21,8 @@ from packages.utility.general_utility import print_df
 
 # Deploy: Install poetry plugin: poetry self add poetry-plugin-export
 # Then create requirements.txt: poetry export -f requirements.txt -o requirements.txt
+
+VALIDITY_CHECKS = True
 
 st.set_page_config(layout="wide")
 
@@ -34,6 +43,28 @@ a.metric("Materials", len(database.extracted_materials), border=True)
 b.metric("Recipes", database.df_recipes.shape[0], border=True)
 c.metric("Machines", len(database.extracted_machines), border=True)
 d.metric("Machine Types", len(set().union(*[m.machine_types for m in database.extracted_machines.values()])), border=True)
+
+if VALIDITY_CHECKS:
+    import pandas as pd
+
+    df_recipes = database.df_recipes.copy()
+    recipe_initializer = RecipeInitializer(machine_options_book=database.machine_options_book)
+    df_recipes[["SELECTED_MACHINE", "SELECTED_VOLTAGE_TIER"]] = pd.DataFrame(
+        df_recipes["RECIPE"]
+            .apply(recipe_initializer.get_default_machine_and_voltage_tier)
+            .tolist(),
+        index=df_recipes.index,
+    )
+    instantiated_recipes = recipe_initializer.instantiate_recipes_from_raw(df_recipes, pick_any=True)
+        
+    _LOGGER.info('Checking instantiated recipes for throughput calculation...')
+    for instantiated_recipe in instantiated_recipes.values():
+        try:
+            throughput = instantiated_recipe.adapted_recipe.get_throughput(instantiated_recipe.base_recipe.raw_recipe)
+            if throughput <= 0:
+                _LOGGER.error(f"Non-positive throughput {throughput} for instantiated recipe: {instantiated_recipe}")
+        except ValueError as e:
+            _LOGGER.error(f"Throughput calculation failed for instantiated recipe: {instantiated_recipe.id}. Error: {e}")
 
 # col_1, col_2, col_3 = st.columns(3)
 # with col_1:

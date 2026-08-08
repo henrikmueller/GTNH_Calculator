@@ -19,6 +19,7 @@ from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.machine_stats import MachineStats
 from ..recipes_db.machines import Machine, MachineType
 from ..recipes_db.behaviours.machine_behaviours import MachineBehaviour
+from ..recipes_db.behaviours.capacity_utilization_behaviour import CapacityUtilizationBehaviour
 from ..recipes_db.recipe_options import RecipeOptions
 from ..recipes_db.raw_recipes import RawRecipe
 from ..recipes_db.recipes import Recipe
@@ -561,6 +562,8 @@ class DatabaseExtractor:
                 additional_stats = {}
                 if 'additional_stats' in specification:
                     additional_stats = {k: v for k, v in specification['additional_stats'].items()}
+                unlock_tier = VoltageTier.to_voltage_tier(specification['unlock_tier']) \
+                    if 'unlock_tier' in specification else VoltageTier.NO_REQUIREMENT
 
                 machine = Machine(
                     name=specification['name'],
@@ -578,6 +581,10 @@ class DatabaseExtractor:
                         efficiency=specification['efficiency'] if 'efficiency' in specification else 1
                     ),
                     machine_behaviour=MachineBehaviour.create_machine_behaviour(specification),
+                    capacity_utilization_behaviour=CapacityUtilizationBehaviour.create_capacity_utilization_behaviour(
+                        specification['capacity_utilization_behaviour'] 
+                        if 'capacity_utilization_behaviour' in specification.keys() else None),
+                    specified_unlock_tier=unlock_tier,
                 )
                 extracted_machines[item_id] = machine
 

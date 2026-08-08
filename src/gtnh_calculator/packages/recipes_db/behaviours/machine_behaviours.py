@@ -22,6 +22,14 @@ _LOGGER.setLevel(logging.INFO)
 
 
 @dataclass(frozen=True)
+class FittingContext:
+    raw_recipe: RawRecipe
+    voltage_tier: int  # of the machine
+    machine_stats: MachineStats
+    machine_options: MachineOptions
+
+
+@dataclass(frozen=True)
 class MachineBehaviour:
     overclock_behaviour: OverclockBehaviour
     parallel_behaviour: ParallelBehaviour
@@ -32,11 +40,9 @@ class MachineBehaviour:
     @abstractmethod
     def fit_recipe(
         self,
-        raw_recipe: RawRecipe,
-        voltage_tier: int,
-        machine_stats: MachineStats,
-        machine_options: MachineOptions,
-        log=False
+        fitting_context: FittingContext,
+        parallel_cap: int | None = None,
+        log: bool = False
     ) -> AdaptedRecipe | None:
         ...
 
@@ -75,15 +81,19 @@ class MachineBehaviour:
 class DefaultMachineBehaviour(MachineBehaviour):
     def fit_recipe(
         self,
-        raw_recipe: RawRecipe,
-        voltage_tier: int,  # of the machine
-        machine_stats: MachineStats,
-        machine_options: MachineOptions,
-        log=False
+        fitting_context: FittingContext,
+        parallel_cap: int | None = None,
+        log: bool = False
     ) -> AdaptedRecipe | None:
+        raw_recipe = fitting_context.raw_recipe
+        voltage_tier = fitting_context.voltage_tier
+        machine_stats = fitting_context.machine_stats
+        machine_options = fitting_context.machine_options
+
         if raw_recipe.total_eu > 0:
             # EU Generators cannot be overclocked
             return None
+
         if voltage_tier not in machine_stats.voltage_tiers:
             raise ValueError(f'Voltage tier {voltage_tier} is invalid for machine stats {machine_stats}.')
         
@@ -99,7 +109,6 @@ class DefaultMachineBehaviour(MachineBehaviour):
             _LOGGER.warning(f'Insufficient fusion tier: {machine_stats.fusion_tier} for {raw_recipe}. Required: {raw_recipe.recipe_options.fusion_tier}')
             return None  # Cannot fit the recipe to the machine due to insufficient fusion tier
         
-
         # EU Generator efficiency missing
         speedup = self.speedup_behaviour.get_speedup_multiplier(machine_options=machine_options)
 
@@ -119,6 +128,8 @@ class DefaultMachineBehaviour(MachineBehaviour):
             voltage_tier=voltage_tier,
             machine_options=machine_options
         )
+        if parallel_cap is not None:
+            max_parallels = min(max_parallels, parallel_cap)
 
         max_eu_per_tick = VoltageTier.eu_per_tick(voltage_tier) * raw_recipe.amperage
         reduced_eu_per_tick = abs(energy_multiplier * raw_recipe.eu_per_tick)  # eu_per_tick is before parallels
@@ -155,6 +166,7 @@ class DefaultMachineBehaviour(MachineBehaviour):
             _LOGGER.warning(f'overclock_context: {overclock_context}')
             _LOGGER.warning(f'max_parallels: {max_parallels}')
             _LOGGER.warning(f'max_eu_per_tick: {max_eu_per_tick}')
+            _LOGGER.warning(f'energy_multiplier: {energy_multiplier}')
             _LOGGER.warning(f'reduced_eu_per_tick: {reduced_eu_per_tick}')
             _LOGGER.warning(f'used_parallels: {used_parallels}')
             _LOGGER.warning(f'max_overclocks: {max_overclocks}')
@@ -184,16 +196,15 @@ class DefaultMachineBehaviour(MachineBehaviour):
 class NeutronActivatorBehaviour(MachineBehaviour):
     def fit_recipe(
         self,
-        raw_recipe: RawRecipe,
-        voltage_tier: int,
-        machine_stats: MachineStats,
-        machine_options: MachineOptions,
-        log=False
+        fitting_context: FittingContext,
+        parallel_cap: int | None = None,
+        log: bool = False
     ) -> AdaptedRecipe | None:
+        raw_recipe = fitting_context.raw_recipe
+
         speedup = 1
         processing_time = (raw_recipe.processing_time / speedup)
         eu_per_tick = -6  # As if ULV Accelerator is used
-        voltage_tier = VoltageTier.voltage_tier_by_eu(abs(eu_per_tick))
 
         adapted_recipe = AdaptedRecipe(
             eu_per_tick=eu_per_tick,
@@ -210,10 +221,8 @@ class NeutronActivatorBehaviour(MachineBehaviour):
 class NotImplementedMachineBehaviour(MachineBehaviour):
     def fit_recipe(
         self,
-        raw_recipe: RawRecipe,
-        voltage_tier: int,
-        machine_stats: MachineStats,
-        machine_options: MachineOptions,
-        log=False
+        fitting_context: FittingContext,
+        parallel_cap: int | None = None,
+        log: bool = False
     ) -> AdaptedRecipe | None:
         raise NotImplementedError('Machine Behaviour not implemented')

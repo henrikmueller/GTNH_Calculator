@@ -57,15 +57,9 @@ class RecipeOptions:
         return option_type in self.options.keys()
 
     def markdown_string(self) -> str:
-        result = []
-        if self.coil_heat is not None:
-            result.append(f'**Coil Heat**: {self.coil_heat} K')
-        return ', '.join(result)
-
-    def __repr__(self):
         if not self.options:
-            return 'RecipeOptions: None'
-        return f'RecipeOptions: {', '.join(f"{k}: {v}" for k, v in self.options.items())}'
+            return '**RecipeOptions**: None'
+        return f'**RecipeOptions**: {', '.join(f"{k}: {v}" for k, v in self.options.items())}'
 
     def __bool__(self):
         return len(self.options) > 0

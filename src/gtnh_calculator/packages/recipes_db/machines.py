@@ -6,12 +6,10 @@ from typing import Dict
 
 from .material import Material
 from .voltage_tiers import VoltageTier
-from .machine_options.machine_options import MachineOption, MachineOptions
 from .machine_options.machine_option_types import MachineOptionType
 from .behaviours.machine_behaviours import MachineBehaviour
-from .raw_recipes import RawRecipe
+from .behaviours.capacity_utilization_behaviour import CapacityUtilizationBehaviour
 from .machine_stats import MachineStats
-from packages.recipes_db import machine_stats
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
@@ -27,9 +25,11 @@ class Machine:
     item: Material
     weight: int
     machine_behaviour: MachineBehaviour
+    capacity_utilization_behaviour: CapacityUtilizationBehaviour
     machine_types: tuple[MachineType, ...]
     valid_options: tuple[MachineOptionType, ...]
     machine_stats: MachineStats
+    specified_unlock_tier: int
 
     @property
     def id(self) -> str:
@@ -57,8 +57,18 @@ class Machine:
             repr_string = f'{self.name}'
         return repr_string if not self.deprecated else repr_string + ' (DEPRECATED)'
 
+    @property
+    def machine_name_specified(self) -> str:
+        if self.unspecified:
+            return f'{self.__str__()} (Unspecified)'
+        return self.__str__()
+
     def minimal_voltage_tier(self) -> int:
         return min(self.voltage_tiers) if self.voltage_tiers else VoltageTier.NO_REQUIREMENT
+
+    @property
+    def unlock_tier(self) -> int:
+        return self.specified_unlock_tier
 
 
 @dataclass(eq=True, frozen=True)

@@ -1,61 +1,55 @@
+from __future__ import annotations
 import streamlit as st
 from io import BytesIO
+import logging
+from dataclasses import dataclass
+import hashlib
+
+from packages.utility.constants import ExampleFile
+from packages.streamlit.session_state import SessionState
+
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel(logging.INFO)
 
 
-def display_example_files():
+@dataclass(frozen=True)
+class ConfigFile:
+    file: BytesIO
+
+    def file_hash(self) -> str:
+        return hashlib.sha256(self.file.getvalue()).hexdigest()
+
+
+def display_example_files(example_files: list[ExampleFile], session_state: SessionState) -> None:
     with st.expander('Example files'):
-        a, b = st.columns(2)
+        cols = st.columns(len(example_files))
 
-        with a:
-            st.markdown('### Example 1: High Octane Gasoline')
+        for col, (i, example_file) in zip(cols, enumerate(example_files)):
+            with col:
+                st.markdown(f'### Example {i + 1}: {example_file.name}')
 
-            st.markdown(f'''Uses _Oil Combs_ from Forestry and _Spruce Logs_ to produce _High Octane Gasoline_. 
-        The config file specifies that the crafting chain should be optimized for maximal Gasoline output, while 
-        adhering to the specified material constraints.
-        ''')
-            if st.button('Calculate Crafting Chain', type='primary', key='example_hog'):
-                st.session_state['example_yaml'] = 'hog'
-            # material_image(database.extracted_materials['f~gregtech~highoctanegasoline'])
+                st.markdown(example_file.description)
+                if st.button('Calculate Crafting Chain', type='primary', key=f'example_{example_file.key}'):
+                    session_state.example_file_key = example_file.key
 
-            st.markdown('**Download config file for High Octane Gasoline example**:')
-            with open("config/fixed_examples/config_hog_example.yaml", "rb") as file:
-                st.download_button(
-                    label="Download yaml file",
-                    data=file,
-                    file_name="config_hog_example.yaml"
-                )
-
-        with b:
-            st.markdown('### Example 2: Platinum Line')
-            
-            st.markdown(f'''Extracts several elements from _Platinum Metallic Powder Dust_ via Sieving, Electrolysis, 
-        Leaching, Pyrometallurgy, Solvent extraction and other processes: _Platinum_, _Rhodium_, _Ruthenium_, _Palladium_, 
-        _Iridium_ and _Osmium_. The config file specifies that the crafting chain should be optimized for the unweighted 
-        sum of all outputs, while adhering to the specified material constraints.
-        ''')
-            if st.button('Calculate Crafting Chain', type='primary', key='example_plat'):
-                st.session_state['example_yaml'] = 'platinum'
-            # material_image(database.extracted_materials['i~bartworks~gt.bwMetaGenerateddust~47'])
-
-            st.markdown('**Download config file for Platinum Line example**:')
-            with open("config/fixed_examples/config_plat_line_example.yaml", "rb") as file:
-                st.download_button(
-                    label="Download yaml file",
-                    data=file,
-                    file_name="config_plat_line_example.yaml"
-                )
+                st.markdown(f'**Download config file for {example_file.name} example**:')
+                with open(example_file.yaml_path, "rb") as file:
+                    st.download_button(
+                        label="Download yaml file",
+                        data=file,
+                        file_name=f"config_{example_file.key}_example.yaml"
+                    )
 
 
-def file_selection() -> BytesIO | None:
-    uploaded_file = st.file_uploader("Choose a config file to specify the recipe chain", type='yaml')
+def file_selection(example_files: list[ExampleFile], session_state: SessionState) -> ConfigFile | None:
+    file_bytes = st.file_uploader("Choose a config file to specify the recipe chain", type='yaml')
 
-    if uploaded_file is None and 'example_yaml' in st.session_state:
-        match st.session_state['example_yaml']:
-            case 'hog':
-                with open("config/fixed_examples/config_hog_example.yaml", "rb") as f:
-                    uploaded_file = BytesIO(f.read())
-            case 'platinum':
-                with open("config/fixed_examples/config_plat_line_example.yaml", "rb") as f:
-                    uploaded_file = BytesIO(f.read())
-                    
-    return uploaded_file
+    if file_bytes is None and session_state.example_file_key is not None:
+        for example_file in example_files:
+            if session_state.example_file_key == example_file.key:
+                _LOGGER.info(f'Loading example file with key "{example_file.key}"')
+                with open(example_file.yaml_path, "rb") as f:
+                    file_bytes = BytesIO(f.read())
+                break
+
+    return ConfigFile(file_bytes) if file_bytes is not None else None

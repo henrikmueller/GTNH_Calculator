@@ -529,7 +529,7 @@ class CraftingChainFinder:
             #     if not np.isinf(ub[i]) and x >= ub[i]:
             #         _LOGGER.warning(f'Machine Limit reached for recipe {recipes[i]}: {x} = {ub[i]}')
 
-            crafting_chain = CraftingChain(
+            crafting_chain = CraftingChain.create_crafting_chain(
                 recipe_amounts=recipe_amounts,
                 total_material_needs=material_amounts,
                 input_materials=self.inputs,
