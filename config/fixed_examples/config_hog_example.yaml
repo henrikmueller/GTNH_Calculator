@@ -15,5 +15,4 @@ display_interval: 60s
 default_coil: i~gregtech~gt.blockcasings5~4
 unlocked_voltage_tier: IV
 default_voltage_tier: HV
-maximal_energy_increase: 1.5
 machine_limit: 50

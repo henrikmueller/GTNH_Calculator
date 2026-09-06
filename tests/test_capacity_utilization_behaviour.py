@@ -59,4 +59,4 @@ def test_fit_to_capacity_utilization_mega_vacuum_freezer(
     assert_approximate_dict_equality(
         partially_utilized.average_inputs, {g: throughput * a for g, a in base_recipe.inputs.items()})
     assert_approximate_dict_equality(
-        partially_utilized.average_outputs, {g: throughput * a for g, a in base_recipe.output_dict.items()})
+        partially_utilized.output_dict, {g: throughput * a for g, a in base_recipe.output_dict.items()})

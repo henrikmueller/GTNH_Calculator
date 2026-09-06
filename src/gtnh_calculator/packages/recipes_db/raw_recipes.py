@@ -11,7 +11,17 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
-type InputCombination = frozendict[MaterialGroup, Material]
+@dataclass(frozen=True)
+class InputCombination:
+    mapping: frozendict[MaterialGroup, Material]
+    instance_number: int
+
+    def get_material(self, material_group: MaterialGroup) -> Material:
+        return self.mapping[material_group]
+
+    @property
+    def materials(self) -> tuple[Material, ...]:
+        return tuple(self.mapping.values())
 
 
 def get_output_dict(output_specifications: frozendict[int, tuple[Material, float, float]]) -> frozendict[Material, float]:

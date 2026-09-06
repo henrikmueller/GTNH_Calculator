@@ -11,7 +11,7 @@ from ..adapted_recipes import AdaptedRecipe, PartiallyUtilizedRecipe
 from .machine_behaviours import MachineBehaviour, FittingContext
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.INFO)
+_LOGGER.setLevel(logging.WARNING)
 
 
 @dataclass(frozen=True)
@@ -42,7 +42,7 @@ class DefaultCapacityUtilizationBehaviour(CapacityUtilizationBehaviour):
     ) -> PartiallyUtilizedRecipe:
         if capacity_utilization < 0:
             raise ValueError('Capacity utilization must be greater than 0')
-        if capacity_utilization.is_integer():
+        if capacity_utilization.is_integer() or adapted_recipe.processing_time == 0:
             return PartiallyUtilizedRecipe(
                 capacity_utilization=capacity_utilization,
                 min_total_eu=capacity_utilization * adapted_recipe.total_eu,

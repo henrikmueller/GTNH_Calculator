@@ -1,17 +1,18 @@
 import pandas as pd
 import logging
-from typing import Dict
+from typing import Dict, Iterable
 from dataclasses import dataclass
 from math import isnan
 from collections import defaultdict
 
 from ..recipes_db.adapted_recipes import AdaptedRecipe, InvalidAdaptedRecipe
-from ..recipes_db.recipes import Recipe
+from ..recipes_db.recipes import Recipe, get_id
 from ..recipes_db.instantiated_recipes import InstantiatedRecipe, RecipeEnvironment
 from ..recipes_db.recipe_options import RecipeOptions
 from ..recipes_db.machine_options.machine_options import MachineOptions
 from ..recipes_db.machine_options.machine_option_books import MachineOptionsBook
 from ..recipes_db.machines import Machine
+from ..recipes_db.raw_recipes import InputCombination
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.behaviours.machine_behaviours import FittingContext
 from ..configs.crafting_chain_config_db import CraftingChainConfig
@@ -202,6 +203,7 @@ class RecipeInitializer:
 
     def instantiate(
         self, recipe: Recipe, config: CraftingChainConfig, pick_any: bool = False, 
+        input_combinations: list[InputCombination] | None = None,
         changed_recipe_environments: Dict[str, tuple[RecipeEnvironment, StoredRecipeEnvironment]] = {}
     ) -> list[InstantiatedRecipe]:
         """
@@ -213,28 +215,33 @@ class RecipeInitializer:
             _LOGGER.warning(f'Could not determine the default machine for recipe: {recipe}')
             return []
         machine_options = self.create_default_machine_options(machine, recipe.raw_recipe.recipe_options)
+        if input_combinations is None:
+            input_combinations = recipe.input_combinations(pick_any=pick_any)
+        else:
+            input_combinations = [input_combinations[0]] if pick_any and input_combinations else input_combinations
+
         instantiated_recipes = []
-        for instance_number, input_combination in enumerate(recipe.input_combinations(pick_any=pick_any)):
-                id = InstantiatedRecipe.get_id(recipe.id, instance_number)
-                if id in changed_recipe_environments.keys():
-                    recipe_environment = changed_recipe_environments[id][1].to_environment()
-                    _LOGGER.info(f'Using changed recipe environment for recipe {id}: {recipe_environment}')
-                else:
-                    recipe_environment = RecipeEnvironment(
-                        machine=machine,
-                        voltage_tier=voltage_tier,
-                        machine_options=machine_options
-                    )
-                adapted_recipe = self.adapt_recipe(recipe, recipe_environment)
-                instantiated_recipes.append(InstantiatedRecipe(
-                    instance_number=instance_number,
-                    base_recipe=recipe,
-                    adapted_recipe=adapted_recipe,
-                    recipe_environment=recipe_environment,
-                    input_combination=input_combination,
-                    cap=None,
-                    cap_specified=False
-                ))
+        for input_combination in input_combinations:
+            id = get_id(recipe.id, input_combination.instance_number)
+            if id in changed_recipe_environments.keys():
+                recipe_environment = changed_recipe_environments[id][1].to_environment()
+                _LOGGER.info(f'Using changed recipe environment for recipe {id}: {recipe_environment}')
+            else:
+                recipe_environment = RecipeEnvironment(
+                    machine=machine,
+                    voltage_tier=voltage_tier,
+                    machine_options=machine_options
+                )
+            adapted_recipe = self.adapt_recipe(recipe, recipe_environment)
+            instantiated_recipes.append(InstantiatedRecipe(
+                instance_number=input_combination.instance_number,
+                base_recipe=recipe,
+                adapted_recipe=adapted_recipe,
+                recipe_environment=recipe_environment,
+                input_combination=input_combination,
+                cap=None,
+                cap_specified=False
+            ))
         return instantiated_recipes
         
     def instantiate_all(

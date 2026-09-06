@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from string import Template
 from textwrap import dedent
 from typing import Iterable
@@ -8,9 +9,6 @@ from typing import Protocol
 from rapidfuzz import fuzz
 from streamlit_extras.stylable_container import stylable_container
 import streamlit.components.v1 as components
-from tomlkit import key
-import numpy as np
-import plotly.graph_objects as go
 from pympler import asizeof
 import os
 import psutil
@@ -29,10 +27,9 @@ from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
 from packages.utility.general_utility import get_base64_image, format_float
 from packages.recipes_db.voltage_tiers import VoltageTier
 from packages.exceptions import GTNHCalculatorException
-from packages.crafting_chains.crafting_chain_finder_highs import (
-    CraftingChainFinder, OptimalSolution, CostConstraints, CostVectorCollection)
 from packages.streamlit.session_state import SessionState, RecipeEnvironmentsState, StoredRecipeEnvironment
 from packages.streamlit.streamlit_logic import ConfigFile
+from packages.utility.general_utility import RGBAColor
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -142,7 +139,7 @@ def load_crafting_chain_database(
 
 def adapt_crafting_chain_recipe(
     instantiated_recipe: InstantiatedRecipe, machine_options_book: MachineOptionsBook,
-    recipe_environments_state: RecipeEnvironmentsState, amount: float = 1, key_suffix: str = ''
+    session_state: SessionState, amount: float = 1, key_suffix: str = ''
 ) -> None:
     """
     Allows the user to adapt the machine, voltage tier and machine options of an instantiated recipe.
@@ -151,6 +148,7 @@ def adapt_crafting_chain_recipe(
     :return: None. The recipe_environments_state is adapted in place.
     """
     id = instantiated_recipe.id
+    recipe_environments_state = session_state.recipe_environments_state
     selected_recipe_environment = recipe_environments_state.get_recipe_environment(id, instantiated_recipe.recipe_environment)
     recipe_amount_str = format_float(amount, decimal_places=3, separate_thousands=True)
 
@@ -161,6 +159,17 @@ def adapt_crafting_chain_recipe(
             material_image(selected_recipe_environment.machine.item)
         with d:
             st.markdown(f'#### {f"{recipe_amount_str} " if amount != 1 else ""}{selected_recipe_environment.machine.machine_name_specified}')
+
+        def clicked_enable_toggle():
+            new_value = st.session_state[f"enable_{id}_{key_suffix}"]
+            session_state.set_enabled(id, new_value)
+
+        st.checkbox(
+            label="Enabled" if session_state.is_enabled(id) else "Disabled", 
+            key=f"enable_{id}_{key_suffix}",
+            value=session_state.is_enabled(id),
+            on_change=clicked_enable_toggle,
+        )
 
         st.markdown(f'Recipe ID: {id}')
         valid_machines = sorted(instantiated_recipe.valid_machines, key=lambda m: m.minimal_voltage_tier())
@@ -188,6 +197,7 @@ def adapt_crafting_chain_recipe(
             machine_options_book=machine_options_book,
             key_suffix=key_suffix
         )
+    return None
 
 
 def select_machine(
@@ -293,8 +303,9 @@ def select_machine_options(
 
 
 def display_crafting_chain_recipe(
-    displayable_recipe: DisplayableRecipe, factor: float = 1.0, recipe_headline: str = ''
+    displayable_recipe: DisplayableRecipe, enabled: bool = False, factor: float = 1.0, recipe_headline: str = ''
 ) -> None:
+    color = RGBAColor((0.0, 0.0, 0.0, 0.9))
     html = Template(dedent("""
     <style>
     .recipe-row {
@@ -343,7 +354,7 @@ def display_crafting_chain_recipe(
     .tooltip .tooltiptext {
         visibility: hidden;
         display: block;
-        background-color: rgba(0,0,0,0.9);
+        background-color: $color_string;
         color: white;
         padding: 5px 8px;
         border-radius: 5px;
@@ -440,7 +451,10 @@ def display_crafting_chain_recipe(
             _LOGGER.warning(e)
 
     st.markdown(
-        _flatten_html(html.substitute(inputs_html=inputs_html, outputs_html=outputs_html, machines_html=machines_html)),
+        _flatten_html(html.substitute(
+            inputs_html=inputs_html, outputs_html=outputs_html, machines_html=machines_html, 
+            color_string=color.to_string()
+        )),
         unsafe_allow_html=True
     )
     if not displayable_recipe.is_valid:
@@ -597,91 +611,6 @@ def search_material_name(materials: Iterable[Material], label: str) -> list[Mate
         matching_materials.sort(key=lambda s: fuzz.ratio(search.lower(), s.name.lower()), reverse=True)
         return matching_materials
     return []
-
-
-def scatter_plot(
-    data: list[tuple[OptimalSolution, CostConstraints]],
-    cost_vectors: CostVectorCollection,
-    crafting_chain_finder: CraftingChainFinder,
-    title: str,
-    x: str,
-    y: str,
-    label_x: str,
-    label_y: str
-):
-    def get_value(cost_vector_name: str, solution: OptimalSolution) -> float | None:
-        match cost_vector_name:
-            case 'recipe_cost_vector':
-                return np.dot(solution.recipe_vector, cost_vectors.recipe_cost_vector.vector).item()
-            case 'eu_cost_vector':
-                return crafting_chain_finder.get_eu_per_tick(solution)
-            case 'machine_amount_cost_vector':
-                return crafting_chain_finder.get_machine_amount(solution)
-
-    data_x = [get_value(x, s) for s, _ in data]
-    data_y = [get_value(y, s) for s, _ in data]
-    labels = [f'Solution {i}' for i in range(len(data))]
-    description = [f'{c}' for _, c in data]
-    colors = ['cyan' for x in data]
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=data_x,
-        y=data_y,
-        mode='markers',
-        marker=dict(
-            size=12,
-            color=colors
-        ),
-        text=labels,
-        customdata=description,
-        hovertemplate=
-        "<b>%{text}</b><br>" "x: %{x}<br>" + "y: %{y}<br>" +
-        "%{customdata}<extra></extra>"
-    ))
-    fig.update_layout(
-        title=title,
-        xaxis_title=label_x,
-        yaxis_title=label_y
-    )
-    st.plotly_chart(fig)
-
-
-def display_pareto_front(crafting_chain_finder: CraftingChainFinder, cost_vectors: CostVectorCollection):
-    pareto_results = crafting_chain_finder.pareto_front(cost_vectors)
-    a, b, c = st.columns(3)
-    with a:
-        scatter_plot(
-            data=pareto_results,
-            cost_vectors=cost_vectors,
-            crafting_chain_finder=crafting_chain_finder,
-            title='Material Cost vs. EU/t',
-            x='recipe_cost_vector',
-            y='eu_cost_vector',
-            label_x='Material Cost',
-            label_y='EU/t'
-        )
-    with b:
-        scatter_plot(
-            data=pareto_results,
-            cost_vectors=cost_vectors,
-            crafting_chain_finder=crafting_chain_finder,
-            title='Material Cost vs. Machine Amount',
-            x='recipe_cost_vector',
-            y='machine_amount_cost_vector',
-            label_x='Material Cost',
-            label_y='Machine Cost'
-        )
-    with c:
-        scatter_plot(
-            data=pareto_results,
-            cost_vectors=cost_vectors,
-            crafting_chain_finder=crafting_chain_finder,
-            title='EU/t vs. Machine Amount',
-            x='eu_cost_vector',
-            y='machine_amount_cost_vector',
-            label_x='Recipe Cost',
-            label_y='Machine Cost'
-        )
 
 
 def show_memory_usage(database: GTNHDatabase) -> None:

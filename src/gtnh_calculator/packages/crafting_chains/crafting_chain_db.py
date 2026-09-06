@@ -7,6 +7,7 @@ from typing import Dict
 from math import ceil
 
 from ..recipes_db.material import Material
+from ..recipes_db.machines import Machine
 from ..recipes_db.instantiated_recipes import InstantiatedRecipe, InstantiatedPartialRecipe
 from .crafting_chain_utility import calculate_gradings
 from ..utility.general_utility import format_float
@@ -62,9 +63,13 @@ class CraftingChain:
         time: float
     ) -> CraftingChain:
         recipe_amounts = {r: a for r, a in recipe_amounts.items() if a > 0}
+        capacity_utilizations = {
+            r: a * (r.processing_time / time if r.positive_processing_time() else 1)
+            for r, a in recipe_amounts.items()
+        }
         partial_recipes = {
-            instantiated_recipe.id: instantiated_recipe.fit_to_capacity_utilization(amount)
-            for instantiated_recipe, amount in recipe_amounts.items()
+            r.id: r.fit_to_capacity_utilization(capacity_utilizations[r])
+            for r in recipe_amounts.keys()
         }
 
         recipe_grading, material_grading = calculate_gradings(
@@ -124,9 +129,9 @@ class CraftingChain:
         return {m: a for m, a in self.total_material_needs.items() if a > 0}
 
     def get_machine_amount(self, recipe_id: str) -> float:
-        partial_recipe = self.partial_recipes[recipe_id]
-        return partial_recipe.capacity_utilization * partial_recipe.processing_time / self.time \
-            if partial_recipe.positive_processing_time() else (1 if partial_recipe.capacity_utilization > 0 else 0)
+        if recipe_id not in self.partial_recipes:
+            return 0.0
+        return self.partial_recipes[recipe_id].capacity_utilization
 
     @property
     def machine_amounts(self) -> Dict[str, float]:
@@ -136,8 +141,24 @@ class CraftingChain:
         }
 
     @property
+    def number_of_distinct_machines(self) -> int:
+        return len([a for a in self.machine_amounts.values() if a > 0])
+
+    @property
     def number_of_machines(self) -> int:
         return sum(ceil(a) for a in self.machine_amounts.values())
+
+    @property
+    def used_machines(self) -> set[Machine]:
+        return {p.machine for p in self.partial_recipes.values() if p.capacity_utilization > 0}
+
+    @property
+    def used_materials(self) -> set[Material]:
+        materials = []
+        for partial_recipe in self.partial_recipes.values():
+            if partial_recipe.capacity_utilization > 0:
+                materials.extend(partial_recipe.used_materials)
+        return set(materials)
 
     @property
     def min_total_eu_per_tick(self) -> float:
@@ -164,8 +185,8 @@ class CraftingChain:
         data[:, 3] = [p.voltage_tier_name for p in partial_recipes]
         data[:, 4] = [p.input_string(time_factor) for p in partial_recipes]
         data[:, 5] = [p.output_string(time_factor) for p in partial_recipes]
-        data[:, 6] = [round(p.min_eu_per_tick, 3) for p in partial_recipes]
-        data[:, 7] = [round(p.max_eu_per_tick, 3) for p in partial_recipes]
+        data[:, 6] = [round(abs(p.min_eu_per_tick), 3) for p in partial_recipes]
+        data[:, 7] = [round(abs(p.max_eu_per_tick), 3) for p in partial_recipes]
         data[:, 8] = [self.infinite_recipes[p.id] for p in partial_recipes]
         data[:, 9] = [p.id for p in partial_recipes]
         df = pd.DataFrame(data=data, columns=columns)

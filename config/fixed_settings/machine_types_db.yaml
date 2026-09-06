@@ -7610,12 +7610,16 @@ i~gregtech~gt.blockmachines~998:
   machine_types:
   - Chemical Plant
   multiblock: true
-  unspecified: true
+  unspecified: false
   valid_options: coil, pipe_casing
   speedup_behaviour:
     type: coil_temperature
     base_speed: 1
     speed_per_coil_tier: 0.5
+  parallel_behaviour:
+    type: by_machine_option
+    machine_option_type: pipe_casing
+    parallels_dict: {1: 2, 2: 4, 3: 6, 4: 8}
   name: ExxonMobil Chemical Plant
   voltage_tier:
   - 0

@@ -244,3 +244,11 @@ machine_options:
     option_type: containment_block
     options:
       tier: 5
+  - name: No upgrade
+    option_type: maceration_upgrade
+    options:
+      tier: 1
+  - name: i~miscutils~MU-metaitem.01~32152
+    option_type: maceration_upgrade
+    options:
+      tier: 2

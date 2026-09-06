@@ -72,8 +72,12 @@ class MachineOption:
         self, extracted_materials: Dict[str, Material], name: str, option_type: MachineOptionType,
             options: Dict[str, float] | None = None
     ):
-        self.material = extracted_materials[name]
-        self.name = self.material.name
+        if name in extracted_materials.keys():
+            self.material = extracted_materials[name]
+            self.name = self.material.name
+        else:
+            self.material = None
+            self.name = name
         self.option_type = option_type
         self.options = {} if options is None else options
 

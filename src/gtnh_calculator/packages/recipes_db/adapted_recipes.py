@@ -79,7 +79,7 @@ class AdaptedRecipe:
         return self.inputs
 
     def input_dict(self, input_combination: InputCombination) -> frozendict[Material, float]:
-        return frozendict({input_combination[g]: a for g, a in self.inputs.items()})
+        return frozendict({input_combination.get_material(g): a for g, a in self.inputs.items()})
 
     @property
     def average_outputs(self) -> frozendict[Material, float]:
@@ -131,7 +131,7 @@ class PartiallyUtilizedRecipe:
         return self.max_total_eu / (self.processing_time * 20) if self.processing_time > 0 else 0.0
 
     def input_dict(self, input_combination: InputCombination) -> frozendict[Material, float]:
-        return frozendict({input_combination[g]: a for g, a in self.average_inputs.items()})
+        return frozendict({input_combination.get_material(g): a for g, a in self.average_inputs.items()})
 
     @property
     def output_dict(self) -> frozendict[Material, float]:

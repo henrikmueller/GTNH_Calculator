@@ -7,7 +7,7 @@ from enum import StrEnum
 from frozendict import frozendict
 
 from .recipe_options import RecipeOptions
-from .recipes import Recipe, InputCombination
+from .recipes import Recipe, InputCombination, get_id
 from .raw_recipes import RawRecipe
 from .material import Material
 from .machines import Machine
@@ -43,16 +43,12 @@ class InstantiatedRecipe:
     cap: float | None
     cap_specified: bool
 
-    @classmethod
-    def get_id(cls, recipe_id: str, instance_number: int) -> str:
-        return recipe_id + str(instance_number)
-
     def __hash__(self) -> int:
         return hash(self.id)
 
     @property
     def id(self) -> str:
-        return InstantiatedRecipe.get_id(self.base_recipe.id, self.instance_number)
+        return get_id(self.base_recipe.id, self.instance_number)
 
     @property
     def raw_recipe(self) -> RawRecipe:
@@ -381,6 +377,10 @@ class InstantiatedPartialRecipe:
     @property
     def output_specifications(self) -> frozendict[int, tuple[Material, float, float]]:
         return frozendict(self.partially_utilized_recipe.output_specifications)
+
+    @property
+    def used_materials(self) -> set[Material]:
+        return set(self.input_dict.keys()) | set(self.output_dict.keys())
 
     @property
     def is_valid(self) -> bool:

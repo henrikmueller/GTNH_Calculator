@@ -32,7 +32,6 @@ class CraftingChainConfig:
     max_voltage_tier: int
     unlocked_voltage_tier: int
     default_voltage_tier: int
-    maximal_energy_increase: float
     max_singleblock_machines: int | None
     max_multiblock_machines: int | None
     default_machine_options: Dict[str, MachineOption]
@@ -61,7 +60,6 @@ class CraftingChainConfig:
         unlocked_voltage_tier: str,
         default_voltage_tier: str,
         max_voltage_tier: str | None,
-        maximal_energy_increase: float,
         machine_limit: int,
         disabled_materials: list[str],
         disabled_recipe_ids: list[str],
@@ -127,13 +125,12 @@ class CraftingChainConfig:
         self.max_voltage_tier = min(VoltageTier.to_voltage_tier(max_voltage_tier) if max_voltage_tier is not None
                                     else VoltageTier.MAX, self.unlocked_voltage_tier)
         self.default_voltage_tier = VoltageTier.to_voltage_tier(default_voltage_tier)
-        self.maximal_energy_increase = maximal_energy_increase
         self.max_singleblock_machines = max_singleblock_machines
         self.max_multiblock_machines = max_multiblock_machines
         self.machine_limit = machine_limit
-        self.disabled_materials = frozenset(materials[id] for id in disabled_materials)
-        self.disabled_recipe_ids = frozenset(disabled_recipe_ids)
-        self.disabled_machines = frozenset(database.extracted_machines[id] for id in disabled_machines)
+        self.disabled_materials = frozenset(materials[remove_comment(id)] for id in disabled_materials)
+        self.disabled_recipe_ids = frozenset(remove_comment(id) for id in disabled_recipe_ids)
+        self.disabled_machines = frozenset(database.extracted_machines[remove_comment(id)] for id in disabled_machines)
 
         self.default_machine_options = {
             'coil': machine_options_book.get_machine_option(default_coil, machine_options_book.coil),
@@ -185,7 +182,6 @@ def load_config(
         max_voltage_tier = fields.String(required=False, allow_none=True, load_default=None)
         max_singleblock_machines = fields.Integer(required=False, allow_none=True, load_default=None)
         max_multiblock_machines = fields.Integer(required=False, allow_none=True, load_default=None)
-        maximal_energy_increase = fields.Float(required=True)
         machine_limit = fields.Integer(required=False, load_default=DEFAULT_MACHINE_LIMIT)
         infinite_production_weights = fields.Dict(keys=fields.String(), values=fields.Float(), required=False)
 
@@ -294,11 +290,6 @@ def load_config(
             if max_voltage_tier is not None and max_voltage_tier not in VoltageTier.voltage_tiers(minimum=0):
                 raise ValidationError(f'Invalid maximal voltage tier: "{max_voltage_tier}"')
 
-        @validates('maximal_energy_increase')
-        def validate_maximal_energy_increase(self, maximal_energy_increase: float, data_key: str) -> None:
-            if maximal_energy_increase < 1:
-                raise ValidationError(f'Invalid maximal energy increase: "{maximal_energy_increase}"')
-
         @validates('machine_limit')
         def validate_machine_limit(self, machine_limit: int, data_key: str) -> None:
             if machine_limit < 0:
@@ -307,20 +298,23 @@ def load_config(
         @validates('disabled_materials')
         def validate_disabled_materials(self, disabled_materials: list[str], data_key: str) -> None:
             for material_id in disabled_materials:
-                if material_id not in materials.keys():
-                    raise ValidationError(f'Unknown disabled material: "{material_id}"')
+                id = remove_comment(material_id)
+                if id not in materials.keys():
+                    raise ValidationError(f'Unknown disabled material: "{id}"')
 
         @validates('disabled_recipe_ids')
         def validate_disabled_recipe_ids(self, disabled_recipe_ids: list[str], data_key: str) -> None:
             for recipe_id in disabled_recipe_ids:
-                if not database.df_recipes["ID"].str.contains(recipe_id, na=False).any():
-                    raise ValidationError(f'Unknown disabled recipe id: "{recipe_id}"')
+                id = remove_comment(recipe_id)
+                if not database.df_recipes["ID"].str.contains(id, na=False).any():
+                    raise ValidationError(f'Unknown disabled recipe id: "{id}"')
 
         @validates('disabled_machines')
         def validate_disabled_machines(self, disabled_machines: list[str], data_key: str) -> None:
             for machine_id in disabled_machines:
-                if machine_id not in database.extracted_machines.keys():
-                    raise ValidationError(f'Unknown disabled machine: "{machine_id}"')
+                id = remove_comment(machine_id)
+                if id not in database.extracted_machines.keys():
+                    raise ValidationError(f'Unknown disabled machine: "{id}"')
 
     if any('#' in k for k in database.extracted_materials.keys()):
         raise AssertionError(f'Material keys must not contain the comment character "{COMMENT_CHARACTER}"')
@@ -334,10 +328,15 @@ def load_config(
     return schema.load(yaml_data)
 
 
-def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Material | None, str | None, float | None]:
+def remove_comment(text: str) -> str:
     comment_index = text.find(COMMENT_CHARACTER)
     if comment_index >= 0:
         text = text[:comment_index].strip()
+    return text
+
+
+def extract_substrings(text: str, materials: Dict[str, Material]) -> tuple[Material | None, str | None, float | None]:
+    text = remove_comment(text)
 
     equals = [i for i, c in enumerate(text) if c == '=']
     less_than = [i for i, c in enumerate(text) if c == '<']

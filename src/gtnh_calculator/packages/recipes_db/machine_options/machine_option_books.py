@@ -40,9 +40,9 @@ class MachineOptionsBook:
         self.containment_block.sort(key=lambda o: o.tier)
         self.coke_oven_casing = [o for o in machine_options if o.option_type == MachineOptionType.COKE_OVEN_CASING]
         self.coke_oven_casing.sort(key=lambda o: o.tier)
-
+        self.maceration_upgrade = [o for o in machine_options if o.option_type == MachineOptionType.MACERATION_UPGRADE]
+        self.maceration_upgrade.sort(key=lambda o: o.tier)
         self.width = []
-        self.maceration_upgrade = []
 
     @property
     def all_options(self) -> list[MachineOption]:
@@ -69,7 +69,11 @@ class MachineOptionsBook:
         rank: Callable[[MachineOption], int | float],
     ) -> MachineOption:
         options: list[MachineOption] = getattr(self, option_type)
-        return max(options, key=rank)
+        try:
+            max_option = max(options, key=rank)
+            return max_option
+        except ValueError as e:
+            raise ValueError(f'No machine options available for {option_type}. Available options: {options}. Error: {e}')
 
     @staticmethod
     def get_machine_option(input_id: str, options: list[MachineOption]) -> MachineOption | None:

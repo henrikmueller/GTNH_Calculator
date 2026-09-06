@@ -10,23 +10,15 @@ from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.recipes_db.material import Material
 from packages.recipes_db.recipes import Recipe
 from packages.recipes_db.voltage_tiers import VoltageTier
-from packages.recipes_db.instantiated_recipes import RecipeUpdateResult, InstantiatedRecipe
+from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
 from packages.streamlit.streamlit_functions import (
     display_crafting_chain_recipe, adapt_crafting_chain_recipe
 )
+from packages.streamlit.filtering import RecipeFilters, get_recipe_filters
 from packages.streamlit.session_state import SessionState
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
-
-
-@dataclass
-class RecipeExplorationFilters:
-    selected_recipe_id: str
-    selected_machine_names: set[str]
-    selected_inputs: set[Material]
-    selected_outputs: set[Material]
-    selected_voltage_tiers: set[int]
 
 
 @dataclass
@@ -75,108 +67,61 @@ class CCDBExplorer:
         #         }
         #         st.write(current_grade_materials)
 
-
-    def get_recipe_exploration_filters(
-        self,
-        database: GTNHDatabase,
-        all_materials: dict[str, Material]
-    ) -> RecipeExplorationFilters:
-        a, b, c = st.columns(3)
-        with a:
-            selected_recipe_id = st.text_input("Filter by Recipe ID")
-            selected_recipe_id = selected_recipe_id.split("==")[0]  # strip instance number of instantiated recipe
-            selected_machine_names = set(st.multiselect(
-                "Filter recipes by machines",
-                options=[m.name for m in database.extracted_machines.values()],
-                default=None,
-            ))
-        with b:
-            options = {
-                id: m.name for id, m in all_materials.items()
-            }
-            selected_input_ids = st.multiselect(
-                'Filter by Input Materials',
-                options=options.keys(),
-                key=f"input_select",
-                format_func=lambda index: options[index]
-            )
-            selected_inputs = {
-                all_materials[id] for id in selected_input_ids
-            }
-
-            options = {
-                id: m.name for id, m in all_materials.items()
-            }
-            selected_output_ids = st.multiselect(
-                'Filter by Output Materials',
-                options=options.keys(),
-                key=f"output_select",
-                format_func=lambda index: options[index]
-            )
-            selected_outputs = {
-                all_materials[id] for id in selected_output_ids
-            }
-        with c:
-            selected_voltage_tiers = set(VoltageTier.to_voltage_tier(v) for v in st.multiselect(
-                "Filter recipes by voltage tiers",
-                options=[VoltageTier.voltage_tier_name(v) for v in VoltageTier.valid_voltage_tiers()],
-                default=[VoltageTier.voltage_tier_name(v) for v in VoltageTier.valid_voltage_tiers()],
-            ))
-        return RecipeExplorationFilters(
-            selected_recipe_id=selected_recipe_id,
-            selected_machine_names=selected_machine_names,
-            selected_inputs=selected_inputs,
-            selected_outputs=selected_outputs,
-            selected_voltage_tiers=selected_voltage_tiers
-        )
-
-
     def apply_recipe_exploration_filters(
         self,
         database: GTNHDatabase,
         crafting_chain_database: CraftingChainDatabase,
-        recipe_exploration_filters: RecipeExplorationFilters
-    ) -> pd.DataFrame:
+        recipe_filters: RecipeFilters
+    ) -> tuple[list[InstantiatedRecipe], int]:
         with st.spinner('Applying filters...', show_time=True):
-            selected_machines = {m for m in database.extracted_machines.values() if m.name in recipe_exploration_filters.selected_machine_names}
+            selected_machines = {m for m in database.extracted_machines.values() if m.name in recipe_filters.selected_machine_names}
             df_recipes = crafting_chain_database.df_recipes(database)
+            selected_instantiated_id = recipe_filters.selected_recipe_id.split("==")[0]  # strip instance number of instantiated recipe
+            selected_id = selected_instantiated_id if selected_instantiated_id == "" else selected_instantiated_id + "=="
             df_filtered = filter_recipes(
                 df_recipes=df_recipes,
-                selected_id=recipe_exploration_filters.selected_recipe_id,
-                inputs=recipe_exploration_filters.selected_inputs,
-                outputs=recipe_exploration_filters.selected_outputs,
+                selected_id=selected_id,
+                inputs=recipe_filters.selected_inputs,
+                outputs=recipe_filters.selected_outputs,
                 voltage_tiers={v for v in VoltageTier.voltage_tiers_int()},
                 machines=selected_machines
             )
-        return df_filtered
+
+            displayed_recipes: list[InstantiatedRecipe] = []
+            filtered_recipe_amount = 0
+            for recipe_row in df_filtered.itertuples(index=False):
+                recipe: Recipe = recipe_row.RECIPE  # type: ignore
+                input_combinations = recipe.filtered_input_combinations(
+                    pick_any=False, selected_inputs=recipe_filters.selected_inputs, any_input=True,
+                    selected_instantiated_id=selected_instantiated_id, 
+                    enabled_ids=self.session_state.enabled_recipe_ids if recipe_filters.only_enabled else None
+                )
+                if not input_combinations:
+                    continue
+                if filtered_recipe_amount >= recipe_filters.max_displayed_recipes:
+                    filtered_recipe_amount += len(input_combinations)
+                    continue  # this may break after max_displayed_recipes, as there can be multiple instances
+                filtered_recipe_amount += len(input_combinations)
+    
+                instantiated_recipes = crafting_chain_database.instantiate(
+                    recipe=recipe, pick_any=False,
+                    input_combinations=input_combinations,
+                    changed_recipe_environments=self.session_state.recipe_environments_state.changed_recipe_environments
+                )
+                displayed_recipes += instantiated_recipes
+    
+            displayed_recipes = displayed_recipes[:recipe_filters.max_displayed_recipes]
+            return displayed_recipes, filtered_recipe_amount
 
 
     def recipe_exploration_display(
         self,
         database: GTNHDatabase,
-        crafting_chain_database: CraftingChainDatabase,
-        df_filtered: pd.DataFrame,
-        max_displayed_recipes: int = 30
+        displayed_recipes: list[InstantiatedRecipe],
+        filtered_recipe_amount: int
     ) -> None:
         _LOGGER.info(f'Starting recipe exploration display ...')
-        # st.write(self.session_state.recipe_environments_state.changed_recipe_environments)
-
-        total_recipe_count = crafting_chain_database.number_of_instantiated_recipes(df_filtered)
-        show_all = st.toggle(f'Show all filtered recipes (Max {max_displayed_recipes})', value=False)
-        display_amount = max_displayed_recipes if show_all else 10
-        displayed_recipes: list[InstantiatedRecipe] = []
-        for recipe_row in df_filtered.itertuples(index=False):
-            recipe: Recipe = recipe_row.RECIPE  # type: ignore
-            displayed_recipes += crafting_chain_database.instantiate(
-                recipe=recipe, 
-                changed_recipe_environments=self.session_state.recipe_environments_state.changed_recipe_environments
-            )
-            if len(displayed_recipes) >= display_amount:
-                break
-
-        displayed_recipes = displayed_recipes[:display_amount]
-
-        st.success(f'Displaying {len(displayed_recipes)} / {total_recipe_count} recipes matching the selected filters.', icon="✅")
+        st.success(f'Displaying {len(displayed_recipes)} / {filtered_recipe_amount} recipes matching the selected filters.', icon="✅")
 
         if len(displayed_recipes) > 0:
             for instantiated_recipe in displayed_recipes:
@@ -185,7 +130,7 @@ class CCDBExplorer:
                     with a:
                         adapt_crafting_chain_recipe(
                             instantiated_recipe, database.machine_options_book, 
-                            self.session_state.recipe_environments_state, key_suffix='ccdb'
+                            self.session_state, key_suffix='ccdb'
                         )
                     with b:
                         display_crafting_chain_recipe(instantiated_recipe)
@@ -196,20 +141,22 @@ class CCDBExplorer:
         database: GTNHDatabase,
         crafting_chain_database: CraftingChainDatabase,
         all_materials: dict[str, Material],
-        max_displayed_recipes: int = 30
     ) -> None:
         st.markdown('### Explore Recipes:')
-        recipe_exploration_filters = self.get_recipe_exploration_filters(database, all_materials)
-        df_filtered = self.apply_recipe_exploration_filters(
+        recipe_filters = get_recipe_filters(
+            st_key="ccdb_rf", 
+            used_machines=database.extracted_machines.values(), 
+            used_materials=all_materials.values()
+        )
+        displayed_recipes, filtered_recipe_amount = self.apply_recipe_exploration_filters(
             database=database,
             crafting_chain_database=crafting_chain_database,
-            recipe_exploration_filters=recipe_exploration_filters
+            recipe_filters=recipe_filters
         )
         self.recipe_exploration_display(
             database=database,
-            crafting_chain_database=crafting_chain_database,
-            df_filtered=df_filtered,
-            max_displayed_recipes=max_displayed_recipes
+            displayed_recipes=displayed_recipes,
+            filtered_recipe_amount=filtered_recipe_amount
         )
 
 

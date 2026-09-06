@@ -8,6 +8,8 @@ GT_EU_DICT_KEY = 'EU'
 INCLUDE_DEPRECATED_MACHINES = False
 DEFAULT_MACHINE_LIMIT = 1000
 FLUID_WEIGHT_FACTOR = 1 / 250  # between 1 / 144 and 1 / 1000
+SUPPORT_THRESHOLD = 1e-8  # threshold for determining support in optimization problems
+DEFAULT_MAX_DISPLAYED_RECIPES = 10
 
 STARTING_MATERIAL_NAMES = [
     'Acacia Log', 'Dark Oak Log', 'Oak Log', 'Spruce Log', 'Birch Log', 'Jungle Log', 'Pine Log',

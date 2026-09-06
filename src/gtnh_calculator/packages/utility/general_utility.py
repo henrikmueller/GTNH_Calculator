@@ -27,7 +27,7 @@ class Timer:
             print(f'{self.name} took {end - self.start:.6f} seconds')
 
 
-@dataclass
+@dataclass(frozen=True)
 class RGBColor:
     value: tuple[float, float, float]  # entries between 0 and 1
 
@@ -40,7 +40,15 @@ class RGBColor:
         return '#%02x%02x%02x' % self.integer_value
 
 
-@dataclass
+@dataclass(frozen=True)
+class RGBAColor:
+    value: tuple[float, float, float, float]  # entries between 0 and 1
+
+    def to_string(self) -> str:
+        return f'rgba({self.value[0]},{self.value[1]},{self.value[2]},{self.value[3]})'
+
+
+@dataclass(frozen=True)
 class HSVColor:
     value: tuple[float, float, float]  # entries between 0 and 1
 

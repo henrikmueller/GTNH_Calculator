@@ -4,7 +4,7 @@ import pytest
 from typing import Any
 
 from packages.recipes_db.behaviours.machine_behaviours import (
-    MachineBehaviour, DefaultMachineBehaviour
+    MachineBehaviour, DefaultMachineBehaviour, FittingContext
 )
 from packages.recipes_db.behaviours.overclock_behaviours import (
     DefaultOverclockBehaviour, InfiniteOverclockBehaviour, CoilTemperatureOverclockBehaviour, FusionOverclockBehaviour
@@ -14,12 +14,19 @@ from packages.recipes_db.behaviours.energy_behaviour import CoilTemperatureEnerg
 from packages.recipes_db.behaviours.heat_capacity_behaviour import (
     DefaultHeatCapacityBehaviour, EBFHeatCapacityBehaviour)
 from packages.recipes_db.behaviours.speedup_behaviour import DefaultSpeedupBehaviour, CoilTemperatureSpeedupBehaviour
+from packages.recipes_db.behaviours.capacity_utilization_behaviour import DefaultCapacityUtilizationBehaviour
+from packages.recipes_db.adapted_recipes import AdaptedRecipe
+from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
+from packages.recipes_db.machines import Machine, MachineType
 from packages.recipes_db.raw_recipes import RawRecipe
+from packages.recipes_db.recipe_environments import RecipeEnvironment
+from packages.recipes_db.recipes import Recipe
 from packages.recipes_db.machine_stats import MachineStats, MachineStatType
 from packages.recipes_db.material import ExtractedFluid, Material, MaterialGroup
 from packages.recipes_db.recipe_options import RecipeOptions
 from packages.recipes_db.machine_options.machine_options import MachineOptions, MachineOption
 from packages.recipes_db.machine_options.machine_option_types import MachineOptionType
+from packages.recipes_db.voltage_tiers import VoltageTier
 
 
 def get_test_material(name: str) -> Material:
@@ -87,6 +94,62 @@ def machine_options_for_test(
     
 def empty_machine_options() -> MachineOptions:
     return MachineOptions((), {}, {})
+
+
+def create_test_machine(name: str = "Test Machine") -> Machine:
+    return Machine(
+        name=name,
+        multiblock=False,
+        deprecated=False,
+        disabled=False,
+        unspecified=False,
+        item=get_test_material(name),
+        weight=0,
+        machine_behaviour=default_behaviour(),
+        capacity_utilization_behaviour=DefaultCapacityUtilizationBehaviour(),
+        machine_types=(MachineType(name="Test Machine Type"),),
+        valid_options=(),
+        machine_stats=machine_stats(voltage_tiers=(VoltageTier.LV,)),
+        specified_unlock_tier=VoltageTier.LV,
+    )
+
+
+def instantiated_recipe(
+    recipe_id: str,
+    adapted_recipe: AdaptedRecipe,
+    machine: Machine,
+    instance_number: int = 0,
+    recipe_options: RecipeOptions | None = None
+) -> InstantiatedRecipe:
+    recipe_options = RecipeOptions(options=frozendict({})) if recipe_options is None else recipe_options
+    raw_recipe = RawRecipe(
+        category="",
+        eu_per_tick=adapted_recipe.eu_per_tick,
+        processing_time=adapted_recipe.processing_time,
+        amperage=1,
+        voltage_tier=VoltageTier.LV,
+        inputs=frozendict({g: a for g, a in adapted_recipe.inputs.items()}),
+        output_specifications=frozendict({i: (m, p, c) for i, (m, p, c) in adapted_recipe.output_specifications.items()}),
+        recipe_options=recipe_options,
+    )
+    base_recipe = Recipe(
+        id=recipe_id,
+        raw_recipe=raw_recipe,
+        valid_machines=frozenset({machine}),
+    )
+    return InstantiatedRecipe(
+        instance_number=instance_number,
+        base_recipe=base_recipe,
+        adapted_recipe=adapted_recipe,
+        recipe_environment=RecipeEnvironment(
+            machine=machine,
+            voltage_tier=VoltageTier.LV,
+            machine_options=empty_machine_options(),
+        ),
+        input_combination=base_recipe.input_combinations(pick_any=True)[0],
+        cap=None,
+        cap_specified=False,
+    )
 
 
 def coil_only_machine_options(temperature: float = 3600.0, tier: int = 1) -> MachineOptions:

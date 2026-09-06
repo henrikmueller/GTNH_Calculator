@@ -1,6 +1,6 @@
 from __future__ import annotations
 import streamlit as st
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
 import logging
 
@@ -9,6 +9,7 @@ from packages.recipes_db.machines import Machine
 from packages.recipes_db.machine_options.machine_options import MachineOptions
 from packages.crafting_chains.crafting_chain_db import CraftingChain
 from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
+from packages.crafting_chains.crafting_chain_problem import DeterminedSolution
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -127,25 +128,80 @@ class SessionState:
     key: str
     recipe_environments_state: RecipeEnvironmentsState
     crafting_chain_display_state: CraftingChainDisplayState
+    enabled_recipe_ids: set[str] = field(default_factory=set)
     file_hash: str | None = None
     example_file_key: str | None = None
     update_optimization: bool = True
+    reset_enabled_recipes: bool = True
     crafting_chain: CraftingChain | None = None
+    determined_solutions: list[DeterminedSolution] = field(default_factory=list)
 
     def has_active_file(self) -> bool:
         return self.file_hash is not None or self.example_file_key is not None
 
     def wipe(self) -> None:
+        # don't wipe the example file key
         self.recipe_environments_state = RecipeEnvironmentsState.initialize_empty_recipe_environments_state()
         self.crafting_chain_display_state = CraftingChainDisplayState.initialize_empty_crafting_chain_display_state()
         self.file_hash = None
         self.update_optimization = True
+        self.reset_enabled_recipes = True
         self.crafting_chain = None
+        self.enabled_recipe_ids = set()
+        self.determined_solutions = []
         _LOGGER.info(f'Wiped session state with key "{self.key}"')
+
+    def is_enabled(self, instantiated_recipe_id: str) -> bool:
+        return instantiated_recipe_id in self.enabled_recipe_ids
+
+    def enable(self, instantiated_recipe_ids: set[str]) -> None:
+        _LOGGER.info(f'Enabling {len(instantiated_recipe_ids)} recipes in session state with key "{self.key}". '
+                     f'Enabled recipe count: {len(self.enabled_recipe_ids)}')
+        self.enabled_recipe_ids.update(instantiated_recipe_ids)
+
+    def set_enabled(self, instantiated_recipe_id: str, enabled: bool) -> None:
+        if enabled:
+            self.enabled_recipe_ids.add(instantiated_recipe_id)
+        else:
+            self.enabled_recipe_ids.discard(instantiated_recipe_id)
+        # _LOGGER.info(
+        #     f'Setting enable state for recipe {instantiated_recipe_id}: {self.is_enabled(instantiated_recipe_id)} -> {enabled}. '
+        #     f'Enabled recipe count: {len(self.enabled_recipe_ids)}'
+        # )
+
+    def add_solutions(self, solutions: list[DeterminedSolution]) -> None:
+        added_count = 0
+        for solution in solutions:
+            if all(solution.is_compatible(existing_solution) for existing_solution in self.determined_solutions):
+                self.determined_solutions.append(solution)
+                added_count += 1
+            else:
+                _LOGGER.warning(f'Solution not compatible with existing solutions: {solution.markdown_string}')
+        _LOGGER.info(f'Trying to add {len(solutions)} solutions to session state with key "{self.key}". Added: {added_count}')
+
+    def wipe_solutions(self) -> None:
+        self.determined_solutions = []
+        _LOGGER.info(f'Wiped solutions from session state with key "{self.key}"')
+
+    def next_solution_name(self, name: str) -> str:
+        existing_names = {solution.name for solution in self.determined_solutions}
+        if name not in existing_names:
+            return name
+        index = 1
+        new_name = f"{name} ({index})"
+        while new_name in existing_names:
+            index += 1
+            new_name = f"{name} ({index})"
+        return new_name
+
+    @property
+    def default_solutions(self) -> tuple[DeterminedSolution, ...]:
+        return tuple(s for s in self.determined_solutions if s.default)
 
     @classmethod
     def get(cls, key: str) -> SessionState:
         if key not in st.session_state:
+            _LOGGER.info(f'Initializing new session state with key "{key}"')
             st.session_state[key] = SessionState(
                 key=key,
                 recipe_environments_state=RecipeEnvironmentsState.initialize_empty_recipe_environments_state(),

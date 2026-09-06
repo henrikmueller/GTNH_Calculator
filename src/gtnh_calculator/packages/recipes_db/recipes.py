@@ -14,6 +14,10 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
 
 
+def get_id(recipe_id: str, instance_number: int) -> str:
+    return recipe_id + str(instance_number)
+
+
 @dataclass(frozen=True)
 class Recipe:
     """
@@ -24,15 +28,39 @@ class Recipe:
     raw_recipe: RawRecipe
     valid_machines: frozenset[Machine]
 
-    def input_combinations(self, pick_any: bool = False) -> list[InputCombination]:
+    def input_combinations(
+        self, pick_any: bool = False
+    ) -> list[InputCombination]:
         material_lists = [g.materials for g in self.raw_recipe.inputs]
         combinations = []
-        for materials in product(*material_lists):
-            input_combination = frozendict(zip(self.raw_recipe.inputs, materials))
+        for instance_number, materials in enumerate(product(*material_lists)):
+            input_combination = InputCombination(
+                mapping=frozendict(zip(self.raw_recipe.inputs, materials)), instance_number=instance_number)
             if pick_any:
                 return [input_combination]
             combinations.append(input_combination)
         return combinations
+
+    def filtered_input_combinations(
+        self, selected_inputs: set[Material], selected_instantiated_id: str, 
+        enabled_ids: set[str] | None = None, pick_any: bool = False, any_input: bool = True
+    ) -> list[InputCombination]:
+        input_combinations = self.input_combinations(pick_any=pick_any)
+        filtered_combinations = []
+        for input_combination in input_combinations:
+            id = get_id(self.id, input_combination.instance_number)
+            if selected_instantiated_id != "" and id != selected_instantiated_id:
+                continue
+            if enabled_ids is not None and id not in enabled_ids:
+                continue
+            if selected_inputs:
+                function = any if any_input else all
+                if not function(m in selected_inputs for m in input_combination.materials):
+                    continue
+            if pick_any:
+                return [input_combination]
+            filtered_combinations.append(input_combination)
+        return filtered_combinations
     
     @property
     def input_combination_amount(self) -> int:
