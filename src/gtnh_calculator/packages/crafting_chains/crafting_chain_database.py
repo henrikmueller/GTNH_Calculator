@@ -36,15 +36,15 @@ def filter_recipes(
 
     if selected_id:
         df_result = df_result[df_result['ID'] == selected_id]
-    if inputs:
+    if df_result.shape[0] > 0 and inputs:
         df_result = df_result[df_result['RECIPE'].map(lambda r: all(
             any(input in input_group.materials for input_group in r.inputs) for input in inputs)  # type: ignore
         )]
-    if outputs:
+    if df_result.shape[0] > 0 and outputs:
         df_result = df_result[df_result['RECIPE'].map(lambda r: all(
             output in r.outputs for output in outputs  # type: ignore
         ))]
-    if voltage_tiers:
+    if df_result.shape[0] > 0 and voltage_tiers:
         min_vt, max_vt = min(voltage_tiers), max(voltage_tiers)
         if voltage_tiers and max_vt - min_vt + 1 == len(voltage_tiers):
             df_result = df_result[df_result['RECIPE'].map(lambda r: 
@@ -52,10 +52,10 @@ def filter_recipes(
         else:
             df_result = df_result[df_result['RECIPE'].map(lambda r: 
                 r.voltage_tier in voltage_tiers)]  # type: ignore
-    if categories:
+    if df_result.shape[0] > 0 and categories:
         df_result = df_result[df_result['RECIPE'].map(lambda r: 
             r.category in categories)]  # type: ignore
-    if machines:
+    if df_result.shape[0] > 0 and machines:
         df_result = df_result[df_result['RECIPE'].map(lambda r: bool(r.valid_machines & machines))]  # type: ignore
     return df_result
 

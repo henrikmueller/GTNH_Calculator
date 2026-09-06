@@ -1,7 +1,6 @@
 import logging
 from marshmallow import Schema, fields, post_load, validates, ValidationError
 from typing import Dict, Any
-from io import BytesIO
 from ..exceptions import DataLoadingException
 
 from ..recipes_db.material import Material
@@ -13,6 +12,8 @@ from ..database_extraction.gtnh_database import GTNHDatabase
 from ..utility.general_utility import str_to_float, load_file
 from ..utility.constants import COMMENT_CHARACTER, DEFAULT_MACHINE_LIMIT
 from ..streamlit.streamlit_logic import ConfigFile
+from ..utility.gtnh_utility import get_recipe_id_from_str
+
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -129,7 +130,9 @@ class CraftingChainConfig:
         self.max_multiblock_machines = max_multiblock_machines
         self.machine_limit = machine_limit
         self.disabled_materials = frozenset(materials[remove_comment(id)] for id in disabled_materials)
-        self.disabled_recipe_ids = frozenset(remove_comment(id) for id in disabled_recipe_ids)
+        self.disabled_recipe_ids = frozenset(
+            get_recipe_id_from_str(remove_comment(id)) for id in disabled_recipe_ids
+        )
         self.disabled_machines = frozenset(database.extracted_machines[remove_comment(id)] for id in disabled_machines)
 
         self.default_machine_options = {
@@ -305,7 +308,7 @@ def load_config(
         @validates('disabled_recipe_ids')
         def validate_disabled_recipe_ids(self, disabled_recipe_ids: list[str], data_key: str) -> None:
             for recipe_id in disabled_recipe_ids:
-                id = remove_comment(recipe_id)
+                id = get_recipe_id_from_str(remove_comment(recipe_id))
                 if not database.df_recipes["ID"].str.contains(id, na=False).any():
                     raise ValidationError(f'Unknown disabled recipe id: "{id}"')
 

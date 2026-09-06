@@ -16,6 +16,7 @@ from packages.streamlit.streamlit_functions import (
 )
 from packages.streamlit.filtering import RecipeFilters, get_recipe_filters
 from packages.streamlit.session_state import SessionState
+from packages.utility.gtnh_utility import get_recipe_id_from_str
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -76,8 +77,7 @@ class CCDBExplorer:
         with st.spinner('Applying filters...', show_time=True):
             selected_machines = {m for m in database.extracted_machines.values() if m.name in recipe_filters.selected_machine_names}
             df_recipes = crafting_chain_database.df_recipes(database)
-            selected_instantiated_id = recipe_filters.selected_recipe_id.split("==")[0]  # strip instance number of instantiated recipe
-            selected_id = selected_instantiated_id if selected_instantiated_id == "" else selected_instantiated_id + "=="
+            selected_id = get_recipe_id_from_str(recipe_filters.selected_recipe_id)
             df_filtered = filter_recipes(
                 df_recipes=df_recipes,
                 selected_id=selected_id,
@@ -93,7 +93,7 @@ class CCDBExplorer:
                 recipe: Recipe = recipe_row.RECIPE  # type: ignore
                 input_combinations = recipe.filtered_input_combinations(
                     pick_any=False, selected_inputs=recipe_filters.selected_inputs, any_input=True,
-                    selected_instantiated_id=selected_instantiated_id, 
+                    selected_instantiated_id=recipe_filters.selected_recipe_id, 
                     enabled_ids=self.session_state.enabled_recipe_ids if recipe_filters.only_enabled else None
                 )
                 if not input_combinations:

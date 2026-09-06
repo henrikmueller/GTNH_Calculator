@@ -584,7 +584,6 @@ class CraftingChainFinder:
         self,
         crafting_chain_problem: CraftingChainProblem,
         cost_vector_type: CostVectorType,
-        support: GTNHSupport | None = None,
         cost_constraints: GTNHConstraints = frozendict(),
         log: bool = False
     ) -> SolutionVector | None:
@@ -594,30 +593,18 @@ class CraftingChainFinder:
                 cost_vector_type, 
                 epsilon_constraints=frozendict({t: v for t, v in cost_constraints.items()})
             )
-            _LOGGER.info(f'LP: {linear_problem.problem_statistics_string()}')
             optimal_solution = highs_solver.solve(linear_problem)
 
             if optimal_solution is None:
                 _LOGGER.warning('No solution found for the linear problem.')
                 return None
-            optimal_cost = optimal_solution.cost(linear_problem.cost_vector, normalize=False)
+            if cost_vector_type == CostVectorType.MACHINE_AMOUNT_COST_VECTOR:
+                return optimal_solution  # no need to optimize further for machine amount again
+
+            first_cost_vector = linear_problem.cost_vector
+            optimal_cost = optimal_solution.cost(first_cost_vector, normalize=False)
 
             if log:
-                if support is not None:
-                    determined_solution = DeterminedSolution(
-                        name='Test Solution',
-                        used_support=support,
-                        cost_vector_type=CostVectorType.RECIPE_COST_VECTOR,
-                        optimal_costs=frozendict({CostVectorType.RECIPE_COST_VECTOR: optimal_cost}),
-                        cost_constraints=cost_constraints,
-                        solution_vector=optimal_solution,
-                        integer_machine_amounts=True,
-                        number_of_recipes=crafting_chain_problem.number_of_recipes
-                    )
-                    recipe_vector = self._get_recipe_vector(determined_solution).vector
-                    _LOGGER.info(f'Valid for global problem: {self._is_contained_in_solution_space(recipe_vector, self.continuous_problem)}')
-                    _LOGGER.info(f'Global cost: {np.dot(self.continuous_problem.problem.cost_vectors[CostVectorType.RECIPE_COST_VECTOR].vector, recipe_vector)}')
-
                 machine_amount_cost_vector = crafting_chain_problem.problem.cost_vectors[CostVectorType.MACHINE_AMOUNT_COST_VECTOR].vector
                 machine_amount = crafting_chain_problem.get_continuous_machine_amount(optimal_solution)
                 machine_amount_int = crafting_chain_problem.get_machine_amount(optimal_solution)
@@ -627,16 +614,17 @@ class CraftingChainFinder:
                 _LOGGER.info(f'Optimal integer machine amount: {machine_amount_int}')
                 _LOGGER.info(f'Machine amount constraint: {machine_amount_cost_vector}')
                 _LOGGER.info(f'Number of non-zero recipes: {crafting_chain_problem.get_non_zero_recipe_count(optimal_solution)} out of {crafting_chain_problem.number_of_recipes}')
-                _LOGGER.info(f'LP cost vector: {linear_problem.cost_vector.vector}')
-                _LOGGER.info(f'LP cost vector number of non-zero entries: {np.count_nonzero(linear_problem.cost_vector.vector)}')
+                _LOGGER.info(f'LP cost vector: {first_cost_vector.vector}')
+                _LOGGER.info(f'LP cost vector number of non-zero entries: {np.count_nonzero(first_cost_vector.vector)}')
                 _LOGGER.info(f'LP optimal cost (non-normalized): {optimal_cost}')
 
-            optimal_cost_constraint = linear_problem.cost_vector.vector.reshape(1, -1)
+            optimal_cost_constraint = first_cost_vector.vector.reshape(1, -1)
+            additional_constraint_bounds = np.array([[-np.inf], [optimal_cost]]) if first_cost_vector.minimize else np.array([[optimal_cost], [np.inf]])
             reduce_machine_amount_problem = crafting_chain_problem.problem.get_mixed_integer_linear_problem(
                 objective_key=CostVectorType.MACHINE_AMOUNT_COST_VECTOR,
                 epsilon_constraints=frozendict({t: c for t, c in cost_constraints.items()}),
                 additional_constraint_matrix=optimal_cost_constraint,
-                additional_constraint_bounds=np.array([[optimal_cost], [np.inf]])
+                additional_constraint_bounds=additional_constraint_bounds
             )
             optimal_solution = highs_solver.solve(reduce_machine_amount_problem)
             if optimal_solution is None:
@@ -756,8 +744,7 @@ class CraftingChainFinder:
         _LOGGER.info('Calculating mixed integer default solution ...')
         restricted_solution_vector = self._determine_solution_vector(
             restricted_mixed_problem,
-            cost_vector_type=CostVectorType.RECIPE_COST_VECTOR,
-            support=support
+            cost_vector_type=CostVectorType.RECIPE_COST_VECTOR
         )
         if restricted_solution_vector is None:
             _LOGGER.warning('No solution found for the MILP problem.')
@@ -805,12 +792,11 @@ class CraftingChainFinder:
                 f'cost_vector_type {optimized_cost_vector_type} and constraints {cost_constraints}'
             )
 
-        restricted_constrainted_problem = restricted_mixed_problem.apply_constraints(
+        optimal_solution = self._determine_solution_vector(
+            restricted_mixed_problem,
             cost_vector_type=optimized_cost_vector_type,
             cost_constraints=cost_constraints
         )
-        highs_solver = HighsSolver(time_limit=60.0)
-        optimal_solution = highs_solver.solve(restricted_constrainted_problem)
         if optimal_solution is None:
             _LOGGER.warning('No solution found for the restricted_constrainted_problem')
             return SolutionCalculationResult(
