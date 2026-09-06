@@ -22,7 +22,7 @@ class RecipeFilters:
 def get_recipe_filters(
     st_key: str, used_machines: Iterable[Machine], used_materials: Iterable[Material],
     default_max_displayed_recipes: int = DEFAULT_MAX_DISPLAYED_RECIPES,
-    only_enabled_checkbox: bool = True,
+    only_enabled_checkbox: bool = True, separate_input_output: bool = True, 
 ) -> RecipeFilters:
     a, b, c = st.columns(3)
     with a:
@@ -45,28 +45,38 @@ def get_recipe_filters(
         options = {
             id: m.name for id, m in materials.items()
         }
-        selected_input_ids = st.multiselect(
-            'Filter by Input Materials',
-            options=options.keys(),
-            key=f"{st_key}_input_select",
-            format_func=lambda index: options[index]
-        )
-        selected_inputs = {
-            materials[id] for id in selected_input_ids
-        }
 
-        options = {
-            id: m.name for id, m in materials.items()
-        }
-        selected_output_ids = st.multiselect(
-            'Filter by Output Materials',
-            options=options.keys(),
-            key=f"{st_key}_output_select",
-            format_func=lambda index: options[index]
-        )
-        selected_outputs = {
-            materials[id] for id in selected_output_ids
-        }
+        if separate_input_output:
+            selected_input_ids = st.multiselect(
+                'Filter by Input Materials',
+                options=options.keys(),
+                key=f"{st_key}_input_select",
+                format_func=lambda index: options[index]
+            )
+            selected_inputs = {
+                materials[id] for id in selected_input_ids
+            }
+
+            selected_output_ids = st.multiselect(
+                'Filter by Output Materials',
+                options=options.keys(),
+                key=f"{st_key}_output_select",
+                format_func=lambda index: options[index]
+            )
+            selected_outputs = {
+                materials[id] for id in selected_output_ids
+            }
+        else:
+            selected_material_ids = st.multiselect(
+                'Filter by Materials',
+                options=options.keys(),
+                key=f"{st_key}_material_select",
+                format_func=lambda index: options[index]
+            )
+            selected_inputs = {
+                materials[id] for id in selected_material_ids
+            }
+            selected_outputs = selected_inputs
     with c:
         selected_voltage_tiers = set(VoltageTier.to_voltage_tier(v) for v in st.multiselect(
             "Filter recipes by voltage tiers",

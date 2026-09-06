@@ -171,7 +171,7 @@ class CraftingChain:
     def get_partial_recipe(self, instantiated_recipe: InstantiatedRecipe) -> InstantiatedPartialRecipe:
         return self.partial_recipes[instantiated_recipe.id]
 
-    def to_dataframe(self, time_factor, display_interval_string: str):
+    def to_dataframe(self, display_interval, display_interval_string: str):
         columns = ['Recipe Grading', 'Machine Amount', 'Machine', 'Voltage', f'Inputs per {display_interval_string}',
                    f'Outputs per {display_interval_string}',
                    'Min EU/t', 'Max EU/t', 'Infinite', 'Recipe ID']
@@ -183,8 +183,14 @@ class CraftingChain:
         data[:, 1] = [machine_amounts[p.id] for p in partial_recipes]
         data[:, 2] = [p.machine.__str__() for p in partial_recipes]
         data[:, 3] = [p.voltage_tier_name for p in partial_recipes]
-        data[:, 4] = [p.input_string(time_factor) for p in partial_recipes]
-        data[:, 5] = [p.output_string(time_factor) for p in partial_recipes]
+        data[:, 4] = [
+            p.input_string(display_interval / p.processing_time if p.processing_time > 0 else 1)
+            for p in partial_recipes
+        ]
+        data[:, 5] = [
+            p.output_string(display_interval / p.processing_time if p.processing_time > 0 else 1)
+            for p in partial_recipes
+        ]
         data[:, 6] = [round(abs(p.min_eu_per_tick), 3) for p in partial_recipes]
         data[:, 7] = [round(abs(p.max_eu_per_tick), 3) for p in partial_recipes]
         data[:, 8] = [self.infinite_recipes[p.id] for p in partial_recipes]

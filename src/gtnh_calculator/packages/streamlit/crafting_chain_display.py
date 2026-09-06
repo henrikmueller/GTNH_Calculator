@@ -249,7 +249,7 @@ class CraftingChainCalculationDisplay:
         ''')
         cost_vector_type_display = {
             CostVectorType.RECIPE_COST_VECTOR: 'Total Material Value',
-            CostVectorType.EU_COST_VECTOR: 'EU/t',
+            CostVectorType.EU_COST_VECTOR: 'Total EU',
             CostVectorType.MACHINE_AMOUNT_COST_VECTOR: 'Machine Amount',
         }
         a, b = st.columns(2, gap="small")
@@ -480,7 +480,7 @@ behaviour classes.\n
 {'\n'.join([f'- {m.__str__()}\n' for m in unspecified_machines])}
     """, icon="❗")
 
-        time, _ = time_to_seconds(self.config.time)
+        # time, _ = time_to_seconds(self.config.time)
         display_interval, display_interval_unit = time_to_seconds(self.config.display_interval)
         if display_interval != 1:
             display_interval_unit = display_interval_unit + 's'
@@ -498,7 +498,7 @@ behaviour classes.\n
         st.markdown('---')
 
         df = crafting_chain.to_dataframe(
-            time_factor=display_interval / time,
+            display_interval=display_interval,
             display_interval_string=display_interval_string
         )
         with st.expander('Tabular Overview'):
@@ -513,16 +513,19 @@ behaviour classes.\n
             used_machines=crafting_chain.used_machines, 
             used_materials=crafting_chain.used_materials,
             default_max_displayed_recipes=100,
-            only_enabled_checkbox=False
+            only_enabled_checkbox=False,
+            separate_input_output=False
         )
         partial_recipes = [
             (p, machine_amount) for p, machine_amount in partial_recipes
             if (recipe_filters.selected_recipe_id == '' or p.id == recipe_filters.selected_recipe_id)
             and (not recipe_filters.selected_machine_names or p.machine.name in recipe_filters.selected_machine_names)
-            and (not recipe_filters.selected_inputs or any(m in p.input_dict.keys() for m in recipe_filters.selected_inputs))
-            and (not recipe_filters.selected_outputs or any(m in p.output_dict.keys() for m in recipe_filters.selected_outputs))
             and (not recipe_filters.selected_voltage_tiers or p.voltage_tier in recipe_filters.selected_voltage_tiers)
             and (not recipe_filters.only_enabled or self.session_state.is_enabled(p.id))
+            and (
+                (not recipe_filters.selected_inputs or any(m in p.input_dict.keys() for m in recipe_filters.selected_inputs))
+                 or any(m in p.output_dict.keys() for m in recipe_filters.selected_outputs)
+            )
         ]
         partial_recipes.sort(key=lambda p: -p[1])
         partial_recipes = partial_recipes[:recipe_filters.max_displayed_recipes]

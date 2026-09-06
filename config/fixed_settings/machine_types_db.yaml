@@ -7160,7 +7160,16 @@ i~gregtech~gt.blockmachines~910:
   machine_types:
   - Vacuum Freezer
   multiblock: true
-  unspecified: true
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2.2
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.9
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 0
+    base_parallels: 8
   name: Cryogenic Freezer
   weight: 2
   voltage_tier:
@@ -7407,7 +7416,18 @@ i~gregtech~gt.blockmachines~963:
   machine_types:
   - Blast Furnace
   multiblock: true
-  unspecified: true
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2.2
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.9
+  parallel_behaviour:
+    type: default
+    parallels_per_voltage_tier: 0
+    base_parallels: 8
+  heat_capacity_behaviour:
+    type: ebf
   valid_options: coil
   name: Volcanus
   weight: 2

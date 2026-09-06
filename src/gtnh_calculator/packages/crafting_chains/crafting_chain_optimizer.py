@@ -206,13 +206,13 @@ class CraftingChainFinder:
         )
 
     def _get_eu_cost_vector(self) -> CostVector:
-        eu_cost_vector = np.array([r.eu_per_tick for r in self.recipes])
+        eu_cost_vector = np.array([r.total_eu for r in self.recipes])
         eu_cost_vector = - np.concatenate([eu_cost_vector, np.zeros(self.r)])
         _LOGGER.debug(f'MinMax eu_cost_vector: {np.min(np.abs(eu_cost_vector))}, {np.max(np.abs(eu_cost_vector))}')
         _LOGGER.debug(f'Nan in Max eu_cost_vector: {np.isnan(eu_cost_vector).sum()}')
         _LOGGER.debug(f'Number of positive cost values: {np.sum(eu_cost_vector > 0)}')
         _LOGGER.debug(f'Number of negative cost values: {np.sum(eu_cost_vector < 0)}')
-        estimation = VoltageTier.eu_per_tick(self.config.max_voltage_tier)
+        estimation = VoltageTier.eu_per_tick(self.config.max_voltage_tier) * 20 * self.time
         return CostVector(
             vector=eu_cost_vector, 
             normalization_scalar=estimation,
@@ -420,42 +420,44 @@ class CraftingChainFinder:
             constraint_info=tuple(constraint_info)
         )
 
-    def restrict_to_support(
-        self, mixed_integer: bool, support: GTNHSupport
-    ) -> CraftingChainProblem:
-        if mixed_integer:
-            # _LOGGER.info(f"self.q={self.q}, self.r={self.r}")
-            # _LOGGER.info(f"support={support.tolist()}. Length={len(support)}")
-            restricted_recipes = [self.recipes[i] for i in support if i < self.q]
-            restricted_infinite_material_list = [
-                self.infinite_material_list[i - self.q] for i in support if self.q + self.r > i >= self.q
-            ]
-            extended_support = Support(np.concatenate([support, self.q + self.r + support]))
-            restricted_problem = self.mixed_integer_problem.problem.restrict_to_support(extended_support)
-            _LOGGER.debug(
-                f'Restricted solution space: {self.mixed_integer_problem.problem.solution_space.constraint_matrix.shape} '
-                f'to {restricted_problem.solution_space.constraint_matrix.shape}'
-            )
-            return MixedIntegerCraftingChainProblem.create(
-                problem=restricted_problem,
-                recipes=restricted_recipes,
-                infinite_material_list=restricted_infinite_material_list,
-                constraint_info=self.mixed_integer_problem.constraint_info
-            )
-        else:
-            restricted_recipes = [self.recipes[i] for i in support if i < self.q]
-            restricted_infinite_material_list = [self.infinite_material_list[i - self.q] for i in support if i >= self.q]
-            restricted_problem = self.continuous_problem.problem.restrict_to_support(support)
-            _LOGGER.debug(
-                f'Restricted solution space: {self.continuous_problem.problem.solution_space.constraint_matrix.shape} '
-                f'to {restricted_problem.solution_space.constraint_matrix.shape}'
-            )
-            return ContinuousCraftingChainProblem.create(
-                problem=restricted_problem,
-                recipes=restricted_recipes,
-                infinite_material_list=restricted_infinite_material_list,
-                constraint_info=self.continuous_problem.constraint_info
-            )
+    def restrict_to_support_continuous(
+        self, support: GTNHSupport
+    ) -> ContinuousCraftingChainProblem:
+        restricted_recipes = [self.recipes[i] for i in support if i < self.q]
+        restricted_infinite_material_list = [self.infinite_material_list[i - self.q] for i in support if i >= self.q]
+        restricted_problem = self.continuous_problem.problem.restrict_to_support(support)
+        _LOGGER.debug(
+            f'Restricted solution space: {self.continuous_problem.problem.solution_space.constraint_matrix.shape} '
+            f'to {restricted_problem.solution_space.constraint_matrix.shape}'
+        )
+        return ContinuousCraftingChainProblem.create(
+            problem=restricted_problem,
+            recipes=restricted_recipes,
+            infinite_material_list=restricted_infinite_material_list,
+            constraint_info=self.continuous_problem.constraint_info
+        )
+
+    def restrict_to_support_mixed(
+        self, support: GTNHSupport
+    ) -> MixedIntegerCraftingChainProblem:
+        # _LOGGER.info(f"self.q={self.q}, self.r={self.r}")
+        # _LOGGER.info(f"support={support.tolist()}. Length={len(support)}")
+        restricted_recipes = [self.recipes[i] for i in support if i < self.q]
+        restricted_infinite_material_list = [
+            self.infinite_material_list[i - self.q] for i in support if self.q + self.r > i >= self.q
+        ]
+        extended_support = Support(np.concatenate([support, self.q + self.r + support]))
+        restricted_problem = self.mixed_integer_problem.problem.restrict_to_support(extended_support)
+        _LOGGER.debug(
+            f'Restricted solution space: {self.mixed_integer_problem.problem.solution_space.constraint_matrix.shape} '
+            f'to {restricted_problem.solution_space.constraint_matrix.shape}'
+        )
+        return MixedIntegerCraftingChainProblem.create(
+            problem=restricted_problem,
+            recipes=restricted_recipes,
+            infinite_material_list=restricted_infinite_material_list,
+            constraint_info=self.mixed_integer_problem.constraint_info
+        )
 
     # -----------------------------------------------------------------------------------------------------------------
     # Pipeline for crafting chain calculation from optimization results
@@ -479,9 +481,9 @@ class CraftingChainFinder:
         recipe_cost_vector = self.continuous_problem.cost_vectors[CostVectorType.RECIPE_COST_VECTOR]
         return recipe_vector.cost(recipe_cost_vector, normalize=False)
 
-    def _eu_per_tick_from_recipe_vector(self, recipe_vector: SolutionVector) -> float:
-        eu_per_tick_cost_vector = self.continuous_problem.cost_vectors[CostVectorType.EU_COST_VECTOR]
-        return recipe_vector.cost(eu_per_tick_cost_vector, normalize=False)
+    def _eu_from_recipe_vector(self, recipe_vector: SolutionVector) -> float:
+        eu_cost_vector = self.continuous_problem.cost_vectors[CostVectorType.EU_COST_VECTOR]
+        return recipe_vector.cost(eu_cost_vector, normalize=False)
 
     def _machine_amount_from_recipe_vector(self, recipe_vector: SolutionVector) -> float:
         machine_amount_cost_vector = self.continuous_problem.cost_vectors[CostVectorType.MACHINE_AMOUNT_COST_VECTOR]
@@ -494,7 +496,7 @@ class CraftingChainFinder:
             raise ValueError(f"Expected recipe_vector size to be {self.q + self.r}, got {recipe_vector.size}")
         
         recipe_cost = self._recipe_cost_from_recipe_vector(recipe_vector)
-        eu_per_tick = self._eu_per_tick_from_recipe_vector(recipe_vector)
+        eu_per_tick = self._eu_from_recipe_vector(recipe_vector)
         machine_amounts = self._machine_amount_from_recipe_vector(recipe_vector)
         return frozendict({
             CostVectorType.RECIPE_COST_VECTOR: recipe_cost,
@@ -745,7 +747,7 @@ class CraftingChainFinder:
     ) -> SolutionCalculationResult:
         determined_solutions = []
         support = self._create_support_from_enabled_recipes(enabled_recipe_ids)
-        restricted_mixed_problem = self.restrict_to_support(mixed_integer=True, support=support)
+        restricted_mixed_problem = self.restrict_to_support_mixed(support=support)
 
         non_trivial_solution = restricted_mixed_problem.get_non_trivial_solution()
         if non_trivial_solution is None:
@@ -763,7 +765,6 @@ class CraftingChainFinder:
                 determined_solutions=[],
                 response='No Pareto-optimal default solutions found.'
             )
-        optimal_cost = restricted_solution_vector.cost(restricted_mixed_problem.cost_vectors[CostVectorType.RECIPE_COST_VECTOR])
         determined_solution = DeterminedSolution(
             name='Default Solution',
             used_support=support,
@@ -775,6 +776,7 @@ class CraftingChainFinder:
             number_of_recipes=restricted_mixed_problem.number_of_recipes,
             default=True
         )
+
         determined_solutions.append(determined_solution)
         return SolutionCalculationResult(
             determined_solutions=[determined_solution],
@@ -794,7 +796,7 @@ class CraftingChainFinder:
     ) -> SolutionCalculationResult:
         determined_solutions: list[DeterminedSolution] = []
         support = self._create_support_from_enabled_recipes(enabled_recipe_ids)
-        restricted_mixed_problem = self.restrict_to_support(mixed_integer=True, support=support)
+        restricted_mixed_problem = self.restrict_to_support_mixed(support=support)
 
         non_trivial_solution = restricted_mixed_problem.get_non_trivial_solution()
         if non_trivial_solution is None:
