@@ -141,6 +141,8 @@ class RecipeInitializer:
     def adapt_recipe(self, recipe: Recipe, recipe_environment: RecipeEnvironment) -> AdaptedRecipe:
         adapted_recipe = None
         try:
+            if recipe_environment.machine not in recipe.valid_machines:
+                raise ValueError(f'Recipe update failed: Machine {recipe_environment.machine} is not valid for recipe {recipe}')
             for v in range(recipe_environment.voltage_tier, VoltageTier.MAX + 1):
                 try:
                     adapted_recipe = recipe_environment.machine.machine_behaviour.fit_recipe(FittingContext(
@@ -168,8 +170,36 @@ class RecipeInitializer:
             _LOGGER.warning(f'Could not fit recipe {recipe.raw_recipe} to machine {recipe_environment.machine} with voltage tier {recipe_environment.voltage_tier}')
             return InvalidAdaptedRecipe()
         return adapted_recipe
+
+    def copy_instantiated_recipe(
+        self, instantiated_recipe: InstantiatedRecipe,
+        recipe_environment: RecipeEnvironment
+    ) -> InstantiatedRecipe:
+        adapted_recipe = self.adapt_recipe(instantiated_recipe.base_recipe, recipe_environment)
+        instantiated_recipe.adapted_recipe = adapted_recipe
+        instantiated_recipe.recipe_environment = recipe_environment
+        return InstantiatedRecipe(
+            instance_number=instantiated_recipe.instance_number,
+            base_recipe=instantiated_recipe.base_recipe,
+            adapted_recipe=adapted_recipe,
+            recipe_environment=recipe_environment,
+            input_combination=instantiated_recipe.input_combination,
+            cap=instantiated_recipe.cap,
+            cap_specified=instantiated_recipe.cap_specified
+        )
+
+    def update_instantiated_recipe(
+        self, instantiated_recipe: InstantiatedRecipe,
+        recipe_environment: RecipeEnvironment
+    ) -> None:
+        adapted_recipe = self.adapt_recipe(instantiated_recipe.base_recipe, recipe_environment)
+        instantiated_recipe.adapted_recipe = adapted_recipe
+        instantiated_recipe.recipe_environment = recipe_environment
     
-    def instantiate_recipes_from_raw(self, df_recipes: pd.DataFrame, pick_any: bool = False) -> Dict[str, InstantiatedRecipe]:
+    def instantiate_recipes_from_raw(
+        self, df_recipes: pd.DataFrame, pick_any: bool = False,
+        changed_recipe_environments: Dict[str, tuple[RecipeEnvironment, StoredRecipeEnvironment]] = {}
+    ) -> Dict[str, InstantiatedRecipe]:
         """
         Instantiation without config and without changed recipe environments.
         """
@@ -180,25 +210,46 @@ class RecipeInitializer:
             recipe: Recipe = row.RECIPE  # type: ignore
             machine: Machine = row.SELECTED_MACHINE  # type: ignore
             voltage_tier: int = row.SELECTED_VOLTAGE_TIER  # type: ignore
-            machine_options = self.create_default_machine_options(machine, recipe.raw_recipe.recipe_options)
+            instantiated_recipe_list = self.instantiate_recipe_from_raw(
+                recipe, machine, voltage_tier, pick_any=pick_any, 
+                changed_recipe_environments=changed_recipe_environments
+            )
 
-            # Take the cross product of all input groups
-            for instance_number, input_combination in enumerate(recipe.input_combinations(pick_any=pick_any)):
+            for instantiated_recipe in instantiated_recipe_list:
+                instantiated_recipes[instantiated_recipe.id] = instantiated_recipe
+        return instantiated_recipes
+    
+    def instantiate_recipe_from_raw(
+        self, recipe: Recipe, machine: Machine, voltage_tier: int, pick_any: bool = False,
+        changed_recipe_environments: Dict[str, tuple[RecipeEnvironment, StoredRecipeEnvironment]] = {}
+    ) -> list[InstantiatedRecipe]:
+        """
+        Instantiation without config and without changed recipe environments.
+        """
+        instantiated_recipes = []
+        machine_options = self.create_default_machine_options(machine, recipe.raw_recipe.recipe_options)
+
+        # Take the cross product of all input groups
+        for input_combination in recipe.input_combinations(pick_any=pick_any):
+            id = get_id(recipe.id, input_combination.instance_number)
+            if id in changed_recipe_environments.keys():
+                recipe_environment = changed_recipe_environments[id][1].to_environment()
+            else:
                 recipe_environment = RecipeEnvironment(
                     machine=machine,
                     voltage_tier=voltage_tier,
                     machine_options=machine_options
                 )
-                adapted_recipe = self.adapt_recipe(recipe, recipe_environment)
-                instantiated_recipes[recipe.id + str(instance_number)] = InstantiatedRecipe(
-                    instance_number=instance_number,
-                    base_recipe=recipe,
-                    adapted_recipe=adapted_recipe,
-                    recipe_environment=recipe_environment,
-                    input_combination=input_combination,
-                    cap=None,
-                    cap_specified=False
-                )
+            adapted_recipe = self.adapt_recipe(recipe, recipe_environment)
+            instantiated_recipes.append(InstantiatedRecipe(
+                instance_number=input_combination.instance_number,
+                base_recipe=recipe,
+                adapted_recipe=adapted_recipe,
+                recipe_environment=recipe_environment,
+                input_combination=input_combination,
+                cap=None,
+                cap_specified=False
+            ))
         return instantiated_recipes
 
     def instantiate(

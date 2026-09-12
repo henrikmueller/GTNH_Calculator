@@ -23,43 +23,6 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
 
 
-def filter_recipes(
-    df_recipes: pd.DataFrame,
-    selected_id: str,
-    inputs: Iterable[Material],
-    outputs: Iterable[Material],
-    voltage_tiers: set[int] | frozenset[int],
-    machines: set[Machine] | frozenset[Machine],
-    categories: Iterable[str] | None = None,
-) -> pd.DataFrame:
-    df_result = df_recipes.copy(deep=False)
-
-    if selected_id:
-        df_result = df_result[df_result['ID'] == selected_id]
-    if df_result.shape[0] > 0 and inputs:
-        df_result = df_result[df_result['RECIPE'].map(lambda r: all(
-            any(input in input_group.materials for input_group in r.inputs) for input in inputs)  # type: ignore
-        )]
-    if df_result.shape[0] > 0 and outputs:
-        df_result = df_result[df_result['RECIPE'].map(lambda r: all(
-            output in r.outputs for output in outputs  # type: ignore
-        ))]
-    if df_result.shape[0] > 0 and voltage_tiers:
-        min_vt, max_vt = min(voltage_tiers), max(voltage_tiers)
-        if voltage_tiers and max_vt - min_vt + 1 == len(voltage_tiers):
-            df_result = df_result[df_result['RECIPE'].map(lambda r: 
-                r.voltage_tier >= min_vt and r.voltage_tier <= max_vt)]  # type: ignore
-        else:
-            df_result = df_result[df_result['RECIPE'].map(lambda r: 
-                r.voltage_tier in voltage_tiers)]  # type: ignore
-    if df_result.shape[0] > 0 and categories:
-        df_result = df_result[df_result['RECIPE'].map(lambda r: 
-            r.category in categories)]  # type: ignore
-    if df_result.shape[0] > 0 and machines:
-        df_result = df_result[df_result['RECIPE'].map(lambda r: bool(r.valid_machines & machines))]  # type: ignore
-    return df_result
-
-
 @dataclass
 class CraftingChainDatabase:
     config: CraftingChainConfig

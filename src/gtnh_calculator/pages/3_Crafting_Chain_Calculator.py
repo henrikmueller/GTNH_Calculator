@@ -4,7 +4,7 @@ import sys
 
 from packages.streamlit.crafting_chain_display import CraftingChainCalculationDisplay
 from packages.database_extraction.gtnh_database import GTNHDatabase
-from packages.streamlit.streamlit_functions import (
+from packages.streamlit.streamlit_recipes import (
     load_database, load_crafting_chain_database, show_memory_usage
 )
 from packages.streamlit.streamlit_logic import (

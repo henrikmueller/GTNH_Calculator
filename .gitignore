@@ -5,3 +5,4 @@
 *.pyc
 /src/gtnh_calculator/testing.py
 .vscode/
+config/gspread_service_account.json

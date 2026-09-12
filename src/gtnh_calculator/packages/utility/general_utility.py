@@ -85,11 +85,26 @@ def str_to_int(text: str) -> int | None:
         return None
 
 
+def _normalize_decimal_points(value: str) -> str:
+    value = value.strip()
+    if "," in value and "." in value:
+        if value.rfind(",") > value.rfind("."):
+            # 1.234,56 -> 1234.56
+            value = value.replace(".", "").replace(",", ".")
+        else:
+            # 1,234.56 -> 1234.56
+            value = value.replace(",", "")
+    elif "," in value:
+        # 12,34 -> 12.34
+        value = value.replace(",", ".")
+    return value
+
+
 def str_to_float(text: str) -> float | None:
     if text == '':
         return None
     if isinstance(text, str):
-        text = text.replace(',', '.')
+        text = _normalize_decimal_points(text)
     try:
         return float(text)
     except ValueError:
@@ -98,7 +113,7 @@ def str_to_float(text: str) -> float | None:
 
 def str_to_float_with_exception(text: str) -> float:
     if isinstance(text, str):
-        text = text.replace(',', '.')
+        text = _normalize_decimal_points(text)
     return float(text)
 
 
@@ -124,13 +139,15 @@ def load_file(file_or_filepath: BytesIO | str) -> Any:
     elif isinstance(file_or_filepath, str):
         with open(file_or_filepath, 'r') as f:
             return yaml.load(f, Loader=yaml.SafeLoader)
-    else:
-        raise ValueError(f'CraftingChainConfig file not valid.')
+    raise ValueError(f'CraftingChainConfig file not valid.')
 
 
 def get_base64_image(path):
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
+    try:
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except Exception as e:
+        raise FileNotFoundError(f"Failed to load image from path {path}: {e}")
 
 
 def print_df(df: pd.DataFrame, limit_rows: bool = True, max_rows: int | None = None):

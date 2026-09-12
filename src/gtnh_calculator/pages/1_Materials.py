@@ -2,12 +2,12 @@ import streamlit as st
 import streamlit.components.v1 as components
 import logging
 import sys
-from rapidfuzz import fuzz
 
 from packages.database_extraction.gtnh_database import GTNHDatabase
-from packages.streamlit.streamlit_functions import load_database, show_memory_usage
+from packages.streamlit.streamlit_recipes import (
+    load_database, show_memory_usage, display_crafting_chain_recipe, search_and_select_materials
+)
 from packages.database_extraction.recipe_initialization import RecipeInitializer
-from packages.streamlit.streamlit_functions import display_crafting_chain_recipe, search_and_select_materials
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)

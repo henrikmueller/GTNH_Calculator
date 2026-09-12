@@ -10,6 +10,8 @@ from packages.recipes_db.machine_options.machine_options import MachineOptions
 from packages.crafting_chains.crafting_chain_db import CraftingChain
 from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
 from packages.crafting_chains.crafting_chain_problem import DeterminedSolution
+from packages.streamlit.filtering import RecipeFilters
+from packages.factory_database.sheet_connection import FactoryDatabaseConnection
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -58,6 +60,7 @@ class StoredRecipeEnvironment:
 @dataclass
 class RecipeEnvironmentsState:
     changed_recipe_environments: Dict[str, tuple[RecipeEnvironment, StoredRecipeEnvironment]]  # (current, new)
+    enabled_recipe_ids: set[str] = field(default_factory=set)
 
     def get_recipe_environment(self, instantiated_recipe_id: str, current_recipe_environment: RecipeEnvironment) -> StoredRecipeEnvironment:
         if instantiated_recipe_id in self.changed_recipe_environments.keys():
@@ -103,6 +106,24 @@ class RecipeEnvironmentsState:
         markdown_string += "Update Optimization to apply changes to the crafting chain."
         return markdown_string
     
+    def is_enabled(self, instantiated_recipe_id: str) -> bool:
+        return instantiated_recipe_id in self.enabled_recipe_ids
+
+    def enable(self, instantiated_recipe_ids: set[str]) -> None:
+        _LOGGER.info(f'Enabling {len(instantiated_recipe_ids)} recipes". '
+                     f'Enabled recipe count: {len(self.enabled_recipe_ids)}')
+        self.enabled_recipe_ids.update(instantiated_recipe_ids)
+
+    def set_enabled(self, instantiated_recipe_id: str, enabled: bool) -> None:
+        if enabled:
+            self.enabled_recipe_ids.add(instantiated_recipe_id)
+        else:
+            self.enabled_recipe_ids.discard(instantiated_recipe_id)
+        # _LOGGER.info(
+        #     f'Setting enable state for recipe {instantiated_recipe_id}: {self.is_enabled(instantiated_recipe_id)} -> {enabled}. '
+        #     f'Enabled recipe count: {len(self.enabled_recipe_ids)}'
+        # )
+    
     @classmethod
     def initialize_empty_recipe_environments_state(cls) -> RecipeEnvironmentsState:
         return cls(changed_recipe_environments={})
@@ -128,7 +149,6 @@ class SessionState:
     key: str
     recipe_environments_state: RecipeEnvironmentsState
     crafting_chain_display_state: CraftingChainDisplayState
-    enabled_recipe_ids: set[str] = field(default_factory=set)
     file_hash: str | None = None
     example_file_key: str | None = None
     update_optimization: bool = True
@@ -147,27 +167,8 @@ class SessionState:
         self.update_optimization = True
         self.reset_enabled_recipes = True
         self.crafting_chain = None
-        self.enabled_recipe_ids = set()
         self.determined_solutions = []
         _LOGGER.info(f'Wiped session state with key "{self.key}"')
-
-    def is_enabled(self, instantiated_recipe_id: str) -> bool:
-        return instantiated_recipe_id in self.enabled_recipe_ids
-
-    def enable(self, instantiated_recipe_ids: set[str]) -> None:
-        _LOGGER.info(f'Enabling {len(instantiated_recipe_ids)} recipes in session state with key "{self.key}". '
-                     f'Enabled recipe count: {len(self.enabled_recipe_ids)}')
-        self.enabled_recipe_ids.update(instantiated_recipe_ids)
-
-    def set_enabled(self, instantiated_recipe_id: str, enabled: bool) -> None:
-        if enabled:
-            self.enabled_recipe_ids.add(instantiated_recipe_id)
-        else:
-            self.enabled_recipe_ids.discard(instantiated_recipe_id)
-        # _LOGGER.info(
-        #     f'Setting enable state for recipe {instantiated_recipe_id}: {self.is_enabled(instantiated_recipe_id)} -> {enabled}. '
-        #     f'Enabled recipe count: {len(self.enabled_recipe_ids)}'
-        # )
 
     def add_solutions(self, solutions: list[DeterminedSolution]) -> None:
         added_count = 0
@@ -198,6 +199,16 @@ class SessionState:
     def default_solutions(self) -> tuple[DeterminedSolution, ...]:
         return tuple(s for s in self.determined_solutions if s.default)
 
+    def enable(self, instantiated_recipe_ids: set[str]) -> None:
+        self.recipe_environments_state.enable(instantiated_recipe_ids)
+
+    def is_enabled(self, instantiated_recipe_id: str) -> bool:
+        return self.recipe_environments_state.is_enabled(instantiated_recipe_id)
+
+    @property
+    def enabled_recipe_ids(self) -> set[str]:
+        return self.recipe_environments_state.enabled_recipe_ids
+
     @classmethod
     def get(cls, key: str) -> SessionState:
         if key not in st.session_state:
@@ -206,6 +217,81 @@ class SessionState:
                 key=key,
                 recipe_environments_state=RecipeEnvironmentsState.initialize_empty_recipe_environments_state(),
                 crafting_chain_display_state=CraftingChainDisplayState.initialize_empty_crafting_chain_display_state()
+            )
+        return st.session_state[key]
+
+
+@dataclass
+class RecipeFilteringState:
+    selected_filters: RecipeFilters | None
+    filtered_recipe_ids: set[str]
+    number_of_filtered_instantiated_recipes: int
+
+    def has_selected_filters(self, recipe_filters: RecipeFilters) -> bool:
+        return self.selected_filters is not None and self.selected_filters == recipe_filters
+
+    def wipe_filtered_recipes(self) -> None:
+        self.filtered_recipe_ids = set()
+        self.number_of_filtered_instantiated_recipes = 0
+    
+    @classmethod
+    def initialize_empty_recipe_filtering_state(cls) -> RecipeFilteringState:
+        return cls(
+            selected_filters=None,
+            filtered_recipe_ids=set(),
+            number_of_filtered_instantiated_recipes=0
+        )
+
+
+@dataclass
+class GameStateSessionState:
+    key: str
+    recipe_environments_state: RecipeEnvironmentsState
+    recipe_filtering_state: RecipeFilteringState
+    crafting_chain_display_state: CraftingChainDisplayState
+    factory_database_connection: FactoryDatabaseConnection
+    selected_recipe: InstantiatedRecipe | None
+
+    @property
+    def has_database_connection(self) -> bool:
+        return self.factory_database_connection.has_connection()
+
+    def select_recipe(self, instantiated_recipe: InstantiatedRecipe) -> None:
+        _LOGGER.info(f'Selected recipe: {instantiated_recipe.id}')
+        self.selected_recipe = instantiated_recipe
+
+    def deselect_recipe(self, instantiated_recipe: InstantiatedRecipe) -> None:
+        _LOGGER.info(f'Deselected recipe: {instantiated_recipe.id}')
+        self.selected_recipe = None
+
+    def wipe(self) -> None:
+        self.recipe_environments_state = RecipeEnvironmentsState.initialize_empty_recipe_environments_state()
+        self.crafting_chain_display_state = CraftingChainDisplayState.initialize_empty_crafting_chain_display_state()
+        self.recipe_filtering_state = RecipeFilteringState.initialize_empty_recipe_filtering_state()
+        self.factory_database_connection = FactoryDatabaseConnection.initialize_empty_factory_database_connection()
+        self.selected_recipe = None
+        _LOGGER.info(f'Wiped session state with key "{self.key}"')
+
+    def get_selected_recipe(self) -> InstantiatedRecipe | None:
+        recipe = self.selected_recipe
+        if recipe is None:
+            return None
+        if self.recipe_environments_state.has_recipe_environment(recipe.id):
+            recipe.recipe_environment = self.recipe_environments_state.get_recipe_environment(
+                recipe.id, recipe.recipe_environment).to_environment()
+        return recipe
+
+    @classmethod
+    def get(cls, key: str) -> GameStateSessionState:
+        if key not in st.session_state:
+            _LOGGER.info(f'Initializing new session state with key "{key}"')
+            st.session_state[key] = GameStateSessionState(
+                key=key,
+                recipe_environments_state=RecipeEnvironmentsState.initialize_empty_recipe_environments_state(),
+                crafting_chain_display_state=CraftingChainDisplayState.initialize_empty_crafting_chain_display_state(),
+                recipe_filtering_state=RecipeFilteringState.initialize_empty_recipe_filtering_state(),
+                factory_database_connection=FactoryDatabaseConnection.initialize_empty_factory_database_connection(),
+                selected_recipe=None,
             )
         return st.session_state[key]
     

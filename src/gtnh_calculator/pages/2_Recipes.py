@@ -7,8 +7,7 @@ from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.database_extraction.recipe_initialization import RecipeInitializer
 from packages.recipes_db.voltage_tiers import VoltageTier
 from packages.recipes_db.recipe_options import RecipeOptionType
-from packages.streamlit.streamlit_functions import load_database, show_memory_usage
-from packages.streamlit.streamlit_functions import search_and_select_materials, display_crafting_chain_recipe
+from packages.streamlit.streamlit_recipes import load_database, show_memory_usage, display_crafting_chain_recipe
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
@@ -89,4 +88,5 @@ if displayed_recipe_count > 0:
     #     )
 
     for instantiated_recipe in list(instantiated_recipes.values())[:displayed_recipe_count]:
-        display_crafting_chain_recipe(instantiated_recipe)
+        with st.container(border=True):
+            display_crafting_chain_recipe(instantiated_recipe)

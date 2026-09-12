@@ -12,7 +12,7 @@ from packages.configs.crafting_chain_config_db import CraftingChainConfig
 from packages.crafting_chains.crafting_chain_database import CraftingChainDatabase
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
-from packages.streamlit.streamlit_functions import ( 
+from packages.streamlit.streamlit_recipes import ( 
     display_crafting_chain_recipe, adapt_crafting_chain_recipe
 )
 from packages.streamlit.session_state import SessionState
@@ -540,7 +540,9 @@ behaviour classes.\n
 
             if self.session_state.recipe_environments_state.has_recipe_environment(partial_recipe.id):
                 new_recipe_environment = self.session_state.recipe_environments_state.changed_recipe_environments[partial_recipe.id][1].to_environment()
-                changed_instantiated_recipe = partial_recipe.instantiated_recipe.copy(new_recipe_environment)
+                changed_instantiated_recipe = self.crafting_chain_database.recipe_initializer.copy_instantiated_recipe(
+                    partial_recipe.instantiated_recipe, new_recipe_environment
+                )
                 processing_time_ratio = changed_instantiated_recipe.processing_time / partial_recipe.processing_time
                 new_amount = amount * partial_recipe.instantiated_recipe.get_throughput_ratio(changed_instantiated_recipe) * processing_time_ratio
                 self.session_state.crafting_chain_display_state.changed_recipes[partial_recipe.id] = (changed_instantiated_recipe, new_amount)
@@ -550,7 +552,7 @@ behaviour classes.\n
                 with a:
                     adapt_crafting_chain_recipe(
                         partial_recipe.instantiated_recipe, self.database.machine_options_book, 
-                        self.session_state, amount=machine_amount, key_suffix='opt'
+                        self.session_state.recipe_environments_state, amount=machine_amount, key_suffix='opt'
                     )
                 with b:
                     if self.session_state.crafting_chain_display_state.has_recipe(partial_recipe.id):

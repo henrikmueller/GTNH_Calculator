@@ -5,13 +5,14 @@ import pandas as pd
 import logging
 
 from packages.recipes_db.material import Material
-from packages.crafting_chains.crafting_chain_database import CraftingChainDatabase, filter_recipes
+from packages.crafting_chains.crafting_chain_database import CraftingChainDatabase
+from packages.streamlit.filtering import filter_recipes
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.recipes_db.material import Material
 from packages.recipes_db.recipes import Recipe
 from packages.recipes_db.voltage_tiers import VoltageTier
 from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
-from packages.streamlit.streamlit_functions import (
+from packages.streamlit.streamlit_recipes import (
     display_crafting_chain_recipe, adapt_crafting_chain_recipe
 )
 from packages.streamlit.filtering import RecipeFilters, get_recipe_filters
@@ -68,6 +69,29 @@ class CCDBExplorer:
         #         }
         #         st.write(current_grade_materials)
 
+    def recipe_exploration(
+        self,
+        database: GTNHDatabase,
+        crafting_chain_database: CraftingChainDatabase,
+        all_materials: dict[str, Material],
+    ) -> None:
+        st.markdown('### Explore Recipes:')
+        recipe_filters = get_recipe_filters(
+            st_key="ccdb_rf", 
+            used_machines=database.extracted_machines.values(), 
+            used_materials=all_materials.values()
+        )
+        displayed_recipes, filtered_recipe_amount = self.apply_recipe_exploration_filters(
+            database=database,
+            crafting_chain_database=crafting_chain_database,
+            recipe_filters=recipe_filters
+        )
+        self.recipe_exploration_display(
+            database=database,
+            displayed_recipes=displayed_recipes,
+            filtered_recipe_amount=filtered_recipe_amount
+        )
+
     def apply_recipe_exploration_filters(
         self,
         database: GTNHDatabase,
@@ -113,7 +137,6 @@ class CCDBExplorer:
             displayed_recipes = displayed_recipes[:recipe_filters.max_displayed_recipes]
             return displayed_recipes, filtered_recipe_amount
 
-
     def recipe_exploration_display(
         self,
         database: GTNHDatabase,
@@ -130,35 +153,10 @@ class CCDBExplorer:
                     with a:
                         adapt_crafting_chain_recipe(
                             instantiated_recipe, database.machine_options_book, 
-                            self.session_state, key_suffix='ccdb'
+                            self.session_state.recipe_environments_state, key_suffix='ccdb'
                         )
                     with b:
                         display_crafting_chain_recipe(instantiated_recipe)
-
-
-    def recipe_exploration(
-        self,
-        database: GTNHDatabase,
-        crafting_chain_database: CraftingChainDatabase,
-        all_materials: dict[str, Material],
-    ) -> None:
-        st.markdown('### Explore Recipes:')
-        recipe_filters = get_recipe_filters(
-            st_key="ccdb_rf", 
-            used_machines=database.extracted_machines.values(), 
-            used_materials=all_materials.values()
-        )
-        displayed_recipes, filtered_recipe_amount = self.apply_recipe_exploration_filters(
-            database=database,
-            crafting_chain_database=crafting_chain_database,
-            recipe_filters=recipe_filters
-        )
-        self.recipe_exploration_display(
-            database=database,
-            displayed_recipes=displayed_recipes,
-            filtered_recipe_amount=filtered_recipe_amount
-        )
-
 
     def material_card_crafting_chain_database(self, material: Material):
         with st.container(border=True, width=600):

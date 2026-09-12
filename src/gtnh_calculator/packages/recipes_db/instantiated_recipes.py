@@ -23,12 +23,6 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.WARNING)
 
 
-class RecipeUpdateResult(StrEnum):
-    UPDATED = "updated"
-    NOT_UPDATED = "not_updated"
-    INVALID = "invalid"
-
-
 @dataclass
 class InstantiatedRecipe:
     """
@@ -47,8 +41,12 @@ class InstantiatedRecipe:
         return hash(self.id)
 
     @property
+    def base_id(self) -> str:
+        return self.base_recipe.id
+
+    @property
     def id(self) -> str:
-        return get_id(self.base_recipe.id, self.instance_number)
+        return get_id(self.base_id, self.instance_number)
 
     @property
     def raw_recipe(self) -> RawRecipe:
@@ -65,83 +63,6 @@ class InstantiatedRecipe:
     @property
     def machine(self) -> Machine:
         return self.recipe_environment.machine
-
-    @machine.setter
-    def machine(self, machine: Machine) -> None:
-        self.update(machine=machine)
-
-    def copy(self, new_recipe_environment: RecipeEnvironment | None = None) -> InstantiatedRecipe:
-        instantiated_recipe = InstantiatedRecipe(
-            instance_number=self.instance_number,
-            base_recipe=self.base_recipe,
-            adapted_recipe=self.adapted_recipe,
-            recipe_environment=self.recipe_environment,
-            input_combination=self.input_combination,
-            cap=self.cap,
-            cap_specified=self.cap_specified
-        )
-        if new_recipe_environment is not None:
-            instantiated_recipe.update_environment(new_recipe_environment)
-        return instantiated_recipe
-
-    def update_environment(self, recipe_environment: RecipeEnvironment) -> RecipeUpdateResult:
-        return self.update(
-            machine=recipe_environment.machine,
-            voltage_tier=recipe_environment.voltage_tier,
-            machine_option_dict=recipe_environment.machine_options.options
-        )
-
-    def update(
-        self, 
-        machine: Machine | None = None, 
-        voltage_tier: int | None = None, 
-        machine_option_dict: Dict[MachineOptionType, MachineOption] | None = None,
-        log: bool = False
-    ) -> RecipeUpdateResult:
-        """
-        Update the recipe.
-        """
-        voltage_tier = self.voltage_tier if voltage_tier is None else voltage_tier
-        if machine is None:
-            machine = self.machine
-        else:
-            if machine not in self.base_recipe.valid_machines:
-                raise ValueError(f'Recipe update failed: Machine {machine} is not valid for recipe {self}')
-        if voltage_tier not in machine.voltage_tiers:
-            self.adapted_recipe = InvalidAdaptedRecipe()
-            _LOGGER.warning(f'Recipe update failed: Invalid voltage tier {voltage_tier} for machine {machine}')
-            return RecipeUpdateResult.INVALID
-        
-        new_machine_options = self.machine_options if machine_option_dict is None \
-            else self.machine_options.copy(machine_option_dict)
-        
-        if log:
-            _LOGGER.info(f'Updating with machine {machine}, voltage tier {voltage_tier} and machine options {new_machine_options}')
-            _LOGGER.info(f'Currently: Machine {self.machine}, voltage tier {self.voltage_tier} and machine options {self.machine_options}')
-        if (machine == self.machine and voltage_tier == self.voltage_tier 
-            and new_machine_options == self.machine_options):
-            return RecipeUpdateResult.NOT_UPDATED
-
-        adapted_recipe = machine.machine_behaviour.fit_recipe(
-            FittingContext(
-                raw_recipe=self.raw_recipe,
-                voltage_tier=voltage_tier,
-                machine_stats=machine.machine_stats,
-                machine_options=new_machine_options,
-            ), 
-            log=log
-        )
-        if adapted_recipe is None:
-            self.adapted_recipe = InvalidAdaptedRecipe()
-            _LOGGER.warning(f'Recipe update failed: Could not fit recipe {self} to machine {machine} with voltage tier {voltage_tier}')
-            return RecipeUpdateResult.INVALID
-        self.adapted_recipe = adapted_recipe
-        self.recipe_environment = RecipeEnvironment(
-            machine=machine,
-            voltage_tier=voltage_tier,
-            machine_options=new_machine_options
-        )
-        return RecipeUpdateResult.UPDATED
 
     @property
     def total_eu(self) -> float:

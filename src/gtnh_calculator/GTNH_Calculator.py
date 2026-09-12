@@ -5,7 +5,7 @@ import logging
 import sys
 
 from packages.database_extraction.gtnh_database import GTNHDatabase
-from packages.streamlit.streamlit_functions import load_database, show_memory_usage
+from packages.streamlit.streamlit_recipes import load_database, show_memory_usage
 from packages.database_algorithms.bfs import calculate_unlock_tiers
 from packages.recipes_db.voltage_tiers import VoltageTier
 from packages.utility.general_utility import print_df
