@@ -66,7 +66,7 @@ def show_selected_recipe(session_state: GameStateSessionState, database: GTNHDat
 
         handle_productive_recipe(instantiated_recipe)
     else:
-        st.write("Select a recipe below to edit it's environment and store it in the database.")
+        st.write("Select a recipe below to edit its environment and store it in the database.")
 
 
 @st.fragment()
