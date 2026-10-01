@@ -15,10 +15,74 @@ from ..raw_recipes import RawRecipe
 from ..adapted_recipes import AdaptedRecipe
 from ..machine_stats import MachineStats
 from ..machine_options.machine_options import MachineOptions
+from ..material import Material, MaterialGroup
 from ..voltage_tiers import VoltageTier
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
+
+
+def _get_default_adapted_recipe(
+    raw_recipe: RawRecipe, overclock_behaviour: OverclockBehaviour, voltage_tier: int, machine_stats: MachineStats,
+    heat_capacity: float, max_parallels: int, energy_multiplier: float,
+    speedup: float, log: bool = False
+) -> AdaptedRecipe:
+    max_eu_per_tick = VoltageTier.eu_per_tick(voltage_tier) * raw_recipe.amperage
+    reduced_eu_per_tick = abs(energy_multiplier * raw_recipe.eu_per_tick)  # eu_per_tick is before parallels
+    used_parallels = min(floor(max_eu_per_tick // reduced_eu_per_tick), max_parallels) if reduced_eu_per_tick > 0 \
+        else max_parallels
+
+    max_overclocks = overclock_behaviour.get_max_overclocks(voltage_tier)
+    overclock_context = OverclockContext(
+        current_eu_per_tick=used_parallels * reduced_eu_per_tick,
+        max_eu_per_tick=max_eu_per_tick,
+        max_overclocks=max_overclocks,
+        machine_stats=machine_stats,
+        recipe_options=raw_recipe.recipe_options,
+        machine_heat_capacity=heat_capacity
+    )
+    non_perfect_overclocks, perfect_overclocks = overclock_behaviour.get_overclocks(overclock_context)
+
+    total_eu = (raw_recipe.total_eu * energy_multiplier * used_parallels *
+                2 ** non_perfect_overclocks / speedup)
+    processing_time = (raw_recipe.processing_time / speedup /
+                        (4 ** perfect_overclocks * 2 ** non_perfect_overclocks))
+    eu_per_tick = total_eu / processing_time / 20 if processing_time > 0 else 0
+    inputs = frozendict({
+        m: used_parallels * a for m, a in raw_recipe.inputs.items()
+    })
+    output_specifications = frozendict({
+        index: (m, used_parallels * a, p) for index, (m, a, p) in raw_recipe.output_specifications.items()
+    })
+
+    def print_logs():
+        _LOGGER.warning(raw_recipe)
+        _LOGGER.warning(f'overclock_context: {overclock_context}')
+        _LOGGER.warning(f'max_parallels: {max_parallels}')
+        _LOGGER.warning(f'max_eu_per_tick: {max_eu_per_tick}')
+        _LOGGER.warning(f'energy_multiplier: {energy_multiplier}')
+        _LOGGER.warning(f'reduced_eu_per_tick: {reduced_eu_per_tick}')
+        _LOGGER.warning(f'used_parallels: {used_parallels}')
+        _LOGGER.warning(f'max_overclocks: {max_overclocks}')
+        _LOGGER.warning(f'non_perfect_overclocks: {non_perfect_overclocks}')
+        _LOGGER.warning(f'perfect_overclocks: {perfect_overclocks}')
+        _LOGGER.warning(f'energy_multiplier: {energy_multiplier}')
+        _LOGGER.warning(f'total_eu: {total_eu}')
+        _LOGGER.warning(f'processing_time: {processing_time}')
+        _LOGGER.warning(f'eu_per_tick: {eu_per_tick}')
+        _LOGGER.warning('')
+
+    if log:
+        print_logs()
+
+    return AdaptedRecipe(
+        eu_per_tick=eu_per_tick,
+        processing_time=processing_time,
+        amperage=raw_recipe.amperage,
+        inputs=inputs,
+        output_specifications=output_specifications,
+        used_parallels=used_parallels
+    )
 
 
 @dataclass(frozen=True)
@@ -36,6 +100,7 @@ class MachineBehaviour:
     energy_behaviour: EnergyBehaviour
     heat_capacity_behaviour: HeatCapacityBehaviour
     speedup_behaviour: SpeedupBehaviour
+    comment: str
 
     @abstractmethod
     def fit_recipe(
@@ -44,6 +109,10 @@ class MachineBehaviour:
         parallel_cap: int | None = None,
         log: bool = False
     ) -> AdaptedRecipe | None:
+        ...
+
+    @abstractmethod
+    def get_linearly_dependent_materials(self, materials: set[Material | MaterialGroup]) -> list[set[Material | MaterialGroup]]:
         ...
 
     @classmethod
@@ -63,18 +132,22 @@ class MachineBehaviour:
         speedup_behaviour = SpeedupBehaviour.create_speedup_behaviour(
             specification['speedup_behaviour'] if 'speedup_behaviour' in specification.keys() else None
         )
-        behaviours = [
-            overclock_behaviour, parallel_behaviour, energy_behaviour, heat_capacity_behaviour, speedup_behaviour
+        comment = '' if 'comment' not in specification.keys() else specification['comment']
+        parameters = [
+            overclock_behaviour, parallel_behaviour, energy_behaviour, heat_capacity_behaviour, speedup_behaviour,
+            comment
         ]
 
         if 'machine_behaviour' in specification:
             match specification['machine_behaviour']['type']:
+                case 'bacterial_vat':
+                    return BacterialVatBehaviour(*parameters, fluid_multiplier=int(specification['fluid_multiplier']))
                 case 'neutron_activator':
-                    return NeutronActivatorBehaviour(*behaviours)
+                    return NeutronActivatorBehaviour(*parameters)
                 case _:
-                    return NotImplementedMachineBehaviour(*behaviours)
+                    return NotImplementedMachineBehaviour(*parameters)
         else:
-            return DefaultMachineBehaviour(*behaviours)
+            return DefaultMachineBehaviour(*parameters)
 
 
 @dataclass(frozen=True)
@@ -109,7 +182,6 @@ class DefaultMachineBehaviour(MachineBehaviour):
             _LOGGER.warning(f'Insufficient fusion tier: {machine_stats.fusion_tier} for {raw_recipe}. Required: {raw_recipe.recipe_options.fusion_tier}')
             return None  # Cannot fit the recipe to the machine due to insufficient fusion tier
         
-        # EU Generator efficiency missing
         speedup = self.speedup_behaviour.get_speedup_multiplier(machine_options=machine_options)
 
         recipe_min_temperature = raw_recipe.recipe_options.coil_heat
@@ -131,65 +203,20 @@ class DefaultMachineBehaviour(MachineBehaviour):
         if parallel_cap is not None:
             max_parallels = min(max_parallels, parallel_cap)
 
-        max_eu_per_tick = VoltageTier.eu_per_tick(voltage_tier) * raw_recipe.amperage
-        reduced_eu_per_tick = abs(energy_multiplier * raw_recipe.eu_per_tick)  # eu_per_tick is before parallels
-        used_parallels = min(floor(max_eu_per_tick // reduced_eu_per_tick), max_parallels) if reduced_eu_per_tick > 0 \
-            else max_parallels
-
-        max_overclocks = self.overclock_behaviour.get_max_overclocks(voltage_tier)
-        overclock_context = OverclockContext(
-            current_eu_per_tick=used_parallels * reduced_eu_per_tick,
-            max_eu_per_tick=max_eu_per_tick,
-            max_overclocks=max_overclocks,
-            machine_stats=machine_stats,
-            recipe_options=raw_recipe.recipe_options,
-            machine_heat_capacity=heat_capacity
-        )
-        non_perfect_overclocks, perfect_overclocks = self.overclock_behaviour.get_overclocks(overclock_context)
-
-        total_eu = (raw_recipe.total_eu * energy_multiplier * used_parallels *
-                    2 ** non_perfect_overclocks / speedup)
-        processing_time = (raw_recipe.processing_time / speedup /
-                           (4 ** perfect_overclocks * 2 ** non_perfect_overclocks))
-        eu_per_tick = total_eu / processing_time / 20 if processing_time > 0 else 0
-        inputs = frozendict({
-            m: used_parallels * a for m, a in raw_recipe.inputs.items()
-        })
-        output_specifications = frozendict({
-            index: (m, used_parallels * a, p) for index, (m, a, p) in raw_recipe.output_specifications.items()
-        })
-
-        def print_logs():
-            _LOGGER.warning(raw_recipe)
-            _LOGGER.warning(self)
-            _LOGGER.warning(f'energy_context: {energy_context}')
-            _LOGGER.warning(f'overclock_context: {overclock_context}')
-            _LOGGER.warning(f'max_parallels: {max_parallels}')
-            _LOGGER.warning(f'max_eu_per_tick: {max_eu_per_tick}')
-            _LOGGER.warning(f'energy_multiplier: {energy_multiplier}')
-            _LOGGER.warning(f'reduced_eu_per_tick: {reduced_eu_per_tick}')
-            _LOGGER.warning(f'used_parallels: {used_parallels}')
-            _LOGGER.warning(f'max_overclocks: {max_overclocks}')
-            _LOGGER.warning(f'non_perfect_overclocks: {non_perfect_overclocks}')
-            _LOGGER.warning(f'perfect_overclocks: {perfect_overclocks}')
-            _LOGGER.warning(f'energy_multiplier: {energy_multiplier}')
-            _LOGGER.warning(f'total_eu: {total_eu}')
-            _LOGGER.warning(f'processing_time: {processing_time}')
-            _LOGGER.warning(f'eu_per_tick: {eu_per_tick}')
-            _LOGGER.warning('')
-
-        if log:
-            print_logs()
-
-        adapted_recipe = AdaptedRecipe(
-            eu_per_tick=eu_per_tick,
-            processing_time=processing_time,
-            amperage=raw_recipe.amperage,
-            inputs=inputs,
-            output_specifications=output_specifications,
-            used_parallels=used_parallels
+        adapted_recipe = _get_default_adapted_recipe(
+            raw_recipe=raw_recipe,
+            overclock_behaviour=self.overclock_behaviour,
+            energy_multiplier=energy_multiplier,
+            speedup=speedup,
+            max_parallels=max_parallels,
+            heat_capacity=heat_capacity,
+            voltage_tier=voltage_tier,
+            machine_stats=machine_stats
         )
         return adapted_recipe
+
+    def get_linearly_dependent_materials(self, materials: set[Material | MaterialGroup]) -> list[set[Material | MaterialGroup]]:
+        return [{m for m in materials}]
 
 
 @dataclass(frozen=True)
@@ -216,6 +243,76 @@ class NeutronActivatorBehaviour(MachineBehaviour):
         )
         return adapted_recipe
 
+    def get_linearly_dependent_materials(self, materials: set[Material | MaterialGroup]) -> list[set[Material | MaterialGroup]]:
+        return [{m for m in materials}]
+
+    
+@dataclass(frozen=True)
+class BacterialVatBehaviour(MachineBehaviour):
+    fluid_multiplier: int
+
+    def fit_recipe(
+        self,
+        fitting_context: FittingContext,
+        parallel_cap: int | None = None,
+        log: bool = False
+    ) -> AdaptedRecipe | None:
+        raw_recipe = fitting_context.raw_recipe
+        voltage_tier = fitting_context.voltage_tier
+        machine_stats = fitting_context.machine_stats
+        machine_options = fitting_context.machine_options
+
+        if raw_recipe.total_eu > 0:
+            # EU Generators cannot be overclocked
+            return None
+
+        if voltage_tier not in machine_stats.voltage_tiers:
+            raise ValueError(f'Voltage tier {voltage_tier} is invalid for machine stats {machine_stats}.')
+        
+        heat_capacity = self.heat_capacity_behaviour.get_heat_capacity(
+            machine_voltage_tier=voltage_tier,
+            machine_options=machine_options
+        )
+        
+        speedup = 1
+        energy_multiplier = 1
+        max_parallels = self.parallel_behaviour.get_parallels(
+            voltage_tier=voltage_tier,
+            machine_options=machine_options
+        )
+        if parallel_cap is not None:
+            max_parallels = min(max_parallels, parallel_cap)
+
+        base_adapted_recipe = _get_default_adapted_recipe(
+            raw_recipe=raw_recipe,
+            overclock_behaviour=self.overclock_behaviour,
+            energy_multiplier=energy_multiplier,
+            speedup=speedup,
+            max_parallels=max_parallels,
+            heat_capacity=heat_capacity,
+            voltage_tier=voltage_tier,
+            machine_stats=machine_stats
+        )
+        final_inputs = frozendict({
+            g: (self.fluid_multiplier if g.is_fluid else 1) * a for g, a in base_adapted_recipe.inputs.items()
+        })
+        final_output_specifications = frozendict({
+            i: (m, (self.fluid_multiplier if m.is_fluid else 1) * a, p) 
+            for i, (m, a, p) in base_adapted_recipe.output_specifications.items()
+        })
+        adapted_recipe = AdaptedRecipe(
+            eu_per_tick=base_adapted_recipe.eu_per_tick,
+            processing_time=base_adapted_recipe.processing_time,
+            amperage=base_adapted_recipe.amperage,
+            inputs=final_inputs,
+            output_specifications=final_output_specifications,
+            used_parallels=base_adapted_recipe.used_parallels
+        )
+        return adapted_recipe
+
+    def get_linearly_dependent_materials(self, materials: set[Material | MaterialGroup]) -> list[set[Material | MaterialGroup]]:
+        return [{m for m in materials if not m.is_fluid}, {m for m in materials if m.is_fluid}]
+
 
 @dataclass(frozen=True)
 class NotImplementedMachineBehaviour(MachineBehaviour):
@@ -226,3 +323,6 @@ class NotImplementedMachineBehaviour(MachineBehaviour):
         log: bool = False
     ) -> AdaptedRecipe | None:
         raise NotImplementedError('Machine Behaviour not implemented')
+
+    def get_linearly_dependent_materials(self, materials: set[Material | MaterialGroup]) -> list[set[Material | MaterialGroup]]:
+        return []

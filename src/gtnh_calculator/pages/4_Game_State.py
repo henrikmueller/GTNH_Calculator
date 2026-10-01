@@ -6,7 +6,7 @@ from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.streamlit.gtnh_database_exploration import GTNHDatabaseExplorer
 from packages.streamlit.session_state import GameStateSessionState
 from packages.factory_database.sheet_connection import connect_to_factory_database
-from packages.factory_database.factories import ProductiveRecipe, TextCondition, ProductiveMachine
+from packages.factory_database.factories import ProductiveRecipe, TextCondition
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.database_extraction.recipe_initialization import RecipeInitializer
 from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
@@ -30,9 +30,10 @@ _LOGGER.info("Starting GTNH Game State page...")
 
 st.write("# GTNH Game State")
 database: GTNHDatabase = load_database()
+machine_options_book = database.machine_options_book
 session_state = GameStateSessionState.get(SESSION_STATE_KEY)
 show_memory_usage(database)
-recipe_initializer = RecipeInitializer(machine_options_book=database.machine_options_book)
+recipe_initializer = RecipeInitializer(machine_options_book=machine_options_book)
 gtnhdatabase_explorer = GTNHDatabaseExplorer(
     database=database,
     session_state=session_state,
@@ -53,7 +54,7 @@ def show_selected_recipe(session_state: GameStateSessionState, database: GTNHDat
             a, b = st.columns(2)
             with a:
                 adapt_crafting_chain_recipe(
-                    instantiated_recipe, database.machine_options_book, 
+                    instantiated_recipe, machine_options_book, 
                     session_state.recipe_environments_state, key_suffix='gs_selected',
                     enabled_checkbox=False
                 )

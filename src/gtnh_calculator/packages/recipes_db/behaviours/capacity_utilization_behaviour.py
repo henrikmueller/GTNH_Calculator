@@ -54,7 +54,11 @@ class DefaultCapacityUtilizationBehaviour(CapacityUtilizationBehaviour):
                 parallelized=adapted_recipe.used_parallels > 1
             )
 
-        full_throughput = adapted_recipe.get_throughput(fitting_context.raw_recipe)
+        grouped_materials = machine_behaviour.get_linearly_dependent_materials(
+            set(adapted_recipe.inputs.keys()) | set(adapted_recipe.output_dict.keys())
+        )
+
+        full_throughput = adapted_recipe.get_throughput(fitting_context.raw_recipe, grouped_materials=grouped_materials)
         adapted_recipes: Dict[int, AdaptedRecipe] = {}
         for parallels in range(1, adapted_recipe.used_parallels + 1):
             recipe = machine_behaviour.fit_recipe(
@@ -65,7 +69,8 @@ class DefaultCapacityUtilizationBehaviour(CapacityUtilizationBehaviour):
 
         trivial_constraint = np.ones(len(adapted_recipes))
         throughput_constraint = np.array([[
-            a.get_throughput(fitting_context.raw_recipe) / a.processing_time for p, a in adapted_recipes.items()
+            a.get_throughput(fitting_context.raw_recipe, grouped_materials=grouped_materials) / a.processing_time 
+            for p, a in adapted_recipes.items()
         ]])
         throughput_target = capacity_utilization * full_throughput / adapted_recipe.processing_time
         cost_vector = np.array([
@@ -91,7 +96,10 @@ class DefaultCapacityUtilizationBehaviour(CapacityUtilizationBehaviour):
             _LOGGER.info(f'Adapted recipe: {adapted_recipe}. Capacity utilization: {capacity_utilization}. '
                         f'Fitting Context: {fitting_context}')
             for parallels, recipe in adapted_recipes.items():
-                _LOGGER.info(f'{parallels} parallels: {recipe}, throughput: {recipe.get_throughput(fitting_context.raw_recipe)}')
+                _LOGGER.info(
+                    f'{parallels} parallels: {recipe}, throughput: '
+                    f'{recipe.get_throughput(fitting_context.raw_recipe, grouped_materials=grouped_materials)}'
+                )
             _LOGGER.info(f'full_throughput: {full_throughput}')
             _LOGGER.info(f'throughput_constraint: {throughput_constraint}')
             _LOGGER.info(f'throughput_target: {throughput_target}')

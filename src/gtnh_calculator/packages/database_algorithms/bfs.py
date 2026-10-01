@@ -131,7 +131,7 @@ def calculate_unlock_tiers(
             m: set() for m in extracted_materials.values()}
         recipe_unlock_tiers: list[int | None] = [None] * df_recipes.shape[0]
         for material in extracted_materials.values():
-            if material.is_starting():
+            if material.is_starting:
                 unlock_tiers[material] = VoltageTier.NO_REQUIREMENT
 
         double_ended_queue = deque([m for m, t in unlock_tiers.items() if t is not None])

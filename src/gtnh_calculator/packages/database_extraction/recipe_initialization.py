@@ -119,52 +119,30 @@ class RecipeInitializer:
         machine = min(base_machines, key=lambda m: m.weight)
         return machine, base_voltage_tier(machine)
 
-    def create_default_machine_options(self, machine: Machine, recipe_options: RecipeOptions) -> MachineOptions:
-        selected_options = {}
-        for option_type in machine.valid_options:
-            options = self.machine_options_book.get_machine_option_list(
-                option_type=option_type
-            )
-            if not isnan(recipe_options.coil_heat):
-                options = [o for o in options if o.temperature >= recipe_options.coil_heat]
-            if options:
-                selected_options[option_type] = min(options, key=lambda o: o.tier)
-            else:
-                selected_options[option_type] = self.machine_options_book.get_max_machine_option(
-                    option_type, lambda o: o.tier)  
-        return MachineOptions(
-            valid_options=machine.valid_options,
-            options=selected_options,
-            min_tier={t: -1 for t in machine.valid_options}
-        )
-
     def adapt_recipe(self, recipe: Recipe, recipe_environment: RecipeEnvironment) -> AdaptedRecipe:
         adapted_recipe = None
-        try:
-            if recipe_environment.machine not in recipe.valid_machines:
-                raise ValueError(f'Recipe update failed: Machine {recipe_environment.machine} is not valid for recipe {recipe}')
-            for v in range(recipe_environment.voltage_tier, VoltageTier.MAX + 1):
-                try:
-                    adapted_recipe = recipe_environment.machine.machine_behaviour.fit_recipe(FittingContext(
-                        raw_recipe=recipe.raw_recipe,
-                        voltage_tier=v,
-                        machine_stats=recipe_environment.machine.machine_stats,
-                        machine_options=recipe_environment.machine_options
-                    ))
-                except ValueError as e:
-                    raise ValueError(f'Error occurred while fitting recipe {recipe.raw_recipe} to machine {recipe_environment.machine}. VT: {recipe_environment.voltage_tier}: {e}')
-                if adapted_recipe is None or adapted_recipe.used_parallels > 0 or recipe_environment.voltage_tier == VoltageTier.NO_REQUIREMENT:
-                    break
-                
-                # Only continue if raising the voltage tier would allow for parallels
-                max_parallels = recipe_environment.machine.machine_behaviour.parallel_behaviour.get_parallels(
-                    voltage_tier=recipe_environment.voltage_tier,
+        if recipe_environment.machine not in recipe.valid_machines:
+            raise ValueError(f'Recipe update failed: Machine {recipe_environment.machine} is not valid for recipe {recipe}')
+        for v in range(recipe_environment.voltage_tier, VoltageTier.MAX + 1):
+            try:
+                adapted_recipe = recipe_environment.machine.machine_behaviour.fit_recipe(FittingContext(
+                    raw_recipe=recipe.raw_recipe,
+                    voltage_tier=v,
+                    machine_stats=recipe_environment.machine.machine_stats,
                     machine_options=recipe_environment.machine_options
-                )
-                if max_parallels != 0 or recipe_environment.machine.machine_behaviour.parallel_behaviour.parallels_per_voltage_tier == 0:
-                    break
-        except TypeError as e:
-            raise TypeError(f'TypeError occurred while fitting recipe {recipe.raw_recipe} to machine {recipe_environment.machine}. VT: {recipe_environment.voltage_tier}, {type(recipe_environment.voltage_tier)}: {e}')
+                ))
+            except ValueError as e:
+                raise ValueError(f'Error occurred while fitting recipe {recipe.raw_recipe} to machine {recipe_environment.machine}. VT: {recipe_environment.voltage_tier}: {e}')
+            if adapted_recipe is None or adapted_recipe.used_parallels > 0 or recipe_environment.voltage_tier == VoltageTier.NO_REQUIREMENT:
+                break
+            
+            # Only continue if raising the voltage tier would allow for parallels
+            max_parallels = recipe_environment.machine.machine_behaviour.parallel_behaviour.get_parallels(
+                voltage_tier=recipe_environment.voltage_tier,
+                machine_options=recipe_environment.machine_options
+            )
+            if max_parallels != 0 or recipe_environment.machine.machine_behaviour.parallel_behaviour.parallels_per_voltage_tier == 0:
+                break
 
         if adapted_recipe is None:
             _LOGGER.warning(f'Could not fit recipe {recipe.raw_recipe} to machine {recipe_environment.machine} with voltage tier {recipe_environment.voltage_tier}')
@@ -227,7 +205,7 @@ class RecipeInitializer:
         Instantiation without config and without changed recipe environments.
         """
         instantiated_recipes = []
-        machine_options = self.create_default_machine_options(machine, recipe.raw_recipe.recipe_options)
+        machine_options = self.machine_options_book.create_default_machine_options(machine, recipe.raw_recipe.recipe_options)
 
         # Take the cross product of all input groups
         for input_combination in recipe.input_combinations(pick_any=pick_any):
@@ -265,7 +243,7 @@ class RecipeInitializer:
         if machine is None:
             _LOGGER.warning(f'Could not determine the default machine for recipe: {recipe}')
             return []
-        machine_options = self.create_default_machine_options(machine, recipe.raw_recipe.recipe_options)
+        machine_options = self.machine_options_book.create_default_machine_options(machine, recipe.raw_recipe.recipe_options)
         if input_combinations is None:
             input_combinations = recipe.input_combinations(pick_any=pick_any)
         else:

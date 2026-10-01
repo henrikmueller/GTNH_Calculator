@@ -1,11 +1,17 @@
 from __future__ import annotations
 import yaml
+import logging
+from typing import Dict
+from marshmallow import Schema, fields, post_load
 from typing import Callable
+from math import isnan
 
-from .machine_options import *
+from .machine_options import MachineOption, MachineOptions, MachineOptionSchema, create_integer_machine_option
 from ..material import Material
 from .machine_option_types import MachineOptionType
 from ..machines import Machine
+from ..recipe_options import RecipeOptions
+from ...utility.constants import MIN_INTEGER_MACHINE_OPTION, MAX_INTEGER_MACHINE_OPTION
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -19,7 +25,7 @@ class MachineOptionsBook:
     solenoid_coil: list[MachineOption]
     anvil: list[MachineOption]
     coke_oven_casing: list[MachineOption]
-    width: list[MachineOption]
+    width_expansion: list[MachineOption]
     maceration_upgrade: list[MachineOption]
     containment_block: list[MachineOption]
 
@@ -42,12 +48,16 @@ class MachineOptionsBook:
         self.coke_oven_casing.sort(key=lambda o: o.tier)
         self.maceration_upgrade = [o for o in machine_options if o.option_type == MachineOptionType.MACERATION_UPGRADE]
         self.maceration_upgrade.sort(key=lambda o: o.tier)
-        self.width = []
+        self.width_expansion = [
+            create_integer_machine_option(amount=width, option_type=MachineOptionType.WIDTH_EXPANSION, options=None)
+            for width in range(MIN_INTEGER_MACHINE_OPTION, MAX_INTEGER_MACHINE_OPTION + 1)
+        ]
 
     @property
     def all_options(self) -> list[MachineOption]:
         return (self.coil + self.pipe_casing + self.item_pipe_casing + self.electromagnet +
-                self.solenoid_coil + self.anvil + self.containment_block + self.coke_oven_casing)
+                self.solenoid_coil + self.anvil + self.containment_block + self.coke_oven_casing +
+                self.width_expansion + self.maceration_upgrade)
 
     def get_machine_option_list(
         self,
@@ -93,6 +103,26 @@ class MachineOptionsBook:
                 return 10000000
             case _:
                 return 0
+
+    def create_default_machine_options(self, machine: Machine, recipe_options: RecipeOptions) -> MachineOptions:
+        selected_options = {}
+        for option_type in machine.valid_options:
+            options = self.get_machine_option_list(
+                option_type=option_type
+            )
+            if not isnan(recipe_options.coil_heat):
+                options = [o for o in options if o.temperature >= recipe_options.coil_heat]
+            if options:
+                selected_options[option_type] = min(options, key=lambda o: o.tier)
+            else:
+                selected_options[option_type] = self.get_max_machine_option(
+                    option_type, lambda o: o.tier)  
+        return MachineOptions(
+            valid_options=machine.valid_options,
+            options=selected_options,
+            min_tier={t: -1 for t in machine.valid_options},
+            max_tier={}  # TODO
+        )
             
 
 class MachineOptionsBookSchema(Schema):
@@ -101,7 +131,7 @@ class MachineOptionsBookSchema(Schema):
     def __init__(self, *args, extracted_materials=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["machine_options"].inner = fields.Nested(
+        self.fields["machine_options"].inner = fields.Nested(  # type: ignore
             MachineOptionSchema(extracted_materials=extracted_materials)
         )
 
@@ -115,4 +145,4 @@ def load_possible_machine_options(path: str, extracted_materials: Dict[str, Mate
     with open(path, 'r') as f:
         yaml_data = yaml.load(f, Loader=yaml.SafeLoader)
         schema = MachineOptionsBookSchema(extracted_materials=extracted_materials)
-        return schema.load(yaml_data)
+        return schema.load(yaml_data)  # type: ignore

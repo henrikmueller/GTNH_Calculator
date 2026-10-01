@@ -34,10 +34,16 @@ class StoredRecipeEnvironment:
             machine_options=recipe_environment.machine_options.copy(),
         )
 
-    def set_machine(self, machine: Machine) -> None:
-        self.machine = machine
+    def set_machine(self, machine: Machine, default_machine_options: MachineOptions | None = None) -> None:
         if self.voltage_tier not in machine.voltage_tiers:
             self.voltage_tier = max(machine.voltage_tiers, key=lambda vt: abs(vt - self.voltage_tier))
+        if default_machine_options is None:
+            if set(self.machine.valid_options) != set(machine.valid_options):
+                raise ValueError(f"Machine options are not compatible with the machine update {self.machine} -> {machine}. "
+                                 f"Former valid options: {self.machine.valid_options}, new valid options: {machine.valid_options}")
+        else:
+            self.machine_options = default_machine_options
+        self.machine = machine
 
     def to_environment(self) -> RecipeEnvironment:
         return RecipeEnvironment(

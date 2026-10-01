@@ -60,11 +60,11 @@ if VALIDITY_CHECKS:
     _LOGGER.info('Checking instantiated recipes for throughput calculation...')
     for instantiated_recipe in instantiated_recipes.values():
         try:
-            throughput = instantiated_recipe.adapted_recipe.get_throughput(instantiated_recipe.base_recipe.raw_recipe)
+            throughput = instantiated_recipe.get_throughput()
             if throughput <= 0:
                 _LOGGER.error(f"Non-positive throughput {throughput} for instantiated recipe: {instantiated_recipe}")
         except ValueError as e:
-            _LOGGER.error(f"Throughput calculation failed for instantiated recipe: {instantiated_recipe.id}. Error: {e}")
+            _LOGGER.error(f"Throughput calculation failed for instantiated recipe: {instantiated_recipe}. Error: {e}")
 
 # col_1, col_2, col_3 = st.columns(3)
 # with col_1:

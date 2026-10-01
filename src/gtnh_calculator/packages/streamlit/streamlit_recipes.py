@@ -18,7 +18,9 @@ from packages.configs.crafting_chain_config_db import load_config
 from packages.recipes_db.material import Material
 from packages.recipes_db.recipe_options import RecipeOptions
 from packages.recipes_db.machine_options.machine_option_books import MachineOptionsBook
-from packages.recipes_db.machine_options.machine_option_types import MachineOptionType
+from packages.recipes_db.machine_options.machine_option_types import (
+    MachineOptionType, MACHINE_OPTION_DATA_TYPES, MachineOptionDataType
+)
 from packages.recipes_db.machines import Machine
 from packages.recipes_db.machine_options.machine_options import MachineOptions, MachineOption
 from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
@@ -29,6 +31,7 @@ from packages.exceptions import GTNHCalculatorException
 from packages.streamlit.session_state import SessionState, RecipeEnvironmentsState, StoredRecipeEnvironment
 from packages.streamlit.streamlit_logic import ConfigFile
 from packages.utility.general_utility import RGBAColor
+from packages.utility.constants import MIN_INTEGER_MACHINE_OPTION, MAX_INTEGER_MACHINE_OPTION
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
@@ -177,14 +180,21 @@ def display_recipe_environment(
             machine_options = instantiated_recipe.machine_options
             for machine_option_type in machine_options.valid_options:
                 selected_option = selected_recipe_environment.machine_options.get_option(machine_option_type)
-        
-                c, d = st.columns([0.5, 5], gap='small', vertical_alignment='center')
-                with c:
-                    if selected_option.material is not None:
-                        material_image(selected_option.material)
-                with d:
-                    st.markdown(selected_option.name)
+                display_machine_option(selected_option)
     return None
+
+
+def display_machine_option(machine_option: MachineOption) -> None:
+    match MACHINE_OPTION_DATA_TYPES[machine_option.option_type]:
+        case MachineOptionDataType.BLOCK:
+            c, d = st.columns([0.5, 5], gap='small', vertical_alignment='center')
+            with c:
+                if machine_option.material is not None:
+                    material_image(machine_option.material)
+            with d:
+                st.markdown(machine_option.name)
+        case MachineOptionDataType.INTEGER:
+            st.markdown(machine_option.name)
 
 
 def adapt_crafting_chain_recipe(
@@ -230,6 +240,7 @@ def adapt_crafting_chain_recipe(
             selected_recipe_environment=selected_recipe_environment,
             valid_machines=valid_machines,
             recipe_environments_state=recipe_environments_state,
+            machine_options_book=machine_options_book,
             key_suffix=key_suffix
         )
         select_voltage_tier(
@@ -254,7 +265,7 @@ def adapt_crafting_chain_recipe(
 
 def select_machine(
     instantiated_recipe: InstantiatedRecipe, selected_recipe_environment: StoredRecipeEnvironment, valid_machines: list[Machine], 
-    recipe_environments_state: RecipeEnvironmentsState, key_suffix: str = ''
+    recipe_environments_state: RecipeEnvironmentsState, machine_options_book: MachineOptionsBook, key_suffix: str = ''
 ):
     if len(valid_machines) <= 1:
         return
@@ -265,7 +276,8 @@ def select_machine(
         if (not recipe_environments_state.has_recipe_environment(id) and machine == instantiated_recipe.machine):
             return
         _LOGGER.info(f'Updating stored machine for recipe {id}: {selected_recipe_environment.machine} -> {machine}')
-        selected_recipe_environment.set_machine(machine)
+        default_machine_options = machine_options_book.create_default_machine_options(machine, instantiated_recipe.recipe_options)
+        selected_recipe_environment.set_machine(machine, default_machine_options=default_machine_options)
         recipe_environments_state.set_recipe_environment(id, selected_recipe_environment, instantiated_recipe.recipe_environment)
     
     with st.expander('Change machine', width=400):
@@ -314,44 +326,60 @@ def select_machine_options(
     selected_recipe_environment: StoredRecipeEnvironment, recipe_environments_state: RecipeEnvironmentsState,
     machine_options_book: MachineOptionsBook, key_suffix: str = ''
 ):
-    if machine_options.valid_option_amount == 0:
-        return
-    id = instantiated_recipe.id
-    st.markdown(f'#### Machine Options')
-
-    def machine_option_changed(machine_option_type: MachineOptionType, machine_option: MachineOption):
+    def _change_machine_option(machine_option_type: MachineOptionType, machine_option: MachineOption):
         if (not recipe_environments_state.has_recipe_environment(id) and 
             machine_option == instantiated_recipe.machine_options.get_option(machine_option_type)):
             return
         _LOGGER.info(f'Updating stored machine option for recipe {id}: {machine_option_type.name} -> {machine_option}')
         selected_recipe_environment.machine_options.set_option(machine_option_type, machine_option)
         recipe_environments_state.set_recipe_environment(id, selected_recipe_environment, instantiated_recipe.recipe_environment)
+    
+    if machine_options.valid_option_amount == 0:
+        return
+    id = instantiated_recipe.id
+    st.markdown(f'#### Machine Options')
 
     for machine_option_type in machine_options.valid_options:
         option_name = machine_option_type.name.replace('_', ' ').title()
         selected_option = selected_recipe_environment.machine_options.get_option(machine_option_type)
 
-        c, d = st.columns([0.5, 5], gap='small', vertical_alignment='center')
-        with c:
-            if selected_option.material is not None:
-                material_image(selected_option.material)
-        with d:
-            st.markdown(selected_option.name)
+        if MACHINE_OPTION_DATA_TYPES[selected_option.option_type] == MachineOptionDataType.BLOCK:
 
-        with st.expander(f'Change {option_name}', width=400):
-            for i, machine_option in enumerate(
-                machine_options_book.get_machine_option_list(machine_option_type, rank=lambda o: o.tier)):
-                a, b = st.columns([0.5, 5], gap='small')
-                with a:
-                    if machine_option.material is not None:
-                        material_image(machine_option.material)
-                with b:
-                    text = f'{machine_option.name} (Tier {machine_option.tier})' if machine_option.tier >= 0 else machine_option.name
-                    if st.button(
-                        text, key=f"vote_{id}_{machine_option_type.name}_{i}_{key_suffix}", 
-                        on_click=machine_option_changed, args=(machine_option_type, machine_option)
-                    ):
-                        pass
+            with st.expander(f'Change {option_name}', width=400):
+                for i, machine_option in enumerate(
+                    machine_options_book.get_machine_option_list(machine_option_type, rank=lambda o: o.tier)
+                ):
+                    key = f"vote_{id}_{machine_option_type.name}_{i}_{key_suffix}"
+                    if MACHINE_OPTION_DATA_TYPES[machine_option.option_type] == MachineOptionDataType.BLOCK:
+                        a, b = st.columns([0.5, 5], gap='small')
+                        with a:
+                            if machine_option.material is not None:
+                                material_image(machine_option.material)
+                        with b:
+                            text = f'{machine_option.name} (Tier {machine_option.tier})' if machine_option.tier >= 0 else machine_option.name
+                            if st.button(
+                                text, key=key, on_click=_change_machine_option, args=(machine_option_type, machine_option)
+                            ):
+                                pass
+
+        elif MACHINE_OPTION_DATA_TYPES[selected_option.option_type] == MachineOptionDataType.INTEGER:
+            def _machine_option_changed(machine_option_type: MachineOptionType, key: str):
+                tier = int(st.session_state[key])
+                options = [o for o in machine_options_book.get_machine_option_list(machine_option_type) if o.tier == tier]
+                if not options:
+                    raise ValueError(f"No machine option found for tier {tier}")
+                _change_machine_option(machine_option_type, options[0])
+
+            text = f'{selected_option.name}'.title()
+            key = f"vote_{id}_{machine_option_type.name}_{key_suffix}"
+            st.slider(
+                label=selected_option.option_type.replace('_', ' ').title(), key=key,
+                min_value=MIN_INTEGER_MACHINE_OPTION, max_value=MAX_INTEGER_MACHINE_OPTION, 
+                value=selected_option.tier, on_change=_machine_option_changed, 
+                args=(machine_option_type, key)
+            )
+        else:
+            st.warning(f"Cannot display machine option data type: {MACHINE_OPTION_DATA_TYPES[selected_option.option_type]}")
 
 
 def display_crafting_chain_recipe(

@@ -184,7 +184,7 @@ class CraftingChainFinder:
 
     def _get_recipe_cost_vector(self) -> CostVector:
         cost_normalization = np.array(
-            [(FLUID_WEIGHT_FACTOR if material.is_fluid() else 1) for material in self.materials]
+            [(FLUID_WEIGHT_FACTOR if material.is_fluid else 1) for material in self.materials]
         )
         c = np.array(
             [self.material_weights[material] if material in self.material_weights.keys() else 0 for material in

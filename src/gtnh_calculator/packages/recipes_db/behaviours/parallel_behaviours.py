@@ -28,25 +28,30 @@ class ParallelBehaviour:
         match specification['type']:
             case 'default':
                 return DefaultParallelBehaviour(
-                    base_parallels=specification['base_parallels'] \
+                    base_parallels=int(specification['base_parallels']) \
                         if 'base_parallels' in specification.keys() else 1,
-                    parallels_per_voltage_tier=specification['parallels_per_voltage_tier'] \
+                    parallels_per_voltage_tier=int(specification['parallels_per_voltage_tier']) \
                         if 'parallels_per_voltage_tier' in specification.keys() else 0,
                 )
             case 'by_machine_option':
-                parallels_dict = frozendict(ast.literal_eval(str(specification['parallels_dict']).strip()))
+                parallels_dict = frozendict(ast.literal_eval(str(specification['parallels_dict']).strip())) \
+                    if 'parallels_dict' in specification.keys() else frozendict()
                 if not (isinstance(parallels_dict, frozendict) and all(isinstance(v, int) for v in parallels_dict.values())):
                     _LOGGER.warning(f'Invalid parallels dict: {parallels_dict} for specification: {specification}')
                 return ParallelByMachineOptionBehaviour(
                     parallels_per_voltage_tier=0,
                     machine_option_type=MachineOptionType(specification['machine_option_type']),
-                    parallels_dict=parallels_dict
+                    parallels_dict=parallels_dict,
+                    default_parallels=int(specification['default_parallels']) \
+                        if 'default_parallels' in specification.keys() else 1,
+                    parallels_per_tier=int(specification['parallels_per_tier']) \
+                        if 'parallels_per_tier' in specification.keys() else 0,
                 )
             case 'eic':
                 return EICParallelBehaviour(
-                    base_parallels=specification['base_parallels'] \
+                    base_parallels=int(specification['base_parallels']) \
                         if 'base_parallels' in specification.keys() else 1,
-                    parallels_per_voltage_tier=specification['parallels_per_voltage_tier'] \
+                    parallels_per_voltage_tier=int(specification['parallels_per_voltage_tier']) \
                         if 'parallels_per_voltage_tier' in specification.keys() else 0,
                 )
             case _:
@@ -65,11 +70,15 @@ class DefaultParallelBehaviour(ParallelBehaviour):
 @dataclass(frozen=True)
 class ParallelByMachineOptionBehaviour(ParallelBehaviour):
     machine_option_type: MachineOptionType
-    parallels_dict: frozendict[int, int]
+    parallels_dict: frozendict[int, int] = frozendict()
+    default_parallels: int = 1
+    parallels_per_tier: int = 0
 
     def get_parallels(self, voltage_tier: int, machine_options: MachineOptions) -> int:
         machine_option = machine_options.get_option(self.machine_option_type)
-        return self.parallels_dict[machine_option.tier] if machine_option.tier in self.parallels_dict.keys() else 1
+        if machine_option.tier in self.parallels_dict.keys():
+            return self.parallels_dict[machine_option.tier]
+        return self.default_parallels + machine_option.tier * self.parallels_per_tier
 
 
 @dataclass(frozen=True)

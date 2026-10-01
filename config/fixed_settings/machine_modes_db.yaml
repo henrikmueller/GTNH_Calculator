@@ -1,0 +1,27 @@
+dangote_distillery:
+  machine_types:
+    - Distillery  
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 2.0
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.85
+  parallel_behaviour:
+    type: default
+    base_parallels: 0
+    parallels_per_voltage_tier: 8
+  name: Distillery Mode
+  id_suffix: ==0
+dangote_dt:
+  machine_types:
+    - Distillation Tower  
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3.5
+  parallel_behaviour:
+    type: default
+    base_parallels: 12
+    parallels_per_voltage_tier: 0
+  name: Distillation Tower Mode
+  id_suffix: ==1

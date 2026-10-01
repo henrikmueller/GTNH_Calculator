@@ -52,15 +52,18 @@ class Material:
     def __eq__(self, other: Any):
         return isinstance(other, Material) and self.id == other.id
 
+    @property
     def is_ore(self) -> bool:
-        return not self.is_fluid() and ' Ore ' in self.tooltip
+        return not self.is_fluid and ' Ore ' in self.tooltip
 
+    @property
     def is_starting(self) -> bool:
         return (
-            self.is_ore() or self.name in STARTING_MATERIAL_NAMES or 
+            self.is_ore or self.name in STARTING_MATERIAL_NAMES or 
             (self.name == 'Crafting Table' and self.mod == 'minecraft')
             )
 
+    @property
     @abstractmethod
     def is_fluid(self) -> bool:
         pass
@@ -97,6 +100,7 @@ class ExtractedItem(Material):
     def __repr__(self):
         return self.name
 
+    @property
     def is_fluid(self) -> bool:
         return False
 
@@ -120,6 +124,7 @@ class ExtractedFluid(Material):
     def __repr__(self):
         return self.name
 
+    @property
     def is_fluid(self) -> bool:
         return True
 
@@ -127,6 +132,10 @@ class ExtractedFluid(Material):
 @dataclass
 class MaterialGroup:
     materials: list[Material]
+
+    @property
+    def is_fluid(self) -> bool:
+        return all(material.is_fluid for material in self.materials)
 
     def __len__(self):
         return len(self.materials)

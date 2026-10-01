@@ -127,6 +127,10 @@ class InstantiatedRecipe:
         return [m for m, a in self.output_dict.items() if a > 0]
 
     @property
+    def used_materials(self) -> set[Material]:
+        return set(self.get_inputs()) | set(self.get_outputs())
+
+    @property
     def input_dict(self) -> frozendict[Material, float]:
         return self.adapted_recipe.input_dict(self.input_combination)
 
@@ -181,11 +185,23 @@ class InstantiatedRecipe:
     def machine_options(self) -> MachineOptions:
         return self.recipe_environment.machine_options
 
+    def get_throughput(self) -> float:
+        return self.adapted_recipe.get_throughput(
+            self.raw_recipe, 
+            grouped_materials=self.machine.machine_behaviour.get_linearly_dependent_materials(
+                set(self.adapted_recipe.inputs.keys()) | set(self.adapted_recipe.output_dict.keys())
+            )
+        )
+
     def get_throughput_ratio(self, instantiated_recipe: InstantiatedRecipe) -> ThroughputRatio:
         if not instantiated_recipe.adapted_recipe.is_valid:
             return ThroughputRatio(0.0)
         if self.raw_recipe == instantiated_recipe.raw_recipe:
-            return self.adapted_recipe.get_throughput_ratio(instantiated_recipe.adapted_recipe, self.raw_recipe)
+            grouped_materials=self.machine.machine_behaviour.get_linearly_dependent_materials(
+                set(self.adapted_recipe.inputs.keys()) | set(self.adapted_recipe.output_dict.keys())
+            )
+            return self.adapted_recipe.get_throughput_ratio(
+                instantiated_recipe.adapted_recipe, self.raw_recipe, grouped_materials=grouped_materials)
         raise ValueError(f"Cannot compute throughput ratio of recipes with different raw recipes: {self.raw_recipe} and {instantiated_recipe.raw_recipe}")
 
     def fit_to_capacity_utilization(self, capacity_utilization: float, log: bool = False) -> InstantiatedPartialRecipe:

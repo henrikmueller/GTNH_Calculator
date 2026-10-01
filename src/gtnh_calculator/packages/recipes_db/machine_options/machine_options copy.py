@@ -1,10 +1,10 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from abc import abstractmethod
 import logging
 from typing import Dict, Any
 from math import nan
-from abc import ABC, abstractmethod
 
+from attr import dataclass
 from marshmallow import Schema, fields, post_load, validates, ValidationError
 from ...recipes_db.material import Material
 from .machine_option_types import MachineOptionType
@@ -25,7 +25,6 @@ class MachineOptions:
     valid_options: tuple[MachineOptionType, ...]
     options: Dict[MachineOptionType, MachineOption]
     min_tier: Dict[MachineOptionType, int]
-    max_tier: Dict[MachineOptionType, int]
 
     def __post_init__(self):
         if not set(self.valid_options) == set(self.options.keys()):
@@ -42,17 +41,9 @@ class MachineOptions:
             raise ValueError(f'MachineOptionType {type} not valid for {self}')
         self.options[type] = option
 
-    def is_valid_option(self, type: MachineOptionType) -> bool:
-        if type not in self.valid_options:
-            return False
-        return (
-            (type not in self.min_tier.keys() or self.min_tier[type] <= self.options[type].tier) and 
-            (type not in self.max_tier.keys() or self.options[type].tier <= self.max_tier[type])
-        )
-
     def __repr__(self) -> str:
         return (f'MachineOptions(valid={self.valid_options}, options={[o.__repr__() for o in self.options.values()]}, '
-                f'min_tier={self.min_tier}), max_tier={self.max_tier})')
+                f'min_tier={self.min_tier})')
     
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, MachineOptions):
@@ -63,8 +54,7 @@ class MachineOptions:
         return MachineOptions(
             valid_options=self.valid_options,
             options=self.options if machine_option_dict is None else machine_option_dict,
-            min_tier=self.min_tier,
-            max_tier=self.max_tier
+            min_tier=self.min_tier
         )
 
     @property
@@ -72,56 +62,24 @@ class MachineOptions:
         return len(self.valid_options)
 
 
-def create_block_machine_option(
-    extracted_materials: Dict[str, Material], name: str, option_type: MachineOptionType, 
-    options: Dict[str, float] | None = None
-) -> MachineOption:
-    if name in extracted_materials.keys():
-        material = extracted_materials[name]
-        return BlockMachineOption(
-            _material=material,
-            _name=material.name,
-            option_type=option_type,
-            options={} if options is None else options
-        )
-    else:
-        return BlockMachineOption(
-            _name=name,
-            _material=None,
-            option_type=option_type,
-            options={} if options is None else options
-        )
-
-
-def create_integer_machine_option(
-    amount: int, option_type: MachineOptionType, options: Dict[str, float] | None = None
-) -> IntegerMachineOption:
-    return IntegerMachineOption(
-        amount=amount,
-        option_type=option_type,
-        options={} if options is None else options
-    )
-
-
-@dataclass(frozen=True)
-class MachineOption(ABC):
+class MachineOption:
+    name: str
     option_type: MachineOptionType
     options: Dict[str, float]
+    material: Material | None
 
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def material(self) -> Material | None:
-        pass
-
-    @property
-    @abstractmethod
-    def tier(self) -> int:
-        ...
+    def __init__(
+        self, extracted_materials: Dict[str, Material], name: str, option_type: MachineOptionType,
+            options: Dict[str, float] | None = None
+    ):
+        if name in extracted_materials.keys():
+            self.material = extracted_materials[name]
+            self.name = self.material.name
+        else:
+            self.material = None
+            self.name = name
+        self.option_type = option_type
+        self.options = {} if options is None else options
 
     def __repr__(self) -> str:
         return f'{self.name} ({self.options})' if self.options else self.name
@@ -130,45 +88,14 @@ class MachineOption(ABC):
         return f'{self.name} ({self.options})' if self.options else self.name
 
     @property
+    def tier(self) -> int:
+        return int(self.options['tier']) if 'tier' in self.options else 0
+
+    @property
     def temperature(self) -> float:
         if 'temperature' in self.options:
             return self.options['temperature']
         return nan
-
-
-@dataclass(frozen=True)
-class BlockMachineOption(MachineOption):
-    _name: str
-    _material: Material | None
-
-    @property
-    def material(self) -> Material | None:
-        return self._material
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def tier(self) -> int:
-        return int(self.options['tier']) if 'tier' in self.options else 0
-
-
-@dataclass(frozen=True)
-class IntegerMachineOption(MachineOption):
-    amount: int
-
-    @property
-    def name(self) -> str:
-        return f'{self.option_type} {self.amount}'
-
-    @property
-    def material(self) -> Material | None:
-        return None
-
-    @property
-    def tier(self) -> int:
-        return self.amount
 
 
 class MachineOptionSchema(Schema):
@@ -182,9 +109,7 @@ class MachineOptionSchema(Schema):
 
     @post_load
     def create(self, data, **kwargs) -> MachineOption:
-        return create_block_machine_option(
+        return MachineOption(
             extracted_materials=self.extracted_materials,
-            name=data['name'],
-            option_type=data['option_type'],
-            options=data.get('options', None),
+            **data
         )

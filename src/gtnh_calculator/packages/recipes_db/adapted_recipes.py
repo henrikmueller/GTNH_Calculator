@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import Iterable
 from frozendict import frozendict
 import logging
 
@@ -57,21 +58,35 @@ class AdaptedRecipe:
     def output_dict(self) -> frozendict[Material, float]:
         return get_output_dict(self.output_specifications)
 
-    def get_throughput(self, base_recipe: RawRecipe) -> Throughput:
-        inputs_ratios = [self.inputs[material_group] / amount 
-                         for material_group, amount in base_recipe.inputs.items() if amount != 0]
-        base_output_dict = base_recipe.output_dict
-        output_dict = self.output_dict
-        output_ratios = [output_dict[material] / amount 
-                         for material, amount in base_output_dict.items() if amount != 0]
-        ratios = inputs_ratios + output_ratios
-        if max(ratios) - min(ratios) <= THROUGHPUT_TOLERANCE:
-            return Throughput(round(ratios[0], THROUGHPUT_DECIMAL_PLACES))
-        raise ValueError(f"Inconsistent input ratios to determine throughput. Base recipe: {base_recipe}, Adapted recipe: {self}. Ratios: {ratios}")
+    def get_throughput(
+        self, base_recipe: RawRecipe, grouped_materials: Iterable[Iterable[Material | MaterialGroup]]
+    ) -> Throughput:
+        stored_ratios = []
+        for group in grouped_materials:
+            inputs_ratios = [
+                self.inputs[material_group] / amount 
+                for material_group, amount in base_recipe.inputs.items() 
+                if amount != 0 and material_group in group
+            ]
+            base_output_dict = base_recipe.output_dict
+            output_dict = self.output_dict
+            output_ratios = [
+                output_dict[material] / amount 
+                for material, amount in base_output_dict.items() 
+                if amount != 0 and material in group
+            ]
+            ratios = inputs_ratios + output_ratios
+            if ratios and max(ratios) - min(ratios) <= THROUGHPUT_TOLERANCE:
+                return Throughput(round(ratios[0], THROUGHPUT_DECIMAL_PLACES))
+            stored_ratios.append(ratios)
+        raise ValueError(f"Inconsistent input ratios to determine throughput. Base recipe: {base_recipe}, Adapted recipe: {self}. Ratios: {stored_ratios}")
 
-    def get_throughput_ratio(self, adapted_recipe: AdaptedRecipe, base_recipe: RawRecipe) -> ThroughputRatio:
-        throughput = self.get_throughput(base_recipe=base_recipe)
-        other_throughput = adapted_recipe.get_throughput(base_recipe=base_recipe)
+    def get_throughput_ratio(
+        self, adapted_recipe: AdaptedRecipe, base_recipe: RawRecipe,
+        grouped_materials: Iterable[Iterable[Material | MaterialGroup]]
+    ) -> ThroughputRatio:
+        throughput = self.get_throughput(base_recipe=base_recipe, grouped_materials=grouped_materials)
+        other_throughput = adapted_recipe.get_throughput(base_recipe=base_recipe, grouped_materials=grouped_materials)
         return ThroughputRatio(throughput / other_throughput)
 
     @property

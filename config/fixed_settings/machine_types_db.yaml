@@ -2896,8 +2896,11 @@ i~gregtech~gt.blockmachines~12708:
 i~gregtech~gt.blockmachines~12712:
   machine_types:
   - Bacterial Vat
+  machine_behaviour:
+    type: bacterial_vat
   multiblock: true
-  unspecified: true
+  fluid_multiplier: 1001
+  comment: It is assumed that the maximal possible growth multiplier is used (x1001)
   name: Bacterial Vat
   voltage_tier:
   - 0
@@ -4349,14 +4352,7 @@ i~gregtech~gt.blockmachines~31021:
   - Distillery
   - Distillation Tower
   multiblock: true
-  speedup_behaviour:
-    type: default
-    speedup_multiplier: 3.5
-  parallel_behaviour:
-    type: default
-    base_parallels: 12
-    parallels_per_voltage_tier: 0
-  unspecified: true
+  modes: dangote_distillery, dangote_dt
   name: Dangote Distillus
   voltage_tier:
   - 0
@@ -5280,9 +5276,20 @@ i~gregtech~gt.blockmachines~365:
 i~gregtech~gt.blockmachines~366:
   machine_types:
   - Fluid Solidifier
-  multiblock: true
-  unspecified: true
   name: Fluid Shaper
+  multiblock: true
+  valid_options: width_expansion
+  speedup_behaviour:
+    type: default
+    speedup_multiplier: 3
+  energy_behaviour:
+    type: default
+    energy_multiplier: 0.8
+  parallel_behaviour:
+    type: by_machine_option
+    machine_option_type: width_expansion
+    default_parallels: 2
+    parallels_per_tier: 3
   voltage_tier:
   - 0
   - 1

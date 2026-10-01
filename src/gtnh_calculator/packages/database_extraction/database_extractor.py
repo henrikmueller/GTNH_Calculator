@@ -17,7 +17,9 @@ from ..database_extraction.gtnh_database import GTNHDatabase
 from ..recipes_db.material import ExtractedItem, ExtractedFluid, MaterialGroup
 from ..recipes_db.voltage_tiers import VoltageTier
 from ..recipes_db.machine_stats import MachineStats
-from ..recipes_db.machines import Machine, MachineType
+from ..recipes_db.machines import (
+    Machine, MachineMode, MachineType, get_machine_type_counts, get_prominent_machine_type
+)
 from ..recipes_db.behaviours.machine_behaviours import MachineBehaviour
 from ..recipes_db.behaviours.capacity_utilization_behaviour import CapacityUtilizationBehaviour
 from ..recipes_db.recipe_options import RecipeOptions
@@ -397,6 +399,11 @@ class DatabaseExtractor:
         return df_all
     
     def create_recipe_from_row(self, recipe_row) -> Recipe:
+        prominent_machine_type = get_prominent_machine_type(recipe_row.MACHINES, ratio_threshold=2.0)
+        if prominent_machine_type is None:
+            machines = recipe_row.MACHINES
+        else:
+            machines = [m for m in recipe_row.MACHINES if m.in_default_mode or prominent_machine_type in m.machine_types]
         raw_recipe = RawRecipe(
             category=recipe_row.CATEGORY,
             eu_per_tick=-recipe_row.VOLTAGE * recipe_row.AMPERAGE,
@@ -410,7 +417,7 @@ class DatabaseExtractor:
         return Recipe(
             id=recipe_row.ID,
             raw_recipe=raw_recipe,
-            valid_machines=frozenset(recipe_row.MACHINES)
+            valid_machines=frozenset(machines)
         )
 
     def extract_items(self, extracted_fluids: Dict[str, ExtractedFluid]) -> Dict[str, ExtractedItem]:
@@ -505,7 +512,7 @@ class DatabaseExtractor:
         machines = {}
         voltages = [str(VoltageTier.eu_per_tick(v)) for v in VoltageTier.voltage_tiers_int()]
         for row in df_recipe_types.drop_duplicates('MACHINES').itertuples(index=False):
-            item = extracted_items[row.MACHINES]
+            item = extracted_items[row.MACHINES]  # type: ignore
             if item.name in steam_machines:  # this tool is not for steam machines
                 continue
 
@@ -536,6 +543,9 @@ class DatabaseExtractor:
     def extract_machine_types(
         self, extracted_items: Dict[str, ExtractedItem]
     ) -> tuple[Dict[str, Machine], Dict[str, MachineType]]:
+        with (open('config/fixed_settings/machine_modes_db.yaml') as f):
+            machine_modes_dict = yaml.safe_load(f)
+
         with (open('config/fixed_settings/machine_types_db.yaml') as f):
             machine_dict = yaml.safe_load(f)
             machine_types = {}
@@ -564,29 +574,52 @@ class DatabaseExtractor:
                     additional_stats = {k: v for k, v in specification['additional_stats'].items()}
                 unlock_tier = VoltageTier.to_voltage_tier(specification['unlock_tier']) \
                     if 'unlock_tier' in specification else VoltageTier.NO_REQUIREMENT
+                
+                if 'modes' in specification:
+                    mode_keys = (k.strip() for k in specification['modes'].strip().split(','))
+                    modes = []
+                    for mode_key in mode_keys:
+                        mode_specification = machine_modes_dict[mode_key]
+                        mode = MachineMode(
+                            name=mode_specification['name'].strip(), 
+                            id_suffix=mode_specification['id_suffix'].strip(), 
+                            machine_types=tuple(machine_types[t] for t in mode_specification['machine_types']),
+                            default=False
+                        )
+                        modes.append((mode, mode_specification))
+                else:
+                    modes = [(
+                        MachineMode(
+                            name='Default Mode', id_suffix='~0', 
+                            machine_types=tuple(machine_types[t] for t in specification['machine_types']), 
+                            default=True
+                        ), {}
+                    )]
 
-                machine = Machine(
-                    name=specification['name'],
-                    multiblock=specification['multiblock'],
-                    deprecated=deprecated,
-                    disabled='disabled' in specification and specification['disabled'],
-                    unspecified='unspecified' in specification and specification['unspecified'],
-                    item=extracted_items[item_id],
-                    weight=specification['weight'] if 'weight' in specification else 0,
-                    valid_options=valid_options,
-                    machine_types=tuple(machine_types[t] for t in specification['machine_types']),
-                    machine_stats=MachineStats(
-                        voltage_tiers=tuple(int(v) for v in specification['voltage_tier']),
-                        additional_stats=frozendict(additional_stats),
-                        efficiency=specification['efficiency'] if 'efficiency' in specification else 1
-                    ),
-                    machine_behaviour=MachineBehaviour.create_machine_behaviour(specification),
-                    capacity_utilization_behaviour=CapacityUtilizationBehaviour.create_capacity_utilization_behaviour(
-                        specification['capacity_utilization_behaviour'] 
-                        if 'capacity_utilization_behaviour' in specification.keys() else None),
-                    specified_unlock_tier=unlock_tier,
-                )
-                extracted_machines[item_id] = machine
+                for mode, mode_specification in modes:
+                    behaviour_specification = specification if mode.default else mode_specification
+                    machine = Machine(
+                        name=specification['name'],
+                        mode=mode,
+                        multiblock=specification['multiblock'],
+                        deprecated=deprecated,
+                        disabled='disabled' in specification and specification['disabled'],
+                        unspecified='unspecified' in specification and specification['unspecified'],
+                        item=extracted_items[item_id],
+                        weight=specification['weight'] if 'weight' in specification else 0,
+                        valid_options=valid_options,
+                        machine_stats=MachineStats(
+                            voltage_tiers=tuple(int(v) for v in specification['voltage_tier']),
+                            additional_stats=frozendict(additional_stats),
+                            efficiency=specification['efficiency'] if 'efficiency' in specification else 1
+                        ),
+                        machine_behaviour=MachineBehaviour.create_machine_behaviour(behaviour_specification),
+                        capacity_utilization_behaviour=CapacityUtilizationBehaviour.create_capacity_utilization_behaviour(
+                            behaviour_specification['capacity_utilization_behaviour'] 
+                            if 'capacity_utilization_behaviour' in behaviour_specification.keys() else None),
+                        specified_unlock_tier=unlock_tier,
+                    )
+                    extracted_machines[machine.id] = machine
 
             _LOGGER.info(f'Extracted {machine_count} machines')
             _LOGGER.info(f'Built {len(machine_types)} machine types')
@@ -635,8 +668,12 @@ class DatabaseExtractor:
             })
         )
 
+        machines_by_db_id = defaultdict(list)
+        for m in extracted_machines.values():
+            machines_by_db_id[m.database_id].append(m)
+
         def update_items(row):
-            machines = [extracted_machines[x] for x in row['MACHINES'] if x in extracted_machines.keys()]
+            machines = [m for db_id in row['MACHINES'] if db_id in machines_by_db_id.keys() for m in machines_by_db_id[db_id]]
             return {m for m in machines if max(m.voltage_tiers) >= VoltageTier.to_voltage_tier(row['ICON_INFO'])}
 
         df_recipe_types['MACHINES'] = df_recipe_types.apply(update_items, axis=1)
