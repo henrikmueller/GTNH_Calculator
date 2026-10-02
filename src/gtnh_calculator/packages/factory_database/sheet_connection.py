@@ -14,13 +14,17 @@ from dataclasses import dataclass, fields
 from ..database_extraction.gtnh_database import GTNHDatabase
 from .database import AbstractFactoryDatabase, FactoryDatabase, EmptyFactoryDatabase
 from ..streamlit.streamlit_functions import confirm_action
-from .constants import GID, SHEET_ID
+from .constants import GID
 from ..utility.general_utility import str_to_float_with_exception
 from .sheets import SHEET_METADATA, SheetType, Sheet, SheetEntry
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.INFO)
+
+
+def _sheet_url(sheet_id: str, gid: GID) -> str:
+    return f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}'
 
 
 @dataclass(frozen=True)
@@ -62,16 +66,13 @@ class WritingResponse:
     display: bool = True
 
 
-def _sheet_url(gid: GID) -> str:
-    return f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}'
-
-
 def _read_sheet_entries(
+    sheet_id: str,
     sheet_type: SheetType,
 ) -> SheetReadingResponse:
     gid = SHEET_METADATA[sheet_type].gid
     entry_type = SHEET_METADATA[sheet_type].entry_type
-    df = pd.read_csv(_sheet_url(gid))
+    df = pd.read_csv(_sheet_url(sheet_id, gid))
     type_hints = get_type_hints(entry_type)
 
     column_types = {
@@ -182,6 +183,7 @@ def _duplicate_entries(
 
 @dataclass(frozen=True)
 class FactoryDatabaseConnection:
+    sheet_id: str
     spreadsheet: gspread.Spreadsheet | None
     file_uploaded: bool
     connection_message: str
@@ -191,8 +193,8 @@ class FactoryDatabaseConnection:
 
     def read_database_entries(self) -> ReadingResponse:
         responses: dict[SheetType, SheetReadingResponse] = {
-            SheetType.MATERIALS: _read_sheet_entries(SheetType.MATERIALS),
-            SheetType.FACTORIES: _read_sheet_entries(SheetType.FACTORIES),
+            SheetType.MATERIALS: _read_sheet_entries(self.sheet_id, SheetType.MATERIALS),
+            SheetType.FACTORIES: _read_sheet_entries(self.sheet_id, SheetType.FACTORIES),
         }
         response = ReadingResponse.create(responses)
         return response
@@ -246,10 +248,9 @@ class FactoryDatabaseConnection:
 
     @classmethod
     def initialize_empty_factory_database_connection(cls) -> FactoryDatabaseConnection:
-        return cls(
-            spreadsheet=None,
-            file_uploaded=False,
-            connection_message="No connection established."
+        return FactoryDatabaseConnection(
+            sheet_id='', spreadsheet=None, file_uploaded=False, 
+            connection_message="Empty factory database connection."
         )
 
 
@@ -261,10 +262,14 @@ def connect_to_factory_database(
         type="json"
     )
     if uploaded_file is None:
-        return FactoryDatabaseConnection(spreadsheet=None, file_uploaded=False, connection_message="No file uploaded.")
+        return FactoryDatabaseConnection(
+            sheet_id='', spreadsheet=None, file_uploaded=False, connection_message="No file uploaded."
+        )
 
     try:
-        service_account_info = json.load(uploaded_file)
+        json_dict = json.load(uploaded_file)
+        sheet_id = json_dict['sheet_id']
+        service_account_info = json_dict['connection']
         credentials = Credentials.from_service_account_info(
             service_account_info,
             scopes=[
@@ -274,16 +279,18 @@ def connect_to_factory_database(
         )
         client = gspread.authorize(credentials)
         _LOGGER.debug("✓ Authentication successful")
-        spreadsheet = client.open_by_key(SHEET_ID)
+        spreadsheet = client.open_by_key(sheet_id)
         _LOGGER.debug("✓ Spreadsheet opened")
 
         connection = FactoryDatabaseConnection(
-            spreadsheet=spreadsheet, file_uploaded=True, connection_message="Successfully connected to the factory database."
+            sheet_id=sheet_id, spreadsheet=spreadsheet, file_uploaded=True, 
+            connection_message="Successfully connected to the factory database."
         )
         reading_response = connection.read_database_entries()
         if not reading_response.success:
             return FactoryDatabaseConnection(
-                spreadsheet=None, file_uploaded=True, connection_message=f"Failed to read database entries: {reading_response.message}"
+                sheet_id=sheet_id, spreadsheet=None, file_uploaded=True, 
+                connection_message=f"Failed to read database entries: {reading_response.message}"
             )
         _LOGGER.debug("✓ Database entries read successfully")
 
@@ -291,11 +298,12 @@ def connect_to_factory_database(
             factories = reading_response.factory_database.get_factories(database)
         except KeyError as e:
             return FactoryDatabaseConnection(
-                spreadsheet=None, file_uploaded=True, connection_message=f"Failed to read factories: {e}"
+                sheet_id=sheet_id, spreadsheet=None, file_uploaded=True, 
+                connection_message=f"Failed to read factories: {e}"
             )
 
         return FactoryDatabaseConnection(
-            spreadsheet=spreadsheet, file_uploaded=True, 
+            sheet_id=sheet_id, spreadsheet=spreadsheet, file_uploaded=True, 
             connection_message=f"Successfully connected to the factory database. Found {len(factories)} factories."
         )
 
@@ -304,5 +312,6 @@ def connect_to_factory_database(
         _LOGGER.error("Exception message: %s", e)
         _LOGGER.error(traceback.format_exc())
         return FactoryDatabaseConnection(
-            spreadsheet=None, file_uploaded=True, connection_message=f"Failed to connect to the factory database: {e}"
+            sheet_id='', spreadsheet=None, file_uploaded=True, 
+            connection_message=f"Failed to connect to the factory database: {e}"
         )
