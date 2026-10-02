@@ -2,13 +2,11 @@ from __future__ import annotations
 import logging
 import sys
 from dataclasses import dataclass
-from abc import ABC, abstractmethod
-from frozendict import frozendict
-from typing import Mapping, TypeVar, Generic
+from typing import TypeVar, Generic
 from enum import StrEnum
 
-from .sheet_entries import SheetEntry, MaterialEntry, FactoryEntry
-from .constants import MATERIALS_GID, FACTORIES_GID, GID
+from .sheet_entries import SheetEntry
+from .constants import GID
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
@@ -48,9 +46,3 @@ class Sheet(Generic[T]):
 
     def __str__(self) -> str:
         return self.metadata.title
-
-
-SHEET_METADATA: Mapping[SheetType, SheetMetadata] = frozendict({
-    SheetType.MATERIALS: SheetMetadata[MaterialEntry](MATERIALS_GID, "Materials", MaterialEntry),
-    SheetType.FACTORIES: SheetMetadata[FactoryEntry](FACTORIES_GID, "Factories", FactoryEntry),
-})

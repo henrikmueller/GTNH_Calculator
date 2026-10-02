@@ -11,12 +11,13 @@ from typing import Callable, Mapping, cast, get_type_hints
 from frozendict import frozendict
 from dataclasses import dataclass, fields
 
+from ..factory_database.sheet_entries import FactoryEntry, MaterialEntry
 from ..database_extraction.gtnh_database import GTNHDatabase
 from .database import AbstractFactoryDatabase, FactoryDatabase, EmptyFactoryDatabase
 from ..streamlit.streamlit_functions import confirm_action
 from .constants import GID
 from ..utility.general_utility import str_to_float_with_exception
-from .sheets import SHEET_METADATA, SheetType, Sheet, SheetEntry
+from .sheets import SheetMetadata, SheetType, Sheet, SheetEntry
 
 logging.basicConfig(stream=sys.stdout)
 _LOGGER = logging.getLogger(__name__)
@@ -69,9 +70,10 @@ class WritingResponse:
 def _read_sheet_entries(
     sheet_id: str,
     sheet_type: SheetType,
+    sheet_metadata: Mapping[SheetType, SheetMetadata],
 ) -> SheetReadingResponse:
-    gid = SHEET_METADATA[sheet_type].gid
-    entry_type = SHEET_METADATA[sheet_type].entry_type
+    gid = sheet_metadata[sheet_type].gid
+    entry_type = sheet_metadata[sheet_type].entry_type
     df = pd.read_csv(_sheet_url(sheet_id, gid))
     type_hints = get_type_hints(entry_type)
 
@@ -94,10 +96,10 @@ def _read_sheet_entries(
             )
             for _, row in df.iterrows()
         )
-        sheet = Sheet[entry_type](metadata=SHEET_METADATA[sheet_type], entries=entries)
+        sheet = Sheet[entry_type](metadata=sheet_metadata[sheet_type], entries=entries)
     except Exception as e:
         return SheetReadingResponse(
-            sheet=Sheet[entry_type](metadata=SHEET_METADATA[sheet_type], entries=tuple()),
+            sheet=Sheet[entry_type](metadata=sheet_metadata[sheet_type], entries=tuple()),
             success=False,
             message=f"Failed to read sheet entries: {e}. "
                     f"Make sure that the columns in the sheet match the expected data type."
@@ -111,10 +113,11 @@ def _read_sheet_entries(
 
 def _write_database_entries(
     spreadsheet: gspread.Spreadsheet, entries_per_sheet: Mapping[SheetType, tuple[SheetEntry, ...]],
+    sheet_metadata: Mapping[SheetType, SheetMetadata]
 ) -> WritingResponse:
     total_written = 0
     for sheet_type, entries in entries_per_sheet.items():
-        gid = SHEET_METADATA[sheet_type].gid
+        gid = sheet_metadata[sheet_type].gid
         rows_to_write = [
             [getattr(entry, f.name) for f in fields(entry)] for entry in entries
         ]
@@ -187,14 +190,15 @@ class FactoryDatabaseConnection:
     spreadsheet: gspread.Spreadsheet | None
     file_uploaded: bool
     connection_message: str
+    sheet_metadata: frozendict[SheetType, SheetMetadata] = frozendict()
 
     def has_connection(self) -> bool:
         return self.spreadsheet is not None
 
     def read_database_entries(self) -> ReadingResponse:
         responses: dict[SheetType, SheetReadingResponse] = {
-            SheetType.MATERIALS: _read_sheet_entries(self.sheet_id, SheetType.MATERIALS),
-            SheetType.FACTORIES: _read_sheet_entries(self.sheet_id, SheetType.FACTORIES),
+            SheetType.MATERIALS: _read_sheet_entries(self.sheet_id, SheetType.MATERIALS, self.sheet_metadata),
+            SheetType.FACTORIES: _read_sheet_entries(self.sheet_id, SheetType.FACTORIES, self.sheet_metadata),
         }
         response = ReadingResponse.create(responses)
         return response
@@ -235,13 +239,13 @@ class FactoryDatabaseConnection:
 )}
 """
             response = confirm_action(
-                on_confirm=lambda: _write_database_entries(spreadsheet, entries_per_sheet),
+                on_confirm=lambda: _write_database_entries(spreadsheet, entries_per_sheet, self.sheet_metadata),
                 on_cancel=lambda: cancel_dialog(),
                 markdown_message=message,
             )
         else:
             entries_to_write = entries_per_sheet
-            response = _write_database_entries(spreadsheet, entries_to_write)
+            response = _write_database_entries(spreadsheet, entries_to_write, self.sheet_metadata)
         if response is None:
             return WritingResponse(success=False, message="", display=False)
         return response
@@ -269,6 +273,8 @@ def connect_to_factory_database(
     try:
         json_dict = json.load(uploaded_file)
         sheet_id = json_dict['sheet_id']
+        materials_gid = json_dict['materials_gid']
+        factories_gid = json_dict['factories_gid']
         service_account_info = json_dict['connection']
         credentials = Credentials.from_service_account_info(
             service_account_info,
@@ -282,15 +288,22 @@ def connect_to_factory_database(
         spreadsheet = client.open_by_key(sheet_id)
         _LOGGER.debug("✓ Spreadsheet opened")
 
+        sheet_metadata = frozendict({
+            SheetType.MATERIALS: SheetMetadata[MaterialEntry](materials_gid, "Materials", MaterialEntry),
+            SheetType.FACTORIES: SheetMetadata[FactoryEntry](factories_gid, "Factories", FactoryEntry),
+        })
+
         connection = FactoryDatabaseConnection(
             sheet_id=sheet_id, spreadsheet=spreadsheet, file_uploaded=True, 
-            connection_message="Successfully connected to the factory database."
+            connection_message="Successfully connected to the factory database.",
+            sheet_metadata=sheet_metadata
         )
         reading_response = connection.read_database_entries()
         if not reading_response.success:
             return FactoryDatabaseConnection(
                 sheet_id=sheet_id, spreadsheet=None, file_uploaded=True, 
-                connection_message=f"Failed to read database entries: {reading_response.message}"
+                connection_message=f"Failed to read database entries: {reading_response.message}",
+                sheet_metadata=sheet_metadata
             )
         _LOGGER.debug("✓ Database entries read successfully")
 
@@ -299,12 +312,14 @@ def connect_to_factory_database(
         except KeyError as e:
             return FactoryDatabaseConnection(
                 sheet_id=sheet_id, spreadsheet=None, file_uploaded=True, 
-                connection_message=f"Failed to read factories: {e}"
+                connection_message=f"Failed to read factories: {e}",
+                sheet_metadata=sheet_metadata
             )
 
         return FactoryDatabaseConnection(
             sheet_id=sheet_id, spreadsheet=spreadsheet, file_uploaded=True, 
-            connection_message=f"Successfully connected to the factory database. Found {len(factories)} factories."
+            connection_message=f"Successfully connected to the factory database. Found {len(factories)} factories.",
+            sheet_metadata=sheet_metadata
         )
 
     except Exception as e:
@@ -313,5 +328,6 @@ def connect_to_factory_database(
         _LOGGER.error(traceback.format_exc())
         return FactoryDatabaseConnection(
             sheet_id='', spreadsheet=None, file_uploaded=True, 
-            connection_message=f"Failed to connect to the factory database: {e}"
+            connection_message=f"Failed to connect to the factory database: {e}",
+            sheet_metadata=frozendict()
         )
