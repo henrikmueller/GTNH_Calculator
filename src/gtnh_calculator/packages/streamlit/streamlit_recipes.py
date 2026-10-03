@@ -862,8 +862,8 @@ def display_factory(
     if factory.processing_time > 0:
         t = format_float(factory.processing_time, decimal_places=2, separate_thousands=True)
         info_string += f'**Processing Time**: {t}s  \n'
-    info_string += f'**Voltage**: {factory.average_eu_per_tick_str}  \n'
-    info_string += f'**Total EU**: {factory.average_total_eu_str}  \n'
+    info_string += f'**Average EU/t**: {factory.average_eu_per_tick_str}  \n'
+    info_string += f'**Average Total EU**: {factory.average_total_eu_str}  \n'
     info_string += f'**Conditions**: {"; ".join(c.to_entry() for c in factory.conditions)}  \n'
     info_string += f'**Location**: {factory.location}  \n'
     info_string += f'**Comment**: {factory.comment}  \n'

@@ -10,6 +10,9 @@ from packages.factory_database.factories import ProductiveRecipe, TextCondition
 from packages.database_extraction.gtnh_database import GTNHDatabase
 from packages.database_extraction.recipe_initialization import RecipeInitializer
 from packages.recipes_db.instantiated_recipes import InstantiatedRecipe
+from packages.factory_database.factory_filtering import get_factory_filters, apply_factory_filters
+from packages.streamlit.streamlit_sorting import get_sort_controls, apply_sorting
+from packages.sorting.sort_fields import FACTORY_SORT_FIELDS
 from packages.streamlit.streamlit_recipes import (
     display_crafting_chain_recipe, adapt_crafting_chain_recipe, load_database, show_memory_usage,
     display_factory, display_recipe_environment
@@ -126,7 +129,25 @@ if session_state.has_database_connection:
         if response.success:
             factory_database = response.factory_database
             factories = factory_database.get_factories(database)
-            for factory in factories:
+            factory_filters = get_factory_filters(
+                st_key="factory_filters",
+                used_machines=database.extracted_machines.values(),
+                used_materials=database.extracted_materials.values()
+            )
+            filtered_factories = apply_factory_filters(factories, factory_filters)
+            _LOGGER.info(f'Filtered factories: {len(filtered_factories)}')
+
+            sort_controls = get_sort_controls(
+                sort_fields=FACTORY_SORT_FIELDS,
+                key_prefix="factory_sort",
+            )
+            sorted_filtered_factories = apply_sorting(
+                items=filtered_factories,
+                sort_controls=sort_controls,
+            )
+            _LOGGER.info(f'Sorted filtered factories: {len(sorted_filtered_factories)}')
+
+            for factory in sorted_filtered_factories:
                 with st.container(border=True):
                     display_factory(factory, recipe_headline=factory.factory_name)
                

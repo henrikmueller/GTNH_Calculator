@@ -84,12 +84,28 @@ class Factory(ABC):
         ...
 
     @property
+    def input_materials(self) -> set[Material]:
+        return set(self.inputs.keys())
+
+    @property
+    def output_materials(self) -> set[Material]:
+        return set(self.outputs.keys())
+
+    @property
+    def all_materials(self) -> set[Material]:
+        return self.input_materials | self.output_materials
+
+    @property
+    def average_total_eu(self) -> float:
+        return 20 * self.average_eu_per_tick * self.processing_time
+
+    @property
     def average_eu_per_tick_str(self) -> str:
         return f"{format_float(abs(self.average_eu_per_tick), decimal_places=1, separate_thousands=True)} EU/t"
 
     @property
     def average_total_eu_str(self) -> str:
-        return f"{format_float(abs(20 * self.average_eu_per_tick * self.processing_time), decimal_places=1, separate_thousands=True)} EU"
+        return f"{format_float(abs(self.average_total_eu), decimal_places=1, separate_thousands=True)} EU"
 
     @property
     def database_entries(self) -> frozendict[SheetType, tuple[SheetEntry, ...]]:
